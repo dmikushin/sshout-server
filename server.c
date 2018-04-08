@@ -117,7 +117,7 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 	fd_set fdset;
 	FD_ZERO(&fdset);
 	FD_SET(fd, &fdset);
-	int maxfd = fd;
+	int max_fd = fd;
 
 	int client_fds[FD_SETSIZE];
 	int online_users_indexes[FD_SETSIZE];
@@ -137,8 +137,9 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 */
 
 	while(1) {
+		int have_client_fd_closed = 0;
 		fd_set rfdset = fdset;
-		int n = select(maxfd + 1, &rfdset, NULL, NULL, NULL);
+		int n = select(max_fd + 1, &rfdset, NULL, NULL, NULL);
 		if(n < 0) {
 			if(errno == EINTR) continue;
 			syslog_perror("select");
@@ -170,7 +171,7 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 					if(client_fds[i] == -1) {
 						client_fds[i] = cfd;
 						FD_SET(cfd, &fdset);
-						if(cfd > maxfd) maxfd = cfd;
+						if(cfd > max_fd) max_fd = cfd;
 						syslog(LOG_INFO, "client %d fd %d\n", i, cfd);
 						break;
 					}
@@ -216,7 +217,7 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 						break;
 					case SSHOUT_LOCAL_POST_MESSAGE:
 						if(online_users_indexes[i] == -1) {
-							syslog(LOG_INFO, "client %d fd %d posting message withoutn login", i, cfd);
+							syslog(LOG_INFO, "client %d fd %d posting message without login", i, cfd);
 							break;
 						}
 						// TODO
@@ -232,11 +233,16 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 				free(packet);
 				continue;
 end_of_connection:
-				close(fd);
-				FD_CLR(fd, &fdset);
+				close(cfd);
+				FD_CLR(cfd, &fdset);
+				have_client_fd_closed = 1;
 				user_offline(i);
 				online_users_indexes[i] = -1;
 			}
+		}
+		if(have_client_fd_closed) {
+			max_fd = fd;
+			for(i=0; n && i<FD_SETSIZE; i++) if(client_fds[i] > max_fd) max_fd = client_fds[i];
 		}
 	}
 }
