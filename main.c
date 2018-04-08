@@ -15,6 +15,7 @@
 #include "common.h"
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <pwd.h>
 
@@ -34,14 +35,28 @@ int main(int argc, char **argv) {
 			argv[0], myuid, myeuid);
 		return 1;
 	}
+
 	struct passwd *mypw = getpwuid(myuid);
 	if(!mypw) {
 		perror("getpwuid");
 		return 1;
 	}
+
+	const char *home = getenv("HOME");
+	if(!home) {
+		fprintf(stderr, "%s: HOME not set\n", argv[0]);
+		return 1;
+	}
+	if(strcmp(home, mypw->pw_dir)) {
+		fprintf(stderr, "%s: HOME=\"%s\" does not equal to \"%s\"\n", argv[0], home, mypw->pw_dir);
+		return 1;
+	}
+
 	if(argc == 3 && strcmp(argv[1], "-c") == 0) return client_mode(argv[2]);
 	if(argc != 1) {
 		print_usage(argv[0]);
 		return 255;
 	}
+
+	server_mode(home);
 }
