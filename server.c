@@ -22,13 +22,44 @@
 #include <stdio.h>
 #include <errno.h>
 
+#define LOCAL_PACKET_BUFFER_SIZE (512 * 1024)
+
+static struct online_user {
+	int id;
+	char user_name[USER_NAME_MAX_LENGTH];
+	char host_name[128];
+} online_users[FD_SETSIZE];
+
 static void syslog_perror(const char *ident) {
 	int e = errno;
 	syslog(LOG_ERR, "%s: %s (%d)", ident, strerror(e), e);
 }
 
+static int user_online(int id, const char *user_name, const char *host_name, int *index) {
+	int i = 0;
+	while(online_users[i].id != -1) {
+		if(++i >= sizeof online_users / sizeof *online_users) {
+			syslog(LOG_WARNING, "cannot let user '%s' from %s login: too many users\n", user_name, host_name);
+			return -1;
+		}
+	}
+	struct online_user *p = online_users + i;
+	p->id = id;
+	strncpy(p->user_name, user_name, sizeof p->user_name);
+	strncpy(p->host_name, user_name, sizeof p->host_name);
+	return 0;
+}
+
+static void user_offline(int id) {
+	int i = 0;
+	while(online_users[i].id != id) {
+		if(++i >= sizeof online_users / sizeof *online_users) return;
+	}
+	online_users[i].id = -1;
+}
+
 int server_mode(const struct sockaddr_un *socket_addr) {
-	int fd = socket(AF_UNIX, SOCK_STREAM, 0);
+	int fd = socket(AF_UNIX, SOCK_DGRAM, 0);
 	if(fd == -1) {
 		perror("socket");
 		return 1;
@@ -60,8 +91,19 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 	int maxfd = fd;
 
 	int client_fds[FD_SETSIZE];
+	int online_users_indexes[FD_SETSIZE];
 	int i;
-	for(i=0; i<FD_SETSIZE; i++) client_fds[i] = -1;
+	for(i=0; i<FD_SETSIZE; i++) {
+		client_fds[i] = -1;
+		online_users[i].id = -1;
+		online_users_indexes[i] = -1;
+	}
+
+	char *buffer = malloc(LOCAL_PACKET_BUFFER_SIZE);
+	if(!buffer) {
+		perror("malloc");
+		return 1;
+	}
 
 	while(1) {
 		fd_set rfdset = fdset;
@@ -113,7 +155,47 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 			if(cfd == -1) continue;
 			if(FD_ISSET(cfd, &rfdset)) {
 				n--;
-				// TODO: read msg
+				//uint16_t packet_type;
+				int s;
+				do {
+					s = read(cfd, buffer, LOCAL_PACKET_BUFFER_SIZE);
+				} while(s < 0 && errno == EINTR);
+				if(s < 0) {
+					syslog_perror("read");
+					close(fd);
+					user_offline(i);
+					online_users_indexes[i] = -1;
+					continue;
+				}
+				if(!s) {
+					syslog(LOG_INFO, "client %d fd %d EOF\n", i, cfd);
+					close(fd);
+					user_offline(i);
+					online_users_indexes[i] = -1;
+					continue;
+				}
+				if(s < 2) {
+					syslog(LOG_INFO, "client %d fd %d packet too short\n", i, cfd);
+					close(fd);
+					user_offline(i);
+					online_users_indexes[i] = -1;
+					continue;
+				}
+				switch(*(uint8_t *)buffer) {
+					case SSHOUT_LOCAL_LOGIN:
+						user_online(i, buffer + sizeof(uint8_t), buffer + sizeof(uint8_t) + USER_NAME_MAX_LENGTH, online_users_indexes + i);
+						break;
+					case SSHOUT_LOCAL_POST_MESSAGE:
+						if(online_users_indexes[i] == -1) {
+							syslog(LOG_INFO, "client %d fd %d posting message withoutn login", i, cfd);
+							break;
+						}
+						// TODO
+						break;
+					case SSHOUT_LOCAL_GET_ONLINE_USERS:
+						//send_online_users(i, cfd);
+						break;
+				}
 			}
 		}
 	}

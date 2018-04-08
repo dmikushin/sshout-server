@@ -7,10 +7,19 @@
 
 #include <stdint.h>
 
+// Local packet types used in UNIX domain sockets
+enum local_packet_type {
+	SSHOUT_LOCAL_LOGIN,
+	SSHOUT_LOCAL_POST_MESSAGE,
+	SSHOUT_LOCAL_GET_ONLINE_USERS,
+	SSHOUT_LOCAL_STATUS,
+	SSHOUT_LOCAL_DISPATCH_MESSAGE,
+};
+
 enum msg_type {
-	MSG_PLAIN = 1,
-	MSG_RICH,
-	MSG_IMAGE
+	SSHOUT_MSG_PLAIN = 1,
+	SSHOUT_MSG_RICH,
+	SSHOUT_MSG_IMAGE
 };
 
 struct message {
