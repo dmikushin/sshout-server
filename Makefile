@@ -4,7 +4,7 @@ endif
 CFLAGS += -Wall -O1
 LIBS += -lreadline
 
-OBJECTS = client.o main.o server.o
+OBJECTS = client.o local-packet.o main.o server.o
 
 sshoutd:	$(OBJECTS)
 	$(CC) $^ -o $@ $(LIBS)

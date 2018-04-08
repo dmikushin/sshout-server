@@ -77,21 +77,35 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 			perror("select");
 		}
 		if(FD_ISSET(fd, &rfdset)) {
-			int s;
-			do {
-				s = read(fd, buffer, LOCAL_PACKET_BUFFER_SIZE);
-			} while(s < 0 && errno == EINTR);
-			if(s < 0) {
-				perror("read");
-				close(fd);
-				return 1;
+			struct local_packet *packet;
+			switch(get_local_packet(fd, &packet)) {
+				case GET_PACKET_EOF:
+					print_with_time(-1, "Server closed connection");
+					close(fd);
+					return 0;
+				case GET_PACKET_ERROR:
+					perror("read");
+					close(fd);
+					return 1;
+				case GET_PACKET_SHORT_READ:
+					print_with_time(-1, "Packet short read");
+					close(fd);
+					return 1;
+				case GET_PACKET_TOO_LARGE:
+					print_with_time(-1, "Packet too large");
+					close(fd);
+					return 1;
+				case GET_PACKET_OUT_OF_MEMORY:
+					print_with_time(-1, "Out of memory");
+					close(fd);
+					return 1;
+				case 0:
+					break;
+				default:
+					print_with_time(-1, "Internal error");
+					abort();
 			}
-			if(!s) {
-				print_with_time(-1, "Server closed connection");
-				close(fd);
-				return 0;
-			}
-			switch(*(uint8_t *)buffer) {
+			switch(packet->type) {
 				case SSHOUT_LOCAL_STATUS:
 					break;
 				case SSHOUT_LOCAL_DISPATCH_MESSAGE:
@@ -99,17 +113,23 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 				case SSHOUT_LOCAL_ONLINE_USERS_INFO:
 					break;
 				default:
-					print_with_time(-1, "Unknown packet type %hhu", *(uint8_t *)buffer);
+					print_with_time(-1, "Unknown packet type %d", packet->type);
 					break;
 			}
+			free(packet);
 		}
 		if(FD_ISSET(STDIN_FILENO, &fdset)) {
 			char *line = readline(NULL);
+			if(!line) {
+				print_with_time(-1, "Exiting ...");
+				return 0;
+			}
 			if(*line == '/') {
 				print_with_time(-1, "command ...");
 			} else {
 				print_with_time(-1, "send msg '%s' ...", line);
 			}
+			free(line);
 		}
 	}
 }

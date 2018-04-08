@@ -19,6 +19,7 @@
 #include <unistd.h>
 #include <syslog.h>
 #include <string.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <errno.h>
@@ -58,12 +59,15 @@ static void send_online_users(int receiver_id, int receiver_fd) {
 	do {
 		if(online_users[i].id != -1) count++;
 	} while(++i < sizeof online_users / sizeof *online_users);
-	size_t packet_length = sizeof(struct local_online_users_info) + sizeof(struct local_online_user) * count;
-	struct local_online_users_info *info = malloc(packet_length);
-	if(!info) {
+	size_t packet_length = sizeof(struct local_packet) + sizeof(struct local_online_users_info) + sizeof(struct local_online_user) * count;
+	struct local_packet *packet = malloc(packet_length);
+	if(!packet) {
 		syslog(LOG_ERR, "send_online_users: out of memory");
 		return;
 	}
+	packet->length = packet_length - sizeof packet->length;
+	packet->type = SSHOUT_LOCAL_ONLINE_USERS_INFO;
+	struct local_online_users_info *info = (struct local_online_users_info *)packet->data;
 	info->your_id = receiver_id;
 	info->count = count;
 	i = 0;
@@ -72,14 +76,17 @@ static void send_online_users(int receiver_id, int receiver_fd) {
 		count--;
 		memcpy(info + count, online_users + i, sizeof(struct local_online_user));
 	}
-	while(write(receiver_fd, info, packet_length) < 0) {
+	while(write(receiver_fd, packet, packet_length) < 0) {
 		if(errno == EINTR) continue;
 		syslog_perror("send_online_users: write");
-		return;
+		break;
 	}
+	free(packet);
 }
 
 int server_mode(const struct sockaddr_un *socket_addr) {
+	static const struct timeval timeout = { .tv_sec = 2 };
+
 	int fd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if(fd == -1) {
 		perror("socket");
@@ -151,10 +158,8 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 				if(errno == EMFILE && n < 2) sleep(1);
 			} else {
 				syslog(LOG_INFO, "client fd %d\n", cfd);
-/*
-				for(i = 0; client_fds[i] != -1; i++) {
-				}
-*/
+			        if(setsockopt(cfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof timeout) < 0) syslog_perror("setsockopt");
+			        if(setsockopt(cfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof timeout) < 0) syslog_perror("setsockopt");
 				i = 0;
 				while(1) {
 					if(i >= FD_SETSIZE) {
@@ -179,51 +184,35 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 			if(cfd == -1) continue;
 			if(FD_ISSET(cfd, &rfdset)) {
 				n--;
-				uint8_t packet_type;
-				int s;
-				do {
-					//s = read(cfd, buffer, LOCAL_PACKET_BUFFER_SIZE);
-					s = read(cfd, &packet_type, sizeof packet_type);
-				} while(s < 0 && errno == EINTR);
-				if(s < 0) {
-					syslog_perror("read");
-					goto end_of_connection;
+				struct local_packet *packet;
+				switch(get_local_packet(cfd, &packet)) {
+					case GET_PACKET_EOF:
+						syslog(LOG_INFO, "client %d fd %d EOF\n", i, cfd);
+						goto end_of_connection;
+					case GET_PACKET_ERROR:
+						syslog_perror("read");
+						goto end_of_connection;
+					case GET_PACKET_SHORT_READ:
+						syslog(LOG_INFO, "client %d fd %d short read\n", i, cfd);
+						goto end_of_connection;
+					case GET_PACKET_TOO_LARGE:
+						syslog(LOG_WARNING, "client %d fd %d packet too large (%u bytes)\n",
+							i, cfd, *(unsigned int *)packet);
+						goto end_of_connection;
+					case GET_PACKET_OUT_OF_MEMORY:
+						syslog(LOG_WARNING, "client %d fd %d out of memory (allocating %u bytes)\n",
+							i, cfd, *(unsigned int *)packet);
+						goto end_of_connection;
+					case 0:
+						break;
+					default:
+						syslog(LOG_INFO, "client %d fd %d unknown error\n", i, cfd);
+						//abort();
+						goto end_of_connection;
 				}
-				if(!s) {
-					syslog(LOG_INFO, "client %d fd %d EOF\n", i, cfd);
-					goto end_of_connection;
-				}
-				uint32_t packet_length;
-				do {
-					s = read(cfd, &packet_length, sizeof packet_length);
-				} while(s < 0 && errno == EINTR);
-				if(s < 0) {
-					syslog_perror("read");
-					goto end_of_connection;
-				}
-				if(!s) {
-					syslog(LOG_INFO, "client %d fd %d EOF\n", i, cfd);
-					goto end_of_connection;
-				}
-				if(s < sizeof packet_length) {
-					syslog(LOG_INFO, "client %d fd %d short read\n", i, cfd);
-					goto end_of_connection;
-				}
-				if(packet_length > LOCAL_PACKET_MAX_LENGTH) {
-					syslog(LOG_WARNING, "client %d fd %d packet too large (%u bytes)\n",
-						i, cfd, (unsigned int)packet_length);
-					goto end_of_connection;
-				}
-				// packet_length may be 0
-				buffer = malloc(packet_length);
-				if(!buffer) {
-					syslog(LOG_WARNING, "client %d fd %d out of memory (allocating %u bytes)\n",
-						i, cfd, (unsigned int)packet_length);
-					goto end_of_connection;
-				}
-				switch(packet_type) {
+				switch(packet->type) {
 					case SSHOUT_LOCAL_LOGIN:
-						user_online(i, buffer, buffer + USER_NAME_MAX_LENGTH, online_users_indexes + i);
+						user_online(i, packet->data, packet->data + USER_NAME_MAX_LENGTH, online_users_indexes + i);
 						break;
 					case SSHOUT_LOCAL_POST_MESSAGE:
 						if(online_users_indexes[i] == -1) {
@@ -235,11 +224,16 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 					case SSHOUT_LOCAL_GET_ONLINE_USERS:
 						send_online_users(i, cfd);
 						break;
+					default:
+						syslog(LOG_NOTICE, "client %d fd %d unknown packet type %d",
+							i, cfd, packet->type);
+						break;
 				}
-				free(buffer);
+				free(packet);
 				continue;
 end_of_connection:
 				close(fd);
+				FD_CLR(fd, &fdset);
 				user_offline(i);
 				online_users_indexes[i] = -1;
 			}

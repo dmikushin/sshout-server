@@ -5,7 +5,8 @@
 #define GLOBAL_NAME "GLOBAL"
 #define USER_LIST_FILE ".ssh/authorized_keys"
 
-#include <stdint.h>
+//#include <stdint.h>
+#include <sys/types.h>
 
 // Local packets are used in UNIX domain sockets
 
@@ -18,6 +19,19 @@ enum local_packet_type {
 	SSHOUT_LOCAL_STATUS,
 	SSHOUT_LOCAL_DISPATCH_MESSAGE,
 	SSHOUT_LOCAL_ONLINE_USERS_INFO,
+};
+
+#define GET_PACKET_EOF -1
+#define GET_PACKET_ERROR -2
+#define GET_PACKET_SHORT_READ -3
+#define GET_PACKET_TOO_LARGE -4
+#define GET_PACKET_OUT_OF_MEMORY -5
+
+// Doesn't need to use types from stdint.h in local packets
+struct local_packet {
+	size_t length;
+	enum local_packet_type type;
+	char data[0];
 };
 
 struct local_online_user {
@@ -41,11 +55,12 @@ enum local_msg_type {
 struct local_message {
 	char msg_to[USER_NAME_MAX_LENGTH];
 	enum local_msg_type msg_type;
-	uint32_t msg_length;
+	size_t msg_length;
 	char msg[0];
 };
 
 struct sockaddr_un;
 
+extern int get_local_packet(int, struct local_packet **);
 extern int client_mode(const struct sockaddr_un *, const char *);
 extern int server_mode(const struct sockaddr_un *);
