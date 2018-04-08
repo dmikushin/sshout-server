@@ -17,9 +17,15 @@
 #include <sys/un.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <syslog.h>
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
+
+static void syslog_perror(const char *ident) {
+	int e = errno;
+	syslog(LOG_ERR, "%s: %s (%d)", ident, strerror(e), e);
+}
 
 int server_mode(const struct sockaddr_un *socket_addr) {
 	int fd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -46,6 +52,8 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 		return 1;
 	}
 
+	openlog("sshoutd", LOG_PID, LOG_DAEMON);
+
 	fd_set fdset;
 	FD_ZERO(&fdset);
 	FD_SET(fd, &fdset);
@@ -60,8 +68,7 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 		int n = select(maxfd + 1, &rfdset, NULL, NULL, NULL);
 		if(n < 0) {
 			if(errno == EINTR) continue;
-			perror("select");
-			return 1;
+			syslog_perror("select");
 		}
 		if(FD_ISSET(fd, &rfdset)) {
 			struct sockaddr_un client_addr;
@@ -71,7 +78,7 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 				cfd = accept(fd, (struct sockaddr *)&client_addr, &addr_len);
 			} while(cfd == -1 && errno == EINTR);
 			if(cfd == -1) {
-				perror("accept");
+				syslog_perror("accept");
 				//if(errno == EMFILE) continue;
 				//return 1;
 				//continue;

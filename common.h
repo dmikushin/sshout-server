@@ -3,6 +3,7 @@
 
 #define USER_NAME_MAX_LENGTH 32
 #define GLOBAL_NAME "GLOBAL"
+#define USER_LIST_FILE ".ssh/authorized_keys"
 
 #include <stdint.h>
 

@@ -77,6 +77,9 @@ int main(int argc, char **argv) {
 	strcpy(pid_file_path + home_len + 1, "sshoutd.pid");
 */
 
-	if(chdir(home) < 0) perror(home);
+	if(chdir(home) < 0) {
+		perror(home);
+		return 1;
+	}
 	return server_mode(&sockaddr);
 }
