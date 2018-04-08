@@ -1,12 +1,13 @@
 ifeq ($(CC),cc)
 CC := gcc
 endif
-CFLAGS = -Wall -O1
+CFLAGS += -Wall -O1
+LIBS += -lreadline
 
 OBJECTS = client.o main.o server.o
 
 sshoutd:	$(OBJECTS)
-	$(CC) $^ -o $@
+	$(CC) $^ -o $@ $(LIBS)
 
 clean:
 	rm -f $(OBJECTS) sshoutd

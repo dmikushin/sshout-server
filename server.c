@@ -19,10 +19,9 @@
 #include <unistd.h>
 #include <syslog.h>
 #include <string.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <errno.h>
-
-#define LOCAL_PACKET_BUFFER_SIZE (512 * 1024)
 
 static struct local_online_user online_users[FD_SETSIZE];
 
@@ -81,11 +80,12 @@ static void send_online_users(int receiver_id, int receiver_fd) {
 }
 
 int server_mode(const struct sockaddr_un *socket_addr) {
-	int fd = socket(AF_UNIX, SOCK_DGRAM, 0);
+	int fd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if(fd == -1) {
 		perror("socket");
 		return 1;
 	}
+	//if(fcntl(fd, F_SETFL, O_NONBLOCK) < 0) syslog_perror("fcntl");
 	unlink(socket_addr->sun_path);
 	if(bind(fd, (struct sockaddr *)socket_addr, sizeof(struct sockaddr_un)) < 0) {
 		perror(socket_addr->sun_path);
@@ -121,11 +121,13 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 		online_users_indexes[i] = -1;
 	}
 
+/*
 	char *buffer = malloc(LOCAL_PACKET_BUFFER_SIZE);
 	if(!buffer) {
 		perror("malloc");
 		return 1;
 	}
+*/
 
 	while(1) {
 		fd_set rfdset = fdset;
@@ -177,35 +179,51 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 			if(cfd == -1) continue;
 			if(FD_ISSET(cfd, &rfdset)) {
 				n--;
-				//uint16_t packet_type;
+				uint8_t packet_type;
 				int s;
 				do {
-					s = read(cfd, buffer, LOCAL_PACKET_BUFFER_SIZE);
+					//s = read(cfd, buffer, LOCAL_PACKET_BUFFER_SIZE);
+					s = read(cfd, &packet_type, sizeof packet_type);
 				} while(s < 0 && errno == EINTR);
 				if(s < 0) {
 					syslog_perror("read");
-					close(fd);
-					user_offline(i);
-					online_users_indexes[i] = -1;
-					continue;
+					goto end_of_connection;
 				}
 				if(!s) {
 					syslog(LOG_INFO, "client %d fd %d EOF\n", i, cfd);
-					close(fd);
-					user_offline(i);
-					online_users_indexes[i] = -1;
-					continue;
+					goto end_of_connection;
 				}
-				if(s < 2) {
-					syslog(LOG_INFO, "client %d fd %d packet too short\n", i, cfd);
-					close(fd);
-					user_offline(i);
-					online_users_indexes[i] = -1;
-					continue;
+				uint32_t packet_length;
+				do {
+					s = read(cfd, &packet_length, sizeof packet_length);
+				} while(s < 0 && errno == EINTR);
+				if(s < 0) {
+					syslog_perror("read");
+					goto end_of_connection;
 				}
-				switch(*(uint8_t *)buffer) {
+				if(!s) {
+					syslog(LOG_INFO, "client %d fd %d EOF\n", i, cfd);
+					goto end_of_connection;
+				}
+				if(s < sizeof packet_length) {
+					syslog(LOG_INFO, "client %d fd %d short read\n", i, cfd);
+					goto end_of_connection;
+				}
+				if(packet_length > LOCAL_PACKET_MAX_LENGTH) {
+					syslog(LOG_WARNING, "client %d fd %d packet too large (%u bytes)\n",
+						i, cfd, (unsigned int)packet_length);
+					goto end_of_connection;
+				}
+				// packet_length may be 0
+				buffer = malloc(packet_length);
+				if(!buffer) {
+					syslog(LOG_WARNING, "client %d fd %d out of memory (allocating %u bytes)\n",
+						i, cfd, (unsigned int)packet_length);
+					goto end_of_connection;
+				}
+				switch(packet_type) {
 					case SSHOUT_LOCAL_LOGIN:
-						user_online(i, buffer + sizeof(uint8_t), buffer + sizeof(uint8_t) + USER_NAME_MAX_LENGTH, online_users_indexes + i);
+						user_online(i, buffer, buffer + USER_NAME_MAX_LENGTH, online_users_indexes + i);
 						break;
 					case SSHOUT_LOCAL_POST_MESSAGE:
 						if(online_users_indexes[i] == -1) {
@@ -218,6 +236,12 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 						send_online_users(i, cfd);
 						break;
 				}
+				free(buffer);
+				continue;
+end_of_connection:
+				close(fd);
+				user_offline(i);
+				online_users_indexes[i] = -1;
 			}
 		}
 	}

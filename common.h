@@ -7,7 +7,10 @@
 
 #include <stdint.h>
 
-// Local packet types used in UNIX domain sockets
+// Local packets are used in UNIX domain sockets
+
+#define LOCAL_PACKET_MAX_LENGTH (512 * 1024)
+
 enum local_packet_type {
 	SSHOUT_LOCAL_LOGIN,
 	SSHOUT_LOCAL_POST_MESSAGE,

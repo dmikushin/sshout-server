@@ -13,15 +13,103 @@
  */
 
 #include "common.h"
+#include <sys/socket.h>
+#include <sys/un.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
+#include <readline/readline.h>
+#include <readline/history.h>
+
+#define MAX(A,B) ((A)>(B)?(A):(B))
+#define LOCAL_PACKET_BUFFER_SIZE (512 * 1024)
+
+static void print_with_time(time_t t, const char *format, ...) {
+	va_list ap;
+	struct tm tm;
+	if(t == -1) t = time(NULL);
+	localtime_r(&t, &tm);
+	fprintf(stdout, "\r[%.2d:%.2d:%.2d] ", tm.tm_hour, tm.tm_min, tm.tm_sec);
+	va_start(ap, format);
+	vfprintf(stderr, format, ap);
+	va_end(ap);
+}
 
 int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 	const char *client_address = getenv("SSH_CLIENT");
 	if(!client_address) {
 		fputs("client mode can only be used in a SSH session\n", stderr);
 		return 1;
+	}
+	int fd = socket(AF_UNIX, SOCK_STREAM, 0);
+	if(fd == -1) {
+		perror("socket");
+		return 1;
+	}
+	while(connect(fd, (struct sockaddr *)socket_addr, sizeof(struct sockaddr_un)) < 0) {
+		if(errno == EINTR) continue;
+		perror("connect");
+		return 1;
+	}
+
+/*
+	char *buffer = malloc(LOCAL_PACKET_BUFFER_SIZE);
+	if(!buffer) {
+		perror("malloc");
+		return 1;
+	}
+*/
+
+	fd_set fdset;
+	FD_ZERO(&fdset);
+	FD_SET(fd, &fdset);
+	FD_SET(STDIN_FILENO, &fdset);
+	int maxfd = MAX(fd, STDIN_FILENO);
+	setvbuf(stdout, NULL, _IOLBF, 0);
+
+	while(1) {
+		fd_set rfdset = fdset;
+		if(select(maxfd + 1, &rfdset, NULL, NULL, NULL) < 0) {
+			if(errno == EINTR) continue;
+			perror("select");
+		}
+		if(FD_ISSET(fd, &rfdset)) {
+			int s;
+			do {
+				s = read(fd, buffer, LOCAL_PACKET_BUFFER_SIZE);
+			} while(s < 0 && errno == EINTR);
+			if(s < 0) {
+				perror("read");
+				close(fd);
+				return 1;
+			}
+			if(!s) {
+				print_with_time(-1, "Server closed connection");
+				close(fd);
+				return 0;
+			}
+			switch(*(uint8_t *)buffer) {
+				case SSHOUT_LOCAL_STATUS:
+					break;
+				case SSHOUT_LOCAL_DISPATCH_MESSAGE:
+					break;
+				case SSHOUT_LOCAL_ONLINE_USERS_INFO:
+					break;
+				default:
+					print_with_time(-1, "Unknown packet type %hhu", *(uint8_t *)buffer);
+					break;
+			}
+		}
+		if(FD_ISSET(STDIN_FILENO, &fdset)) {
+			char *line = readline(NULL);
+			if(*line == '/') {
+				print_with_time(-1, "command ...");
+			} else {
+				print_with_time(-1, "send msg '%s' ...", line);
+			}
+		}
 	}
 }
