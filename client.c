@@ -25,7 +25,8 @@
 #include <readline/history.h>
 
 #define MAX(A,B) ((A)>(B)?(A):(B))
-#define LOCAL_PACKET_BUFFER_SIZE (512 * 1024)
+#define REMOTE_MODE_DIRECT 1
+#define REMOTE_MODE_API 2
 
 static void print_with_time(time_t t, const char *format, ...) {
 	va_list ap;
@@ -39,11 +40,54 @@ static void print_with_time(time_t t, const char *format, ...) {
 	putchar('\n');
 }
 
+static int send_login(int fd, const char *orig_user_name, const char *client_address) {
+	int r = 0;
+	size_t user_name_len = strlen(orig_user_name);
+	//char user_name[USER_NAME_MAX_LENGTH];
+	if(user_name_len > USER_NAME_MAX_LENGTH - 1) user_name_len = USER_NAME_MAX_LENGTH - 1;
+	//memcpy(user_name, orig_user_name, user_name_len);
+	//memset(user_name + user_name_len, 0, USER_NAME_MAX_LENGTH - user_name_len);
+	const char *space = strchr(client_address, ' ');
+	size_t host_name_len = space ? space - client_address : strlen(client_address);
+	if(host_name_len > HOST_NAME_MAX_LENGTH) host_name_len = HOST_NAME_MAX_LENGTH;
+	//char host_name[host_name_len + 1];
+	//memcpy(host_name, client_address, host_name_len);
+	//host_name[host_name_len] = 0;
+	size_t packet_len = sizeof(struct local_packet) + USER_NAME_MAX_LENGTH + host_name_len;
+	struct local_packet *packet = malloc(packet_len);
+	if(!packet) return -1;
+	packet->length = packet_len - sizeof packet->length;
+	packet->type = SSHOUT_LOCAL_LOGIN;
+	memcpy(packet->data, orig_user_name, user_name_len);
+	memset(packet->data + user_name_len, 0, USER_NAME_MAX_LENGTH - user_name_len);
+	char *host_name = packet->data + USER_NAME_MAX_LENGTH;
+	memcpy(host_name, client_address, host_name_len);
+	host_name[host_name_len] = 0;
+	while(write(fd, packet, packet_len) < 0) {
+		if(errno == EINTR) continue;
+		r = -1;
+		break;
+	}
+	int e = errno;
+	free(packet);
+	errno = e;
+	return r;
+}
+
 int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
+	int remote_mode = REMOTE_MODE_DIRECT;
 	const char *client_address = getenv("SSH_CLIENT");
 	if(!client_address) {
 		fputs("client mode can only be used in a SSH session\n", stderr);
 		return 1;
+	}
+	const char *command = getenv("SSH_ORIGINAL_COMMAND");
+	if(command) {
+		if(strcmp(command, "api") == 0) remote_mode = REMOTE_MODE_API;
+		else {
+			fprintf(stderr, "Command '%s' is not recognized\n", command);
+			return 1;
+		}
 	}
 	int fd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if(fd == -1) {
@@ -56,13 +100,12 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 		return 1;
 	}
 
-/*
-	char *buffer = malloc(LOCAL_PACKET_BUFFER_SIZE);
-	if(!buffer) {
-		perror("malloc");
+	if(remote_mode != REMOTE_MODE_DIRECT) {
+		fputs("This remote mode is currently not implemented\n", stderr);
 		return 1;
 	}
-*/
+
+	send_login(fd, user_name, client_address);
 
 	fd_set fdset;
 	FD_ZERO(&fdset);

@@ -4,6 +4,7 @@
 #define USER_NAME_MAX_LENGTH 32
 #define GLOBAL_NAME "GLOBAL"
 #define USER_LIST_FILE ".ssh/authorized_keys"
+#define HOST_NAME_MAX_LENGTH 128
 
 //#include <stdint.h>
 #include <sys/types.h>
@@ -37,7 +38,7 @@ struct local_packet {
 struct local_online_user {
 	int id;
 	char user_name[USER_NAME_MAX_LENGTH];
-	char host_name[128];
+	char host_name[HOST_NAME_MAX_LENGTH];
 };
 
 struct local_online_users_info {

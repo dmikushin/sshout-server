@@ -42,7 +42,7 @@ static int user_online(int id, const char *user_name, const char *host_name, int
 	struct local_online_user *p = online_users + i;
 	p->id = id;
 	strncpy(p->user_name, user_name, sizeof p->user_name);
-	strncpy(p->host_name, user_name, sizeof p->host_name);
+	strncpy(p->host_name, host_name, sizeof p->host_name);
 	return 0;
 }
 
