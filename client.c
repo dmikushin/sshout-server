@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-int client_mode(const char *user_name) {
+int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 	const char *client_address = getenv("SSH_CLIENT");
 	if(!client_address) {
 		fputs("client mode can only be used in a SSH session\n", stderr);

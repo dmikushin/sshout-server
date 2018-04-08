@@ -21,39 +21,28 @@
 #include <stdio.h>
 #include <errno.h>
 
-int server_mode(const char *home) {
-	struct sockaddr_un addr = { .sun_family = AF_UNIX };
-	size_t home_len = strlen(home);
-	if(home_len + 1 + sizeof SOCKET_NAME > sizeof addr.sun_path) {
-		fprintf(stderr, "home path too long (%zu bytes)\n", home_len);
-		return 1;
-	}
+int server_mode(const struct sockaddr_un *socket_addr) {
 	int fd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if(fd == -1) {
 		perror("socket");
 		return 1;
 	}
-	if(chdir(home) < 0) perror(home);
-	//char socket_path[home_len + 1 + sizeof SOCKET_NAME];
-	memcpy(addr.sun_path, home, home_len);
-	addr.sun_path[home_len] = '/';
-	memcpy(addr.sun_path + home_len + 1, SOCKET_NAME, sizeof SOCKET_NAME);
-	unlink(addr.sun_path);
-	if(bind(fd, (struct sockaddr *)&addr, sizeof addr) < 0) {
-		perror(addr.sun_path);
+	unlink(socket_addr->sun_path);
+	if(bind(fd, (struct sockaddr *)socket_addr, sizeof(struct sockaddr_un)) < 0) {
+		perror(socket_addr->sun_path);
 		close(fd);
 		return 1;
 	}
-	if(fchmod(fd, 0600) < 0) {
-		perror("fchmod");
+	if(chmod(socket_addr->sun_path, 0600) < 0) {
+		perror(socket_addr->sun_path);
 		close(fd);
-		unlink(addr.sun_path);
+		unlink(socket_addr->sun_path);
 		return 1;
 	}
 	if(listen(fd, 64) < 0) {
 		perror("listen");
 		close(fd);
-		unlink(addr.sun_path);
+		unlink(socket_addr->sun_path);
 		return 1;
 	}
 

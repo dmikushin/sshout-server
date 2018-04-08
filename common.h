@@ -19,5 +19,7 @@ struct message {
 	char msg[0];
 };
 
-extern int client_mode(const char *);
-extern int server_mode(const char *);
+struct sockaddr_un;
+
+extern int client_mode(const struct sockaddr_un *, const char *);
+extern int server_mode(const struct sockaddr_un *);

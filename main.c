@@ -13,6 +13,8 @@
  */
 
 #include "common.h"
+#include <sys/socket.h>
+#include <sys/un.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
@@ -52,11 +54,29 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	if(argc == 3 && strcmp(argv[1], "-c") == 0) return client_mode(argv[2]);
+	struct sockaddr_un sockaddr = { .sun_family = AF_UNIX };
+	size_t home_len = strlen(home);
+	if(home_len + 1 + sizeof SOCKET_NAME > sizeof sockaddr.sun_path) {
+		fprintf(stderr, "home path too long (%zu bytes)\n", home_len);
+		return 1;
+	}
+	memcpy(sockaddr.sun_path, home, home_len);
+	sockaddr.sun_path[home_len] = '/';
+	memcpy(sockaddr.sun_path + home_len + 1, SOCKET_NAME, sizeof SOCKET_NAME);
+
+	if(argc == 3 && strcmp(argv[1], "-c") == 0) return client_mode(&sockaddr, argv[2]);
 	if(argc != 1) {
 		print_usage(argv[0]);
 		return 255;
 	}
 
-	server_mode(home);
+/*
+	char pid_file_path[home_len + 1 + sizeof "sshoutd.pid"];
+	memcpy(pid_file_path, home, home_len);
+	pid_file_path[home_len] = '/';
+	strcpy(pid_file_path + home_len + 1, "sshoutd.pid");
+*/
+
+	if(chdir(home) < 0) perror(home);
+	return server_mode(&sockaddr);
 }
