@@ -32,10 +32,11 @@ static void print_with_time(time_t t, const char *format, ...) {
 	struct tm tm;
 	if(t == -1) t = time(NULL);
 	localtime_r(&t, &tm);
-	fprintf(stdout, "\r[%.2d:%.2d:%.2d] ", tm.tm_hour, tm.tm_min, tm.tm_sec);
+	printf("\r[%.2d:%.2d:%.2d] ", tm.tm_hour, tm.tm_min, tm.tm_sec);
 	va_start(ap, format);
-	vfprintf(stderr, format, ap);
+	vprintf(format, ap);
 	va_end(ap);
+	putchar('\n');
 }
 
 int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
