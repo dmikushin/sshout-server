@@ -52,7 +52,7 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 		return 1;
 	}
 
-	openlog("sshoutd", LOG_PID, LOG_DAEMON);
+	openlog("sshoutd", LOG_PID | LOG_PERROR, LOG_DAEMON);
 
 	fd_set fdset;
 	FD_ZERO(&fdset);
@@ -84,7 +84,7 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 				//continue;
 				if(errno == EMFILE && n < 2) sleep(1);
 			} else {
-				fprintf(stderr, "client fd %d\n", cfd);
+				syslog(LOG_INFO, "client fd %d\n", cfd);
 /*
 				for(i = 0; client_fds[i] != -1; i++) {
 				}
@@ -92,7 +92,7 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 				i = 0;
 				while(1) {
 					if(i >= FD_SETSIZE) {
-						fprintf(stderr, "warning: cannot add fd %d to set, too many clients\n", cfd);
+						syslog(LOG_WARNING, "cannot add fd %d to set, too many clients\n", cfd);
 						close(cfd);
 						break;
 					}
@@ -100,7 +100,7 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 						client_fds[i] = cfd;
 						FD_SET(cfd, &fdset);
 						if(cfd > maxfd) maxfd = cfd;
-						fprintf(stderr, "client %d fd %d\n", i, cfd);
+						syslog(LOG_INFO, "client %d fd %d\n", i, cfd);
 						break;
 					}
 					i++;
