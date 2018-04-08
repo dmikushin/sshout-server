@@ -14,17 +14,30 @@ enum local_packet_type {
 	SSHOUT_LOCAL_GET_ONLINE_USERS,
 	SSHOUT_LOCAL_STATUS,
 	SSHOUT_LOCAL_DISPATCH_MESSAGE,
+	SSHOUT_LOCAL_ONLINE_USERS_INFO,
 };
 
-enum msg_type {
+struct local_online_user {
+	int id;
+	char user_name[USER_NAME_MAX_LENGTH];
+	char host_name[128];
+};
+
+struct local_online_users_info {
+	int your_id;
+	int count;
+	struct local_online_user user[0];
+};
+
+enum local_msg_type {
 	SSHOUT_MSG_PLAIN = 1,
 	SSHOUT_MSG_RICH,
 	SSHOUT_MSG_IMAGE
 };
 
-struct message {
+struct local_message {
 	char msg_to[USER_NAME_MAX_LENGTH];
-	enum msg_type msg_type;
+	enum local_msg_type msg_type;
 	uint32_t msg_length;
 	char msg[0];
 };

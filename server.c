@@ -24,11 +24,7 @@
 
 #define LOCAL_PACKET_BUFFER_SIZE (512 * 1024)
 
-static struct online_user {
-	int id;
-	char user_name[USER_NAME_MAX_LENGTH];
-	char host_name[128];
-} online_users[FD_SETSIZE];
+static struct local_online_user online_users[FD_SETSIZE];
 
 static void syslog_perror(const char *ident) {
 	int e = errno;
@@ -43,7 +39,7 @@ static int user_online(int id, const char *user_name, const char *host_name, int
 			return -1;
 		}
 	}
-	struct online_user *p = online_users + i;
+	struct local_online_user *p = online_users + i;
 	p->id = id;
 	strncpy(p->user_name, user_name, sizeof p->user_name);
 	strncpy(p->host_name, user_name, sizeof p->host_name);
@@ -56,6 +52,32 @@ static void user_offline(int id) {
 		if(++i >= sizeof online_users / sizeof *online_users) return;
 	}
 	online_users[i].id = -1;
+}
+
+static void send_online_users(int receiver_id, int receiver_fd) {
+	int i = 0, count = 0;
+	do {
+		if(online_users[i].id != -1) count++;
+	} while(++i < sizeof online_users / sizeof *online_users);
+	size_t packet_length = sizeof(struct local_online_users_info) + sizeof(struct local_online_user) * count;
+	struct local_online_users_info *info = malloc(packet_length);
+	if(!info) {
+		syslog(LOG_ERR, "send_online_users: out of memory");
+		return;
+	}
+	info->your_id = receiver_id;
+	info->count = count;
+	i = 0;
+	for(i = 0; i < sizeof online_users / sizeof *online_users && count > 0; i++) {
+		if(online_users[i].id == -1) continue;
+		count--;
+		memcpy(info + count, online_users + i, sizeof(struct local_online_user));
+	}
+	while(write(receiver_fd, info, packet_length) < 0) {
+		if(errno == EINTR) continue;
+		syslog_perror("send_online_users: write");
+		return;
+	}
 }
 
 int server_mode(const struct sockaddr_un *socket_addr) {
@@ -193,7 +215,7 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 						// TODO
 						break;
 					case SSHOUT_LOCAL_GET_ONLINE_USERS:
-						//send_online_users(i, cfd);
+						send_online_users(i, cfd);
 						break;
 				}
 			}
