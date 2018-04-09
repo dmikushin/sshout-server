@@ -22,6 +22,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #endif
+#include <fcntl.h>
 #include <stdio.h>
 #include <termios.h>
 #include <time.h>
@@ -196,6 +197,7 @@ void client_cli_init_stdin() {
 	if(isatty(STDIN_FILENO)) set_terminal();
 	else setvbuf(stdout, NULL, _IOLBF, 0);
 	//rl_attempted_completion_function = command_completion;
+	fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
 }
 
 void client_cli_do_local_packet(int fd) {
@@ -273,7 +275,6 @@ static void do_input_line(int fd, const char *line) {
 	if(*line == '/') {
 		do_command(fd, line + 1);
 	} else if(*line) {
-		print_with_time(-1, "send msg '%s' ...", line);
 		client_post_plain_text_message(fd, GLOBAL_NAME, line);
 	}
 }
@@ -301,6 +302,7 @@ void client_cli_do_stdin(int fd) {
 			s = read(STDIN_FILENO, buffer, sizeof buffer);
 		} while(s < 0 && errno == EINTR);
 		if(s < 0) {
+			if(errno == EAGAIN) return;
 			perror("read");
 			if(isatty(STDIN_FILENO)) reset_terminal();
 			exit(1);
@@ -320,6 +322,7 @@ void client_cli_do_stdin(int fd) {
 			s = read(STDIN_FILENO, input_buffer + ss, sizeof input_buffer - ss);
 		} while(s < 0 && errno == EINTR);
 		if(s < 0) {
+			if(errno == EAGAIN) return;
 			perror("read");
 			if(isatty(STDIN_FILENO)) reset_terminal();
 			exit(1);
