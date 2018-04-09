@@ -164,14 +164,35 @@ static void print_message(const struct local_message *msg) {
 	print_with_time(-1, "%s: %s", msg->msg_from, text);
 }
 
-static char **command_completion(const char *text, int start, int end) {
-	static char *command_names[] = { "/help", NULL };
-	print_with_time(-1, "function: command_completion(%p<%s>, %d, %d)\n", text, text, start, end);
-	if(end < 1 || *text != '/') {
-		rl_bind_key('	', rl_abort);
-		return NULL;
+static char *command_generator(const char *text, int state) {
+	static int len;
+	static struct command *c;
+
+	if(!state) {
+		if(*text != '/') return NULL;
+		len = strlen(text);
+		c = command_list;
 	}
-	return command_names;
+
+	while(c->name) {
+		if(strncmp(c->name, text + 1, len - 1) == 0) {
+			size_t len = strlen(c->name) + 1;
+			char *name = malloc(len + 1);
+			if(!name) return NULL;
+			*name = '/';
+			memcpy(name + 1, c->name, len);
+			c++;
+			return name;
+		}
+		c++;
+	}
+	return NULL;
+}
+
+static char **command_completion(const char *text, int start, int end) {
+	rl_attempted_completion_over = 1;
+	if(start > 0 || *text != '/') return NULL;
+	return rl_completion_matches(text, command_generator);
 }
 
 static void do_input_line(int, const char *);
