@@ -2,7 +2,7 @@ ifeq ($(CC),cc)
 CC := gcc
 endif
 CFLAGS += -Wall -O1
-#LIBS += -lreadline
+LIBS += -lreadline
 
 OBJECTS = client.o client-cli.o local-packet.o main.o server.o
 

@@ -108,6 +108,12 @@ int client_post_plain_text_message(int fd, const char *receiver, const char *tex
 	return r;
 }
 
+static int local_socket = -1;
+
+int client_get_local_socket_fd() {
+	return local_socket;
+}
+
 int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 	int remote_mode = REMOTE_MODE_CLI;
 	const char *client_address = getenv("SSH_CLIENT");
@@ -150,10 +156,11 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 	void (*client_do_local_packet)(int);
 	void (*client_do_stdin)(int);
 	if(remote_mode == REMOTE_MODE_CLI) {
-		client_cli_init_stdin();
+		client_cli_init_io();
 		client_do_local_packet = client_cli_do_local_packet;
 		client_do_stdin = client_cli_do_stdin;
 	}
+	local_socket = fd;
 
 	while(1) {
 		fd_set rfdset = fdset;
@@ -162,6 +169,6 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 			perror("select");
 		}
 		if(FD_ISSET(fd, &rfdset)) client_do_local_packet(fd);
-		if(FD_ISSET(STDIN_FILENO, &fdset)) client_do_stdin(fd);
+		if(FD_ISSET(STDIN_FILENO, &rfdset)) client_do_stdin(fd);
 	}
 }

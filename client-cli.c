@@ -18,10 +18,8 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
-#if 0
 #include <readline/readline.h>
 #include <readline/history.h>
-#endif
 #include <fcntl.h>
 #include <stdio.h>
 #include <termios.h>
@@ -166,22 +164,6 @@ static void print_message(const struct local_message *msg) {
 	print_with_time(-1, "%s: %s", msg->msg_from, text);
 }
 
-static struct termios old;
-
-static void set_terminal() {
-	tcgetattr(STDIN_FILENO, &old);
-	struct termios new = old;
-	new.c_iflag &= ~ICRNL;		// Translate carriage return to newline on input
-	new.c_lflag &= ~ICANON;		// Disable buffered i/o
-	new.c_lflag &= ~ECHO;		// Disable echo
-	tcsetattr(STDIN_FILENO, TCSANOW, &new);
-}
-
-static void reset_terminal() {
-	tcsetattr(STDIN_FILENO, TCSANOW, &old);
-}
-
-#if 0
 static char **command_completion(const char *text, int start, int end) {
 	static char *command_names[] = { "/help", NULL };
 	print_with_time(-1, "function: command_completion(%p<%s>, %d, %d)\n", text, text, start, end);
@@ -191,13 +173,25 @@ static char **command_completion(const char *text, int start, int end) {
 	}
 	return command_names;
 }
-#endif
 
-void client_cli_init_stdin() {
-	if(isatty(STDIN_FILENO)) set_terminal();
-	else setvbuf(stdout, NULL, _IOLBF, 0);
-	//rl_attempted_completion_function = command_completion;
-	fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
+static void do_input_line(int, const char *);
+
+static void do_input_line_from_readline(char *line) {
+	if(!line) {
+		print_with_time(-1, "Exiting ...");
+		if(isatty(STDIN_FILENO)) rl_callback_handler_remove();
+		exit(0);
+	}
+	do_input_line(client_get_local_socket_fd(), line);
+	free(line);
+}
+
+void client_cli_init_io() {
+	if(isatty(STDIN_FILENO)) {
+		rl_callback_handler_install(NULL, do_input_line_from_readline);
+		rl_attempted_completion_function = command_completion;
+	}
+	setvbuf(stdout, NULL, _IOLBF, 0);
 }
 
 void client_cli_do_local_packet(int fd) {
@@ -206,33 +200,33 @@ void client_cli_do_local_packet(int fd) {
 		case GET_PACKET_EOF:
 			print_with_time(-1, "Server closed connection");
 			close(fd);
-			if(isatty(STDIN_FILENO)) reset_terminal();
+			if(isatty(STDIN_FILENO)) rl_callback_handler_remove();
 			exit(0);
 		case GET_PACKET_ERROR:
 			perror("read");
 			close(fd);
-			if(isatty(STDIN_FILENO)) reset_terminal();
+			if(isatty(STDIN_FILENO)) rl_callback_handler_remove();
 			exit(1);
 		case GET_PACKET_SHORT_READ:
 			print_with_time(-1, "Packet short read");
 			close(fd);
-			if(isatty(STDIN_FILENO)) reset_terminal();
+			if(isatty(STDIN_FILENO)) rl_callback_handler_remove();
 			exit(1);
 		case GET_PACKET_TOO_LARGE:
 			print_with_time(-1, "Packet too large");
 			close(fd);
-			if(isatty(STDIN_FILENO)) reset_terminal();
+			if(isatty(STDIN_FILENO)) rl_callback_handler_remove();
 			exit(1);
 		case GET_PACKET_OUT_OF_MEMORY:
 			print_with_time(-1, "Out of memory");
 			close(fd);
-			if(isatty(STDIN_FILENO)) reset_terminal();
+			if(isatty(STDIN_FILENO)) rl_callback_handler_remove();
 			exit(1);
 		case 0:
 			break;
 		default:
 			print_with_time(-1, "Internal error");
-			if(isatty(STDIN_FILENO)) reset_terminal();
+			if(isatty(STDIN_FILENO)) rl_callback_handler_remove();
 			abort();
 	}
 	switch(packet->type) {
@@ -284,75 +278,71 @@ static int ss;
 
 // fd is for local packet
 void client_cli_do_stdin(int fd) {
-#if 0
-	char *line = readline(NULL);
-	//char *line = readline("SSHOUT");
-	if(!line) {
-		print_with_time(-1, "Exiting ...");
-		if(isatty(STDIN_FILENO)) reset_terminal();
-		exit(0);
-	}
-	do_input_line(fd, line);
-	free(line);
-#else
-	int s;
-	if(ss == sizeof input_buffer) {
-		char buffer[64];
-		do {
-			s = read(STDIN_FILENO, buffer, sizeof buffer);
-		} while(s < 0 && errno == EINTR);
-		if(s < 0) {
-			if(errno == EAGAIN) return;
-			perror("read");
-			if(isatty(STDIN_FILENO)) reset_terminal();
-			exit(1);
-		}
-		if(!s) {
-			print_with_time(-1, "Exiting ...");
-			if(isatty(STDIN_FILENO)) reset_terminal();
-			exit(0);
-		}
-		char *bs = buffer;
-		while((bs = mem2chr(bs, '\b', 0x7f, s))) {
-			ss--;
-			fputc('\b', stderr);
-		}
+	if(isatty(STDIN_FILENO)) {
+		rl_callback_read_char();
 	} else {
-		do {
-			s = read(STDIN_FILENO, input_buffer + ss, sizeof input_buffer - ss);
-		} while(s < 0 && errno == EINTR);
-		if(s < 0) {
-			if(errno == EAGAIN) return;
-			perror("read");
-			if(isatty(STDIN_FILENO)) reset_terminal();
-			exit(1);
-		}
-		if(!s) {
-			print_with_time(-1, "Exiting ...");
-			if(isatty(STDIN_FILENO)) reset_terminal();
-			exit(0);
-		}
-		char *br = mem3chr(input_buffer + ss, 0, '\r', '\n', s);
-		if(br) {
-			int skip_len = 0;
-			char *last_br;
+		int s;
+		if(ss == sizeof input_buffer) {
+			char buffer[64];
 			do {
-				if(*br) *br = 0;
-				br++;
-				int line_len = br - input_buffer - skip_len;
-				fputc('\r', stderr);
-				do_input_line(fd, input_buffer + skip_len);
-				last_br = br;
-				br = mem3chr(br, 0, '\r', '\n', s - (br - (input_buffer + ss)));
-				skip_len += line_len;
-			} while(br);
-			ss += s - skip_len;
-			memmove(input_buffer, last_br, ss);
-			write(STDERR_FILENO, input_buffer, ss);
+				s = read(STDIN_FILENO, buffer, sizeof buffer);
+			} while(s < 0 && errno == EINTR);
+			if(s < 0) {
+				if(errno == EAGAIN) return;
+				perror("read");
+				exit(1);
+			}
+			if(!s) {
+				print_with_time(-1, "Exiting ...");
+				exit(0);
+			}
+			char *bs = buffer;
+			while((bs = mem2chr(bs, '\b', 0x7f, s - (bs - buffer)))) {
+				ss--;
+				fputc('\b', stderr);
+			}
 		} else {
-			write(STDERR_FILENO, input_buffer + ss, s);
-			ss += s;
+			do {
+				s = read(STDIN_FILENO, input_buffer + ss, sizeof input_buffer - ss);
+			} while(s < 0 && errno == EINTR);
+			if(s < 0) {
+				if(errno == EAGAIN) return;
+				perror("read");
+				exit(1);
+			}
+			if(!s) {
+				print_with_time(-1, "Exiting ...");
+				exit(0);
+			}
+			char *bs = input_buffer + ss;
+			while(s - (bs - input_buffer) > 0 && (bs = mem2chr(bs, '\b', 0x7f, s - (bs - input_buffer)))) {
+				int back_count = 1;
+				char *p = bs;
+				while((*++p == '\b' || *p == 0x7f) && (p - (input_buffer + ss)) < s) back_count++;
+				memmove(bs - back_count, p, s - (p - (input_buffer + ss)));
+				s -= back_count * 2;
+			}
+			char *br = mem3chr(input_buffer + ss, 0, '\r', '\n', s);
+			if(br) {
+				int skip_len = 0;
+				char *last_br;
+				do {
+					if(*br) *br = 0;
+					br++;
+					int line_len = br - input_buffer - skip_len;
+					fputc('\r', stderr);
+					do_input_line(fd, input_buffer + skip_len);
+					last_br = br;
+					br = mem3chr(br, 0, '\r', '\n', s - (br - (input_buffer + ss)));
+					skip_len += line_len;
+				} while(br);
+				ss += s - skip_len;
+				memmove(input_buffer, last_br, ss);
+				write(STDERR_FILENO, input_buffer, ss);
+			} else {
+				write(STDERR_FILENO, input_buffer + ss, s);
+				ss += s;
+			}
 		}
 	}
-#endif
 }
