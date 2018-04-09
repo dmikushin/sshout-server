@@ -18,9 +18,14 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#if 0
 #include <readline/readline.h>
 #include <readline/history.h>
+#endif
+#include <stdio.h>
 #include <termios.h>
+#include <time.h>
+#include <errno.h>
 
 static void print_with_time(time_t t, const char *format, ...) {
 	va_list ap;
@@ -154,7 +159,10 @@ static void print_message(const struct local_message *msg) {
 		print_with_time(-1, "%s: [Unsupported]", msg->msg_from);
 		return;
 	}
-	print_with_time(-1, "%s: %s", msg->msg_from, msg->msg);
+	char text[msg->msg_length + 1];
+	memcpy(text, msg->msg, msg->msg_length);
+	text[msg->msg_length] = 0;
+	print_with_time(-1, "%s: %s", msg->msg_from, text);
 }
 
 static struct termios old;
@@ -172,6 +180,7 @@ static void reset_terminal() {
 	tcsetattr(STDIN_FILENO, TCSANOW, &old);
 }
 
+#if 0
 static char **command_completion(const char *text, int start, int end) {
 	static char *command_names[] = { "/help", NULL };
 	print_with_time(-1, "function: command_completion(%p<%s>, %d, %d)\n", text, text, start, end);
@@ -181,11 +190,12 @@ static char **command_completion(const char *text, int start, int end) {
 	}
 	return command_names;
 }
+#endif
 
 void client_cli_init_stdin() {
 	if(isatty(STDIN_FILENO)) set_terminal();
 	else setvbuf(stdout, NULL, _IOLBF, 0);
-	rl_attempted_completion_function = command_completion;
+	//rl_attempted_completion_function = command_completion;
 }
 
 void client_cli_do_local_packet(int fd) {
@@ -239,8 +249,41 @@ void client_cli_do_local_packet(int fd) {
 	free(packet);
 }
 
+static void *mem2chr(const void *s, int c1, int c2, size_t n) {
+	char *p = (void *)s;
+	unsigned int i = 0;
+	while(i < n) {
+		if(p[i] == c1 || p[i] == c2) return p + i;
+		i++;
+	}
+	return NULL;
+}
+
+static void *mem3chr(const void *s, int c1, int c2, int c3, size_t n) {
+	char *p = (void *)s;
+	unsigned int i = 0;
+	while(i < n) {
+		if(p[i] == c1 || p[i] == c2 || p[i] == c3) return p + i;
+		i++;
+	}
+	return NULL;
+}
+
+static void do_input_line(int fd, const char *line) {
+	if(*line == '/') {
+		do_command(fd, line + 1);
+	} else if(*line) {
+		print_with_time(-1, "send msg '%s' ...", line);
+		client_post_plain_text_message(fd, GLOBAL_NAME, line);
+	}
+}
+
+static char input_buffer[4906];
+static int ss;
+
 // fd is for local packet
 void client_cli_do_stdin(int fd) {
+#if 0
 	char *line = readline(NULL);
 	//char *line = readline("SSHOUT");
 	if(!line) {
@@ -248,11 +291,65 @@ void client_cli_do_stdin(int fd) {
 		if(isatty(STDIN_FILENO)) reset_terminal();
 		exit(0);
 	}
-	if(*line == '/') {
-		do_command(fd, line + 1);
-	} else if(*line) {
-		print_with_time(-1, "send msg '%s' ...", line);
-		client_post_plain_text_message(fd, GLOBAL_NAME, line);
-	}
+	do_input_line(fd, line);
 	free(line);
+#else
+	int s;
+	if(ss == sizeof input_buffer) {
+		char buffer[64];
+		do {
+			s = read(STDIN_FILENO, buffer, sizeof buffer);
+		} while(s < 0 && errno == EINTR);
+		if(s < 0) {
+			perror("read");
+			if(isatty(STDIN_FILENO)) reset_terminal();
+			exit(1);
+		}
+		if(!s) {
+			print_with_time(-1, "Exiting ...");
+			if(isatty(STDIN_FILENO)) reset_terminal();
+			exit(0);
+		}
+		char *bs = buffer;
+		while((bs = mem2chr(bs, '\b', 0x7f, s))) {
+			ss--;
+			fputc('\b', stderr);
+		}
+	} else {
+		do {
+			s = read(STDIN_FILENO, input_buffer + ss, sizeof input_buffer - ss);
+		} while(s < 0 && errno == EINTR);
+		if(s < 0) {
+			perror("read");
+			if(isatty(STDIN_FILENO)) reset_terminal();
+			exit(1);
+		}
+		if(!s) {
+			print_with_time(-1, "Exiting ...");
+			if(isatty(STDIN_FILENO)) reset_terminal();
+			exit(0);
+		}
+		char *br = mem3chr(input_buffer + ss, 0, '\r', '\n', s);
+		if(br) {
+			int skip_len = 0;
+			char *last_br;
+			do {
+				if(*br) *br = 0;
+				br++;
+				int line_len = br - input_buffer - skip_len;
+				fputc('\r', stderr);
+				do_input_line(fd, input_buffer + skip_len);
+				last_br = br;
+				br = mem3chr(br, 0, '\r', '\n', s - (br - (input_buffer + ss)));
+				skip_len += line_len;
+			} while(br);
+			ss += s - skip_len;
+			memmove(input_buffer, last_br, ss);
+			write(STDERR_FILENO, input_buffer, ss);
+		} else {
+			write(STDERR_FILENO, input_buffer + ss, s);
+			ss += s;
+		}
+	}
+#endif
 }
