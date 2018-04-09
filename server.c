@@ -43,6 +43,7 @@ static int user_online(int id, const char *user_name, const char *host_name, int
 	p->id = id;
 	strncpy(p->user_name, user_name, sizeof p->user_name);
 	strncpy(p->host_name, host_name, sizeof p->host_name);
+	syslog(LOG_INFO, "user %s from %s login", user_name, host_name);
 	return 0;
 }
 
@@ -112,7 +113,7 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 		return 1;
 	}
 
-	openlog("sshoutd", LOG_PID | LOG_PERROR, LOG_DAEMON);
+	openlog("sshoutd", LOG_PID, LOG_DAEMON);
 
 	fd_set fdset;
 	FD_ZERO(&fdset);

@@ -1,0 +1,13 @@
+[Unit]
+Description=Secure Shout Host Oriented Unified Talk server
+Documentation=https://sourceforge.net/projects/sshout/
+
+[Service]
+Type=simple
+User=sshout
+ExecStart=/usr/lib/sshout/sshoutd
+ExecStopPost=rm -f /var/lib/sshout/socket
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

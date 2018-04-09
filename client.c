@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <termios.h>
 
 #define MAX(A,B) ((A)>(B)?(A):(B))
 #define REMOTE_MODE_DIRECT 1
@@ -74,6 +75,21 @@ static int send_login(int fd, const char *orig_user_name, const char *client_add
 	return r;
 }
 
+static struct termios old;
+
+static void set_terminal() {
+	tcgetattr(STDIN_FILENO, &old);
+	struct termios new = old;
+	new.c_iflag &= ~ICRNL;		// Translate carriage return to newline on input
+	new.c_lflag &= ~ICANON;		// Disable buffered i/o
+	new.c_lflag &= ~ECHO;		// Disable echo
+	tcsetattr(STDIN_FILENO, TCSANOW, &new);
+}
+
+static void reset_terminal() {
+	tcsetattr(STDIN_FILENO, TCSANOW, &old);
+}
+
 int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 	int remote_mode = REMOTE_MODE_DIRECT;
 	const char *client_address = getenv("SSH_CLIENT");
@@ -112,7 +128,10 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 	FD_SET(fd, &fdset);
 	FD_SET(STDIN_FILENO, &fdset);
 	int maxfd = MAX(fd, STDIN_FILENO);
-	setvbuf(stdout, NULL, _IOLBF, 0);
+	if(remote_mode == REMOTE_MODE_DIRECT) {
+		if(isatty(STDIN_FILENO)) set_terminal();
+		else setvbuf(stdout, NULL, _IOLBF, 0);
+	}
 
 	while(1) {
 		fd_set rfdset = fdset;
@@ -126,27 +145,33 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 				case GET_PACKET_EOF:
 					print_with_time(-1, "Server closed connection");
 					close(fd);
+					if(isatty(STDIN_FILENO)) reset_terminal();
 					return 0;
 				case GET_PACKET_ERROR:
 					perror("read");
 					close(fd);
+					if(isatty(STDIN_FILENO)) reset_terminal();
 					return 1;
 				case GET_PACKET_SHORT_READ:
 					print_with_time(-1, "Packet short read");
 					close(fd);
+					if(isatty(STDIN_FILENO)) reset_terminal();
 					return 1;
 				case GET_PACKET_TOO_LARGE:
 					print_with_time(-1, "Packet too large");
 					close(fd);
+					if(isatty(STDIN_FILENO)) reset_terminal();
 					return 1;
 				case GET_PACKET_OUT_OF_MEMORY:
 					print_with_time(-1, "Out of memory");
 					close(fd);
+					if(isatty(STDIN_FILENO)) reset_terminal();
 					return 1;
 				case 0:
 					break;
 				default:
 					print_with_time(-1, "Internal error");
+					if(isatty(STDIN_FILENO)) reset_terminal();
 					abort();
 			}
 			switch(packet->type) {
@@ -164,8 +189,10 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 		}
 		if(FD_ISSET(STDIN_FILENO, &fdset)) {
 			char *line = readline(NULL);
+			//char *line = readline("SSHOUT");
 			if(!line) {
 				print_with_time(-1, "Exiting ...");
+				if(isatty(STDIN_FILENO)) reset_terminal();
 				return 0;
 			}
 			if(*line == '/') {
