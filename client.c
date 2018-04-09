@@ -61,6 +61,17 @@ static int send_login(int fd, const char *orig_user_name, const char *client_add
 	return r;
 }
 
+int client_send_request_get_online_users(int fd) {
+	struct local_packet packet;
+	packet.length = sizeof packet - sizeof packet.length;
+	packet.type = SSHOUT_LOCAL_GET_ONLINE_USERS;
+	while(write(fd, &packet, sizeof packet) < 0) {
+		if(errno == EINTR) continue;
+		return -1;
+	}
+	return 0;
+}
+
 int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 	int remote_mode = REMOTE_MODE_CLI;
 	const char *client_address = getenv("SSH_CLIENT");

@@ -75,7 +75,7 @@ static void send_online_users(int receiver_id, int receiver_fd) {
 	for(i = 0; i < sizeof online_users / sizeof *online_users && count > 0; i++) {
 		if(online_users[i].id == -1) continue;
 		count--;
-		memcpy(info + count, online_users + i, sizeof(struct local_online_user));
+		memcpy(info->user + count, online_users + i, sizeof(struct local_online_user));
 	}
 	while(write(receiver_fd, packet, packet_length) < 0) {
 		if(errno == EINTR) continue;

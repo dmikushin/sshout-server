@@ -34,7 +34,119 @@ static void print_with_time(time_t t, const char *format, ...) {
 	putchar('\n');
 }
 
+static void command_who(int fd, int argc, char **argv) {
+	if(client_send_request_get_online_users(fd) < 0) {
+		perror("who: write");
+	}
+}
+
+static struct command {
+	const char *name;
+	const char *usage;
+	void (*func)(int, int, char **);
+} command_list[] = {
+	{ "who", "", command_who },
+	{ "list", "", command_who },
+	{ NULL, NULL, NULL }
+};
+
+
+static int parse_tokens(char *string, char ***tokens, int length) {
+	/* Extract whitespace- and quotes- delimited tokens from the given string
+	   and put them into the tokens array. Returns number of tokens
+	   extracted. Length specifies the current size of tokens[].
+	   THIS METHOD MODIFIES string.  */
+
+	const char * whitespace = " \t\r\n";
+	char * tokenEnd;
+	const char * quoteCharacters = "\"\'";
+	char * end = string + strlen(string);
+
+	if(!string) return length;
+
+	while(1) {
+		const char *q;
+		/* Skip over initial whitespace.  */
+		string += strspn(string, whitespace);
+		if(!*string) break;
+
+		for(q = quoteCharacters; *q; ++q) {
+			if(*string == *q) break;
+		}
+		if(*q) {
+			/* Token is quoted.  */
+			char quote = *string++;
+			tokenEnd = strchr(string, quote);
+			/* If there is no endquote, the token is the rest of the string.  */
+			if(!tokenEnd) tokenEnd = end;
+		} else {
+			tokenEnd = string + strcspn(string, whitespace);
+		}
+
+		*tokenEnd = '\0';
+
+		{
+			char **new_tokens;
+			int newlen = length + 1;
+			new_tokens = realloc(*tokens, (newlen + 1) * sizeof (char *));
+			if(!new_tokens) {
+				/* Out of memory.  */
+				return -1;
+			}
+
+			*tokens = new_tokens;
+			(*tokens)[length] = string;
+			length = newlen;
+		}
+		if(tokenEnd == end) break;
+		string = tokenEnd + 1;
+	}
+
+	return length;
+}
+
 static void do_command(int fd, const char *command) {
+	//size_t len = strlen(commnd) + 1;
+	if(!*command) return;
+	char **argv = malloc(sizeof(char *));
+	char *buffer;
+	if(!argv || !(buffer = strdup(command))) {
+		print_with_time(-1, "do_command: out of memory");
+		free(argv);
+		return;
+	}
+	int argc = parse_tokens(buffer, &argv, 0);
+	if(argc < 0) {
+		print_with_time(-1, "do_command: out of memory");
+		free(argv);
+		free(buffer);
+		return;
+	}
+
+	struct command *c = command_list;
+	while(c->name) {
+		if(strcmp(c->name, argv[0]) == 0) {
+			c->func(fd, argc, argv);
+			free(argv);
+			free(buffer);
+			return;
+		}
+		c++;
+	}
+	print_with_time(-1, "Error: Unknown command '%s'", argv[0]);
+	free(argv);
+	free(buffer);
+}
+
+static void print_online_users(const struct local_online_users_info *info) {
+	int i = 0;
+	print_with_time(-1, "your_id = %d", info->your_id);
+	print_with_time(-1, "count = %d", info->count);
+	while(i < info->count) {
+		const struct local_online_user *u = info->user + i++;
+		printf("%d	%s	%s	%s\n",
+			u->id, u->user_name, u->host_name, u->id == info->your_id ? "*" : "");
+	}
 }
 
 static struct termios old;
@@ -109,6 +221,7 @@ void client_cli_do_local_packet(int fd) {
 		case SSHOUT_LOCAL_DISPATCH_MESSAGE:
 			break;
 		case SSHOUT_LOCAL_ONLINE_USERS_INFO:
+			print_online_users((struct local_online_users_info *)packet->data);
 			break;
 		default:
 			print_with_time(-1, "Unknown packet type %d", packet->type);
@@ -129,7 +242,7 @@ void client_cli_do_stdin(int fd) {
 	if(*line == '/') {
 		print_with_time(-1, "command ...");
 		do_command(fd, line + 1);
-	} else {
+	} else if(*line) {
 		print_with_time(-1, "send msg '%s' ...", line);
 	}
 	free(line);
