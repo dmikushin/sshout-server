@@ -72,6 +72,42 @@ int client_send_request_get_online_users(int fd) {
 	return 0;
 }
 
+// field msg_from is not needed
+int client_post_message(int fd, const struct local_message *message) {
+	int r = 0;
+	size_t packet_len = sizeof(struct local_packet) + sizeof(struct local_message) + message->msg_length;
+	struct local_packet *packet = malloc(packet_len);
+	if(!packet) return -1;
+	packet->length = packet_len - sizeof packet->length;
+	packet->type = SSHOUT_LOCAL_POST_MESSAGE;
+	memcpy(packet->data, message, sizeof(struct local_message) + message->msg_length);
+	while(write(fd, packet, packet_len) < 0) {
+		if(errno == EINTR) continue;
+		r = -1;
+		break;
+	}
+	int e = errno;
+	free(packet);
+	errno = e;
+	return r;
+}
+
+int client_post_plain_text_message(int fd, const char *receiver, const char *text) {
+	size_t receiver_len = strlen(receiver);
+	size_t text_len = strlen(text);
+	struct local_message *message = malloc(sizeof(struct local_message) + text_len);
+	if(!message) return -1;
+	if(receiver_len > USER_NAME_MAX_LENGTH - 1) receiver_len = USER_NAME_MAX_LENGTH - 1;
+	memcpy(message->msg_to, receiver, receiver_len);
+	message->msg_to[receiver_len] = 0;
+	message->msg_type = SSHOUT_MSG_PLAIN;
+	message->msg_length = text_len;
+	memcpy(message->msg, text, text_len);
+	int r = client_post_message(fd, message);
+	free(message);
+	return r;
+}
+
 int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 	int remote_mode = REMOTE_MODE_CLI;
 	const char *client_address = getenv("SSH_CLIENT");

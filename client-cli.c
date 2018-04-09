@@ -149,6 +149,14 @@ static void print_online_users(const struct local_online_users_info *info) {
 	}
 }
 
+static void print_message(const struct local_message *msg) {
+	if(msg->msg_type != SSHOUT_MSG_PLAIN) {
+		print_with_time(-1, "%s: [Unsupported]", msg->msg_from);
+		return;
+	}
+	print_with_time(-1, "%s: %s", msg->msg_from, msg->msg);
+}
+
 static struct termios old;
 
 static void set_terminal() {
@@ -219,6 +227,7 @@ void client_cli_do_local_packet(int fd) {
 		case SSHOUT_LOCAL_STATUS:
 			break;
 		case SSHOUT_LOCAL_DISPATCH_MESSAGE:
+			print_message((struct local_message *)packet->data);
 			break;
 		case SSHOUT_LOCAL_ONLINE_USERS_INFO:
 			print_online_users((struct local_online_users_info *)packet->data);
@@ -240,10 +249,10 @@ void client_cli_do_stdin(int fd) {
 		exit(0);
 	}
 	if(*line == '/') {
-		print_with_time(-1, "command ...");
 		do_command(fd, line + 1);
 	} else if(*line) {
 		print_with_time(-1, "send msg '%s' ...", line);
+		client_post_plain_text_message(fd, GLOBAL_NAME, line);
 	}
 	free(line);
 }

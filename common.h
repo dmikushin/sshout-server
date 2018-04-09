@@ -54,9 +54,10 @@ enum local_msg_type {
 };
 
 struct local_message {
+	char msg_from[USER_NAME_MAX_LENGTH];
 	char msg_to[USER_NAME_MAX_LENGTH];
 	enum local_msg_type msg_type;
-	size_t msg_length;
+	size_t msg_length;	// Only for array msg
 	char msg[0];
 };
 

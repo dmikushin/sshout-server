@@ -89,6 +89,33 @@ static int send_online_users(int receiver_id, int receiver_fd) {
 	return r;
 }
 
+static int dispatch_message(const struct local_online_user *sender, const struct local_message *msg, const int *client_fds) {
+	int r = 0;
+	int i = 0;
+	int is_broadcast = strcmp(msg->msg_to, GLOBAL_NAME) == 0;
+	size_t packet_len = sizeof(struct local_packet) + sizeof(struct local_message) + msg->msg_length;
+	struct local_packet *packet = malloc(packet_len);
+	if(!packet) {
+		syslog(LOG_ERR, "dispatch_message: out of memory");
+		return -1;
+	}
+	packet->length = packet_len - sizeof packet->length;
+	packet->type = SSHOUT_LOCAL_DISPATCH_MESSAGE;
+	memcpy(packet->data, msg, sizeof(struct local_message) + msg->msg_length);
+	strncpy(((struct local_message *)packet->data)->msg_from, sender->user_name, USER_NAME_MAX_LENGTH);
+	do {
+		if(online_users[i].id == -1 || (!is_broadcast && strcmp(online_users[i].user_name, msg->msg_to))) continue;
+		while(write(client_fds[online_users[i].id], packet, packet_len) < 0) {
+			if(errno == EINTR) continue;
+			syslog_perror("dispatch_message: write");
+			r = 1;
+			break;
+		}
+	} while(++i < sizeof online_users / sizeof *online_users);
+	free(packet);
+	return r;
+}
+
 int server_mode(const struct sockaddr_un *socket_addr) {
 	static const struct timeval timeout = { .tv_sec = 2 };
 
@@ -227,7 +254,7 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 							syslog(LOG_INFO, "client %d fd %d posting message without login", i, cfd);
 							break;
 						}
-						// TODO
+						dispatch_message(online_users + online_users_indexes[i], (struct local_message *)packet->data, client_fds);
 						break;
 					case SSHOUT_LOCAL_GET_ONLINE_USERS:
 						if(send_online_users(i, cfd) < 0) {
