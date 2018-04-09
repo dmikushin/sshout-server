@@ -43,6 +43,7 @@ static int user_online(int id, const char *user_name, const char *host_name, int
 	p->id = id;
 	strncpy(p->user_name, user_name, sizeof p->user_name);
 	strncpy(p->host_name, host_name, sizeof p->host_name);
+	*index = i;
 	syslog(LOG_INFO, "user %s from %s login", user_name, host_name);
 	return 0;
 }
@@ -55,7 +56,8 @@ static void user_offline(int id) {
 	online_users[i].id = -1;
 }
 
-static void send_online_users(int receiver_id, int receiver_fd) {
+static int send_online_users(int receiver_id, int receiver_fd) {
+	int r = 0;
 	int i = 0, count = 0;
 	do {
 		if(online_users[i].id != -1) count++;
@@ -64,7 +66,7 @@ static void send_online_users(int receiver_id, int receiver_fd) {
 	struct local_packet *packet = malloc(packet_length);
 	if(!packet) {
 		syslog(LOG_ERR, "send_online_users: out of memory");
-		return;
+		return 0;	// XXX
 	}
 	packet->length = packet_length - sizeof packet->length;
 	packet->type = SSHOUT_LOCAL_ONLINE_USERS_INFO;
@@ -80,9 +82,11 @@ static void send_online_users(int receiver_id, int receiver_fd) {
 	while(write(receiver_fd, packet, packet_length) < 0) {
 		if(errno == EINTR) continue;
 		syslog_perror("send_online_users: write");
+		r = -1;
 		break;
 	}
 	free(packet);
+	return r;
 }
 
 int server_mode(const struct sockaddr_un *socket_addr) {
@@ -144,6 +148,8 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 		if(n < 0) {
 			if(errno == EINTR) continue;
 			syslog_perror("select");
+			sleep(2);
+			continue;
 		}
 		if(FD_ISSET(fd, &rfdset)) {
 			struct sockaddr_un client_addr;
@@ -224,7 +230,10 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 						// TODO
 						break;
 					case SSHOUT_LOCAL_GET_ONLINE_USERS:
-						send_online_users(i, cfd);
+						if(send_online_users(i, cfd) < 0) {
+						//	syslog(LOG_NOTICE, "client %d fd %d send_online_users failed, disconnecting", i, cfd);
+						//	goto end_of_connection;
+						}
 						break;
 					default:
 						syslog(LOG_NOTICE, "client %d fd %d unknown packet type %d",
@@ -244,7 +253,7 @@ end_of_connection:
 		}
 		if(have_client_fd_closed) {
 			max_fd = fd;
-			for(i=0; n && i<FD_SETSIZE; i++) if(client_fds[i] > max_fd) max_fd = client_fds[i];
+			for(i=0; i<FD_SETSIZE; i++) if(client_fds[i] > max_fd) max_fd = client_fds[i];
 		}
 	}
 }
