@@ -182,7 +182,10 @@ static void do_input_line_from_readline(char *line) {
 		if(isatty(STDIN_FILENO)) rl_callback_handler_remove();
 		exit(0);
 	}
+	if(!*line) return;
 	do_input_line(client_get_local_socket_fd(), line);
+	HIST_ENTRY *last = history_get(history_length);
+	if(!last || strcmp(last->line, line)) add_history(line);
 	free(line);
 }
 
@@ -299,7 +302,7 @@ void client_cli_do_stdin(int fd) {
 			char *bs = buffer;
 			while((bs = mem2chr(bs, '\b', 0x7f, s - (bs - buffer)))) {
 				ss--;
-				fputc('\b', stderr);
+				//fputc('\b', stderr);
 			}
 		} else {
 			do {
@@ -313,14 +316,6 @@ void client_cli_do_stdin(int fd) {
 			if(!s) {
 				print_with_time(-1, "Exiting ...");
 				exit(0);
-			}
-			char *bs = input_buffer + ss;
-			while(s - (bs - input_buffer) > 0 && (bs = mem2chr(bs, '\b', 0x7f, s - (bs - input_buffer)))) {
-				int back_count = 1;
-				char *p = bs;
-				while((*++p == '\b' || *p == 0x7f) && (p - (input_buffer + ss)) < s) back_count++;
-				memmove(bs - back_count, p, s - (p - (input_buffer + ss)));
-				s -= back_count * 2;
 			}
 			char *br = mem3chr(input_buffer + ss, 0, '\r', '\n', s);
 			if(br) {
@@ -338,9 +333,9 @@ void client_cli_do_stdin(int fd) {
 				} while(br);
 				ss += s - skip_len;
 				memmove(input_buffer, last_br, ss);
-				write(STDERR_FILENO, input_buffer, ss);
+				//write(STDERR_FILENO, input_buffer, ss);
 			} else {
-				write(STDERR_FILENO, input_buffer + ss, s);
+				//write(STDERR_FILENO, input_buffer + ss, s);
 				ss += s;
 			}
 		}
