@@ -13,6 +13,7 @@
  */
 
 #include "common.h"
+#include "client.h"
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
@@ -21,25 +22,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
-#include <readline/readline.h>
-#include <readline/history.h>
-#include <termios.h>
 
 #define MAX(A,B) ((A)>(B)?(A):(B))
-#define REMOTE_MODE_DIRECT 1
+#define REMOTE_MODE_CLI 1
 #define REMOTE_MODE_API 2
-
-static void print_with_time(time_t t, const char *format, ...) {
-	va_list ap;
-	struct tm tm;
-	if(t == -1) t = time(NULL);
-	localtime_r(&t, &tm);
-	printf("\r[%.2d:%.2d:%.2d] ", tm.tm_hour, tm.tm_min, tm.tm_sec);
-	va_start(ap, format);
-	vprintf(format, ap);
-	va_end(ap);
-	putchar('\n');
-}
 
 static int send_login(int fd, const char *orig_user_name, const char *client_address) {
 	int r = 0;
@@ -75,23 +61,8 @@ static int send_login(int fd, const char *orig_user_name, const char *client_add
 	return r;
 }
 
-static struct termios old;
-
-static void set_terminal() {
-	tcgetattr(STDIN_FILENO, &old);
-	struct termios new = old;
-	new.c_iflag &= ~ICRNL;		// Translate carriage return to newline on input
-	new.c_lflag &= ~ICANON;		// Disable buffered i/o
-	new.c_lflag &= ~ECHO;		// Disable echo
-	tcsetattr(STDIN_FILENO, TCSANOW, &new);
-}
-
-static void reset_terminal() {
-	tcsetattr(STDIN_FILENO, TCSANOW, &old);
-}
-
 int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
-	int remote_mode = REMOTE_MODE_DIRECT;
+	int remote_mode = REMOTE_MODE_CLI;
 	const char *client_address = getenv("SSH_CLIENT");
 	if(!client_address) {
 		fputs("client mode can only be used in a SSH session\n", stderr);
@@ -116,7 +87,7 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 		return 1;
 	}
 
-	if(remote_mode != REMOTE_MODE_DIRECT) {
+	if(remote_mode != REMOTE_MODE_CLI) {
 		fputs("This remote mode is currently not implemented\n", stderr);
 		return 1;
 	}
@@ -128,9 +99,13 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 	FD_SET(fd, &fdset);
 	FD_SET(STDIN_FILENO, &fdset);
 	int maxfd = MAX(fd, STDIN_FILENO);
-	if(remote_mode == REMOTE_MODE_DIRECT) {
-		if(isatty(STDIN_FILENO)) set_terminal();
-		else setvbuf(stdout, NULL, _IOLBF, 0);
+
+	void (*client_do_local_packet)(int);
+	void (*client_do_stdin)(int);
+	if(remote_mode == REMOTE_MODE_CLI) {
+		client_cli_init_stdin();
+		client_do_local_packet = client_cli_do_local_packet;
+		client_do_stdin = client_cli_do_stdin;
 	}
 
 	while(1) {
@@ -139,68 +114,7 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 			if(errno == EINTR) continue;
 			perror("select");
 		}
-		if(FD_ISSET(fd, &rfdset)) {
-			struct local_packet *packet;
-			switch(get_local_packet(fd, &packet)) {
-				case GET_PACKET_EOF:
-					print_with_time(-1, "Server closed connection");
-					close(fd);
-					if(isatty(STDIN_FILENO)) reset_terminal();
-					return 0;
-				case GET_PACKET_ERROR:
-					perror("read");
-					close(fd);
-					if(isatty(STDIN_FILENO)) reset_terminal();
-					return 1;
-				case GET_PACKET_SHORT_READ:
-					print_with_time(-1, "Packet short read");
-					close(fd);
-					if(isatty(STDIN_FILENO)) reset_terminal();
-					return 1;
-				case GET_PACKET_TOO_LARGE:
-					print_with_time(-1, "Packet too large");
-					close(fd);
-					if(isatty(STDIN_FILENO)) reset_terminal();
-					return 1;
-				case GET_PACKET_OUT_OF_MEMORY:
-					print_with_time(-1, "Out of memory");
-					close(fd);
-					if(isatty(STDIN_FILENO)) reset_terminal();
-					return 1;
-				case 0:
-					break;
-				default:
-					print_with_time(-1, "Internal error");
-					if(isatty(STDIN_FILENO)) reset_terminal();
-					abort();
-			}
-			switch(packet->type) {
-				case SSHOUT_LOCAL_STATUS:
-					break;
-				case SSHOUT_LOCAL_DISPATCH_MESSAGE:
-					break;
-				case SSHOUT_LOCAL_ONLINE_USERS_INFO:
-					break;
-				default:
-					print_with_time(-1, "Unknown packet type %d", packet->type);
-					break;
-			}
-			free(packet);
-		}
-		if(FD_ISSET(STDIN_FILENO, &fdset)) {
-			char *line = readline(NULL);
-			//char *line = readline("SSHOUT");
-			if(!line) {
-				print_with_time(-1, "Exiting ...");
-				if(isatty(STDIN_FILENO)) reset_terminal();
-				return 0;
-			}
-			if(*line == '/') {
-				print_with_time(-1, "command ...");
-			} else {
-				print_with_time(-1, "send msg '%s' ...", line);
-			}
-			free(line);
-		}
+		if(FD_ISSET(fd, &rfdset)) client_do_local_packet(fd);
+		if(FD_ISSET(STDIN_FILENO, &fdset)) client_do_stdin(fd);
 	}
 }

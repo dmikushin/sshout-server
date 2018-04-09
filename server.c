@@ -237,6 +237,7 @@ end_of_connection:
 				close(cfd);
 				FD_CLR(cfd, &fdset);
 				have_client_fd_closed = 1;
+				client_fds[i] = -1;
 				user_offline(i);
 				online_users_indexes[i] = -1;
 			}
