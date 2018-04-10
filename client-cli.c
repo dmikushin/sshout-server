@@ -26,11 +26,14 @@
 #include <time.h>
 #include <errno.h>
 
+static int option_alarm = 0;
+
 static void print_with_time(time_t t, const char *format, ...) {
 	va_list ap;
 	struct tm tm;
 	if(t == -1) t = time(NULL);
 	localtime_r(&t, &tm);
+	if(option_alarm) putchar('\a');
 	printf("\r[%.2d:%.2d:%.2d] ", tm.tm_hour, tm.tm_min, tm.tm_sec);
 	va_start(ap, format);
 	vprintf(format, ap);
@@ -44,6 +47,24 @@ static void command_who(int fd, int argc, char **argv) {
 	}
 }
 
+static void command_alarm(int fd, int argc, char **argv) {
+	if(argc != 2) {
+usage:
+		fprintf(stderr, "Usage: %s off|on\n", argv[0]);
+		return;
+	}
+	if(strcmp(argv[1], "off") == 0) option_alarm = 0;
+	else if(strcmp(argv[1], "on") == 0) option_alarm = 1;
+	else goto usage;
+}
+
+static void command_quit(int fd, int argc, char **argv) {
+	close(fd);
+	exit(0);
+}
+
+static void command_help(int, int, char **);
+
 static struct command {
 	const char *name;
 	const char *usage;
@@ -51,9 +72,21 @@ static struct command {
 } command_list[] = {
 	{ "who", "", command_who },
 	{ "list", "", command_who },
+	{ "alarm", "off|on", command_alarm },
+	{ "quit", "", command_quit },
+	{ "help", "", command_help },
 	{ NULL, NULL, NULL }
 };
 
+static void command_help(int fd, int argc, char **argv) {
+	struct command *c = command_list;
+	puts("Supported commands:");
+	while(c->name) {
+		printf("/%s %s\n", c->name, c->usage);
+		c++;
+	}
+	puts("End of list\n");
+}
 
 static int parse_tokens(char *string, char ***tokens, int length) {
 	/* Extract whitespace- and quotes- delimited tokens from the given string
