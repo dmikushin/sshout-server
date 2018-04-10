@@ -295,6 +295,11 @@ void client_cli_do_local_packet(int fd) {
 		case SSHOUT_LOCAL_ONLINE_USERS_INFO:
 			print_online_users((struct local_online_users_info *)packet->data);
 			break;
+		case SSHOUT_LOCAL_USER_ONLINE:
+		case SSHOUT_LOCAL_USER_OFFLINE:
+			print_with_time(-1, "User %s is %s", (char *)packet->data,
+				packet->type == SSHOUT_LOCAL_USER_ONLINE ? "online" : "offline");
+			break;
 		default:
 			print_with_time(-1, "Unknown packet type %d", packet->type);
 			break;

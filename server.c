@@ -31,29 +31,69 @@ static void syslog_perror(const char *ident) {
 	syslog(LOG_ERR, "%s: %s (%d)", ident, strerror(e), e);
 }
 
-static int user_online(int id, const char *user_name, const char *host_name, int *index) {
+static void broadcast_user_state(const char *user_name, int on, const int *client_fds) {
+	int i = 0;
+	size_t packet_len = sizeof(struct local_packet) + USER_NAME_MAX_LENGTH;
+	struct local_packet *packet = malloc(packet_len);
+	if(!packet) {
+		syslog(LOG_ERR, "broadcast_user_state: out of memory");
+		return;
+	}
+	packet->length = packet_len - sizeof packet->length;
+	packet->type = on ? SSHOUT_LOCAL_USER_ONLINE : SSHOUT_LOCAL_USER_OFFLINE;
+	strncpy(packet->data, user_name, USER_NAME_MAX_LENGTH);
+	do {
+		if(online_users[i].id == -1) continue;
+		while(write(client_fds[online_users[i].id], packet, packet_len) < 0) {
+			if(errno == EINTR) continue;
+			syslog_perror("broadcast_user_state: write");
+			break;
+		}
+	} while(++i < sizeof online_users / sizeof *online_users);
+	free(packet);
+}
+
+static int user_online(int id, const char *user_name, const char *host_name, int *index, const int *client_fds) {
+	int found_dup = 0;
 	int i = 0;
 	while(online_users[i].id != -1) {
 		if(++i >= sizeof online_users / sizeof *online_users) {
 			syslog(LOG_WARNING, "cannot let user '%s' from %s login: too many users\n", user_name, host_name);
 			return -1;
 		}
+		if(!found_dup && strcmp(online_users[i].user_name, user_name) == 0) found_dup = 1;
 	}
 	struct local_online_user *p = online_users + i;
 	p->id = id;
 	strncpy(p->user_name, user_name, sizeof p->user_name);
 	strncpy(p->host_name, host_name, sizeof p->host_name);
 	*index = i;
-	syslog(LOG_INFO, "user %s from %s login", user_name, host_name);
+	while(!found_dup && ++i < sizeof online_users / sizeof *online_users) {
+		if(online_users[i].id != -1 && strcmp(online_users[i].user_name, user_name) == 0) found_dup = 1;
+	}
+	syslog(LOG_INFO, "user %s login from %s id %d dup %d", user_name, host_name, id, found_dup);
+	if(!found_dup) broadcast_user_state(user_name, 1, client_fds);
 	return 0;
 }
 
-static void user_offline(int id) {
+static void user_offline(int id, const int *client_fds) {
+	int found_dup = 0;
 	int i = 0;
 	while(online_users[i].id != id) {
 		if(++i >= sizeof online_users / sizeof *online_users) return;
 	}
+	const char *user_name = online_users[i].user_name;
 	online_users[i].id = -1;
+	i = 0;
+	while(i < sizeof online_users / sizeof *online_users) {
+		if(online_users[i].id != -1 && strcmp(online_users[i].user_name, user_name) == 0) {
+			found_dup = 1;
+			break;
+		}
+		i++;
+	}
+	if(!found_dup) broadcast_user_state(user_name, 0, client_fds);
+	syslog(LOG_INFO, "user %s logout id %d dup %d", user_name, id, found_dup);
 }
 
 static int send_online_users(int receiver_id, int receiver_fd) {
@@ -247,7 +287,7 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 				}
 				switch(packet->type) {
 					case SSHOUT_LOCAL_LOGIN:
-						user_online(i, packet->data, packet->data + USER_NAME_MAX_LENGTH, online_users_indexes + i);
+						user_online(i, packet->data, packet->data + USER_NAME_MAX_LENGTH, online_users_indexes + i, client_fds);
 						break;
 					case SSHOUT_LOCAL_POST_MESSAGE:
 						if(online_users_indexes[i] == -1) {
@@ -274,7 +314,7 @@ end_of_connection:
 				FD_CLR(cfd, &fdset);
 				have_client_fd_closed = 1;
 				client_fds[i] = -1;
-				user_offline(i);
+				user_offline(i, client_fds);
 				online_users_indexes[i] = -1;
 			}
 		}
