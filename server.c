@@ -57,11 +57,11 @@ static int user_online(int id, const char *user_name, const char *host_name, int
 	int found_dup = 0;
 	int i = 0;
 	while(online_users[i].id != -1) {
+		if(!found_dup && strcmp(online_users[i].user_name, user_name) == 0) found_dup = 1;
 		if(++i >= sizeof online_users / sizeof *online_users) {
 			syslog(LOG_WARNING, "cannot let user '%s' from %s login: too many users\n", user_name, host_name);
 			return -1;
 		}
-		if(!found_dup && strcmp(online_users[i].user_name, user_name) == 0) found_dup = 1;
 	}
 	struct local_online_user *p = online_users + i;
 	p->id = id;
