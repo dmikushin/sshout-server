@@ -322,8 +322,6 @@ void client_cli_do_local_packet(int fd) {
 			abort();
 	}
 	switch(packet->type) {
-		case SSHOUT_LOCAL_STATUS:
-			break;
 		case SSHOUT_LOCAL_DISPATCH_MESSAGE:
 			print_message((struct local_message *)packet->data);
 			break;
@@ -334,6 +332,9 @@ void client_cli_do_local_packet(int fd) {
 		case SSHOUT_LOCAL_USER_OFFLINE:
 			print_with_time(-1, "User %s is %s", (char *)packet->data,
 				packet->type == SSHOUT_LOCAL_USER_ONLINE ? "online" : "offline");
+			break;
+		case SSHOUT_LOCAL_USER_NOT_FOUND:
+			print_with_time(-1, "User %s not found",  (char *)packet->data);
 			break;
 		default:
 			print_with_time(-1, "Unknown packet type %d", packet->type);

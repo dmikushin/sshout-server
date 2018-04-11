@@ -132,6 +132,7 @@ static int send_online_users(int receiver_id, int receiver_fd) {
 static int dispatch_message(const struct local_online_user *sender, const struct local_message *msg, const int *client_fds) {
 	int r = 0;
 	int i = 0;
+	int found = 0;
 	int is_broadcast = strcmp(msg->msg_to, GLOBAL_NAME) == 0;
 	size_t packet_len = sizeof(struct local_packet) + sizeof(struct local_message) + msg->msg_length;
 	struct local_packet *packet = malloc(packet_len);
@@ -144,15 +145,35 @@ static int dispatch_message(const struct local_online_user *sender, const struct
 	memcpy(packet->data, msg, sizeof(struct local_message) + msg->msg_length);
 	strncpy(((struct local_message *)packet->data)->msg_from, sender->user_name, USER_NAME_MAX_LENGTH);
 	do {
-		if(online_users[i].id == -1 || (!is_broadcast && strcmp(online_users[i].user_name, msg->msg_to))) continue;
+		if(online_users[i].id == -1 || (!is_broadcast && strcmp(online_users[i].user_name, msg->msg_to))) {
+			// Not the target user, we also need to send the message back to sender
+			if(strcmp(online_users[i].user_name, sender->user_name)) continue;
+		} else found = 1;
 		while(write(client_fds[online_users[i].id], packet, packet_len) < 0) {
 			if(errno == EINTR) continue;
 			syslog_perror("dispatch_message: write");
-			r = 1;
+			r = -1;
 			break;
 		}
 	} while(++i < sizeof online_users / sizeof *online_users);
 	free(packet);
+	if(!found) {
+		packet_len = sizeof(struct local_packet) + USER_NAME_MAX_LENGTH;
+		packet = malloc(packet_len);
+		if(!packet) {
+			syslog(LOG_ERR, "dispatch_message: out of memory");
+			return -1;
+		}
+		packet->length = packet_len - sizeof packet->length;
+		packet->type = SSHOUT_LOCAL_USER_NOT_FOUND;
+		strncpy(packet->data, msg->msg_to, USER_NAME_MAX_LENGTH);
+		while(write(client_fds[sender->id], packet, packet_len) < 0) {
+			if(errno == EINTR) continue;
+			syslog_perror("dispatch_message: write");
+			r = -1;
+			break;
+		}
+	}
 	return r;
 }
 
