@@ -58,6 +58,34 @@ usage:
 	else goto usage;
 }
 
+static void command_msg(int fd, int argc, char **argv) {
+	if(argc < 3) {
+		fprintf(stderr, "Usage: %s <user> <message> [<message> ...]\n", argv[0]);
+		return;
+	}
+	const char *user = argv[1];
+	argv += 2;
+	char *msg = NULL;
+	size_t msg_len = 0, last_i;
+	do {
+		size_t a_len = strlen(*argv);
+		last_i = msg_len;
+		msg_len += a_len + 1;
+		char *new_msg = realloc(msg, msg_len);
+		if(!new_msg) {
+			perror("realloc");
+			free(msg);
+			return;
+		}
+		msg = new_msg;
+		memcpy(msg + last_i, *argv, a_len);
+		msg[msg_len - 1] = ' ';
+	} while(*++argv);
+	msg[msg_len - 1] = 0;
+	client_post_plain_text_message(fd, user, msg);
+	free(msg);
+}
+
 static void command_quit(int fd, int argc, char **argv) {
 	close(fd);
 	exit(0);
@@ -73,6 +101,8 @@ static struct command {
 	{ "who", "", command_who },
 	{ "list", "", command_who },
 	{ "alarm", "off|on", command_alarm },
+	{ "msg", "<user> <message> [<message> ...]", command_msg },
+	{ "tell", "<user> <message> [<message> ...]", command_msg },
 	{ "quit", "", command_quit },
 	{ "help", "", command_help },
 	{ NULL, NULL, NULL }
@@ -159,6 +189,7 @@ static void do_command(int fd, const char *command) {
 		free(buffer);
 		return;
 	}
+	argv[argc] = 0;
 
 	struct command *c = command_list;
 	while(c->name) {
@@ -194,7 +225,11 @@ static void print_message(const struct local_message *msg) {
 	char text[msg->msg_length + 1];
 	memcpy(text, msg->msg, msg->msg_length);
 	text[msg->msg_length] = 0;
-	print_with_time(-1, "%s: %s", msg->msg_from, text);
+	if(strcmp(msg->msg_to, GLOBAL_NAME) == 0) {
+		print_with_time(-1, "%s: %s", msg->msg_from, text);
+	} else {
+		print_with_time(-1, "%s to %s: %s", msg->msg_from, msg->msg_to, text);
+	}
 }
 
 static char *command_generator(const char *text, int state) {
