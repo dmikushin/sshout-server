@@ -23,16 +23,12 @@
 static int fgetline(FILE *f, char *line, size_t len) {
 	size_t i = 0;
 	int c;
-#if 1
-	while((c = fgetc(f)) != EOF && c != '\n') {
-#else
-	while((c = fgetc(f)) != EOF) {
-		if(c == '\n') {
-			if(!i) continue;	// Skip empty lines
+	while((c = fgetc(f)) != '\n') {
+		if(c == EOF) {
+			if(!i) return -1;
 			break;
 		}
-#endif
-		if(i >= len - 1) return -1;
+		if(i >= len - 1) return -2;
 		line[i++] = c;
 	}
 	line[i] = 0;
@@ -45,7 +41,13 @@ static int read_user_info(FILE *f, char **name, char **public_key) {
 	while(1) {
 		i++;
 		int len = fgetline(f, line, sizeof line);
-		if(len < 0) return -1;
+		if(len == -2) {
+			int c;
+			fprintf(stderr, "Warning: line %u in file " USER_LIST_FILE " is too long, skipping\n", i);
+			while((c = fgetc(f)) != EOF && c != '\n');
+			continue;
+		}
+		if(len < 0) return -1;	// EOF
 		if(len == 0 || *line == '#') continue;
 		char *p = line;
 		while(*p && (*p == ' ' || *p == '	')) p++;
