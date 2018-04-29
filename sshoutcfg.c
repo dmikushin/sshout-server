@@ -20,8 +20,123 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
+static int fgetline(FILE *f, char *line, size_t len) {
+	size_t i = 0;
+	int c;
+#if 1
+	while((c = fgetc(f)) != EOF && c != '\n') {
+#else
+	while((c = fgetc(f)) != EOF) {
+		if(c == '\n') {
+			if(!i) continue;	// Skip empty lines
+			break;
+		}
+#endif
+		if(i >= len - 1) return -1;
+		line[i++] = c;
+	}
+	line[i] = 0;
+	return i;
+}
+
+static int read_user_info(FILE *f, char **name, char **public_key) {
+	int i = 0;
+	char line[4096];
+	while(1) {
+		i++;
+		int len = fgetline(f, line, sizeof line);
+		if(len < 0) return -1;
+		if(len == 0 || *line == '#') continue;
+		char *p = line;
+		while(*p && (*p == ' ' || *p == '	')) p++;
+		if(!*p) continue;
+		char *q1 = strchr(p, '"');
+		if(!q1) {
+			fprintf(stderr, "Warning: cannot find '\"' at line %u in file " USER_LIST_FILE "\n", i);
+			continue;
+		}
+		*q1 = 0;
+		if(q1 - p < 8 || strcmp(q1 - 8, "command=") || strchr(p, ' ')) {
+			fprintf(stderr, "Warning: syntax error in file " USER_LIST_FILE " line %u\n", i);
+			continue;
+		}
+		q1++;
+		char *q2 = strchr(q1, '"');
+		if(!q2) {
+			fprintf(stderr, "Warning: unmatched '\"' in file " USER_LIST_FILE " line %u\n", i);
+			continue;
+		}
+		char *space = strchr(q2 + 1, ' ');
+		if(!space) {
+			fprintf(stderr, "Warning: syntax error in file " USER_LIST_FILE " line %u\n", i);
+			continue;
+		}
+		size_t user_name_len = q2 - q1;
+		if(!user_name_len) {
+			fprintf(stderr, "Warning: empty user name in file " USER_LIST_FILE " line %u\n", i);
+			continue;
+		}
+		*name = malloc(user_name_len + 1);
+		if(!*name) {
+			fprintf(stderr, "Error: allocate %zu bytes failed when processing file " USER_LIST_FILE " line %u\n", user_name_len + 1, i);
+			return -1;
+		}
+		memcpy(*name, q1, user_name_len);
+		(*name)[user_name_len] = 0;
+		*public_key = strdup(space + 1);
+		if(!*public_key) {
+			fprintf(stderr, "Error: out of memory when processing file " USER_LIST_FILE " line %u\n", i);
+			return -1;
+		}
+		return 0;
+	}
+}
+
 static int adduser_command(int argc, char **argv) {
+	const char *key = NULL;
+	int force = 0;
+	while(1) {
+		int c = getopt(argc, argv, "a:f");
+		if(c == -1) break;
+		switch(c) {
+			case 'a':
+				key = optarg;
+				break;
+			case 'f':
+				force = 1;
+				break;
+			case '?':
+				return -1;
+		}
+	}
+	//fprintf(stderr, "optind = %d, argc = %d\n", optind, argc);
+	if(argc - optind != 1) {
+		fputs("Usage: sshoutcfg adduser [-a <public-key>] [-f] <user-name>\n", stderr);
+		return -1;
+	}
 	return -1;
+}
+
+static int listuser_command(int argc, char **argv) {
+	FILE *f = fopen(USER_LIST_FILE, "r");
+	if(!f) {
+		perror(USER_LIST_FILE);
+		return 1;
+	}
+
+/*
+	char line[4096];
+	while(fgetline(f, line, sizeof line) > 0) {
+		fprintf(stderr, "line = \"%s\"\n", line);
+	}
+*/
+	char *user_name, *public_key;
+	while(read_user_info(f, &user_name, &public_key) == 0) {
+		fprintf(stderr, "User \"%s\", Public key \"%s\"\n", user_name, public_key);
+		free(user_name);
+		free(public_key);
+	}
+	return 0;
 }
 
 static struct subcommand {
@@ -30,6 +145,7 @@ static struct subcommand {
 } commands[] = {
 #define SUBCOMMAND(N) { #N, N##_command }
 	SUBCOMMAND(adduser),
+	SUBCOMMAND(listuser),
 #undef SUBCOMMAND
 	{ NULL, NULL }
 };
