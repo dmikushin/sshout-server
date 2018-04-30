@@ -95,14 +95,18 @@ static int read_user_info(FILE *f, char **name, char **public_key) {
 }
 
 static int adduser_command(int argc, char **argv) {
-	const char *key = NULL;
+	char *key = NULL;
 	int force = 0;
 	while(1) {
 		int c = getopt(argc, argv, "a:f");
 		if(c == -1) break;
 		switch(c) {
 			case 'a':
-				key = optarg;
+				key = strdup(optarg);
+				if(!key) {
+					perror("strdup");
+					return 1;
+				}
 				break;
 			case 'f':
 				force = 1;
@@ -116,6 +120,69 @@ static int adduser_command(int argc, char **argv) {
 		fputs("Usage: sshoutcfg adduser [-a <public-key>] [-f] <user-name>\n", stderr);
 		return -1;
 	}
+	const char *user = argv[optind];
+	if(!key) {
+		key = malloc(4096);
+		if(!key) {
+			perror("malloc");
+			return 1;
+		}
+		fprintf(stderr, "Input public key for %s: ", user);
+		if(fgetline(stdin, key, 4096) == -2) {
+			free(key);
+			fputs("Public key too long\n", stderr);
+			return 1;
+		}
+	}	
+
+	// TODO: verify the key format
+
+	FILE *f = fopen(USER_LIST_FILE, "a+");
+	if(!f) {
+		perror(USER_LIST_FILE);
+		free(key);
+		return 1;
+	}
+
+	int existing_count = 0;
+	{
+		char *user_name, *public_key;
+		while(read_user_info(f, &user_name, &public_key) == 0) {
+			if(strcmp(key, public_key) == 0) {
+				free(key);
+				fprintf(stderr, "This public key is already used by user %s.\n"
+					"Are you pasted wrong key?\n", user_name);
+				free(user_name);
+				free(public_key);
+				return 1;
+			}
+			if(strcmp(user, user_name) == 0) existing_count++;
+			free(user_name);
+			free(public_key);
+		}
+	}
+	if(existing_count) {
+		fprintf(stderr, "There is already %d key%s for user %s\n", existing_count, existing_count > 1 ? "s" : "", user);
+		if(!force) {
+			char answer[16];
+			fprintf(stderr, "Are you sure you want to add this key for user %s? ", user);
+			do {
+				int len = fgetline(stdin, answer, sizeof answer);
+				// Ignore line too long error
+				if(len == -1 || strncasecmp(answer, "no", 2) == 0 || strncmp(answer, "不", 3) == 0) {
+					fputs("Operation canceled\n", stderr);
+					return 1;
+				}
+			} while(strncasecmp(answer, "yes", 3) && strncmp(answer, "是", 3) && strncmp(answer, "好", 3) && strcmp(answer, "可以"));
+		}
+	}
+
+	if(fprintf(f, "command=\"%s\",no-agent-forwarding,no-port-forwarding %s\n", user, key) < 0) {
+		perror("fprintf");
+		free(key);
+		return 1;
+	}
+	free(key);
 	return -1;
 }
 
