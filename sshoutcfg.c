@@ -162,14 +162,14 @@ static int adduser_command(int argc, char **argv) {
 		}
 	}
 	if(existing_count) {
-		fprintf(stderr, "There is already %d key%s for user %s\n", existing_count, existing_count > 1 ? "s" : "", user);
+		fprintf(stderr, "%d key%s already exist for user %s\n", existing_count, existing_count > 1 ? "s" : "", user);
 		if(!force) {
 			char answer[16];
 			fprintf(stderr, "Are you sure you want to add this key for user %s? ", user);
 			do {
 				int len = fgetline(stdin, answer, sizeof answer);
 				// Ignore line too long error
-				if(len == -1 || strncasecmp(answer, "no", 2) == 0 || strncmp(answer, "不", 3) == 0) {
+				if(len == -1 || strncasecmp(answer, "no", 2) == 0 || strncmp(answer, "不", 3) == 0 || strncmp(answer, "否") == 0) {
 					fputs("Operation canceled\n", stderr);
 					return 1;
 				}

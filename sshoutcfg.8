@@ -1,0 +1,47 @@
+.TH sshoutcfg 8
+.SH NAME
+sshoutcfg - Configuring Secure Shout Host Oriented Unified Talk server side
+.SH SYNOPSIS
+.nf
+sshoutcfg adduser [-a <public-key>] [-f] <user-name>
+sshoutcfg listuser
+.fi
+.SH DESCRIPTION
+.PP
+The sshoutcfg tool is used for SSHOUT server side configuring. Currently only for user managment.
+.PP
+This tool changes user information by altering .ssh/authorized_keys file in sshout user's home.
+.PP
+This tool must be run under sshout user account or root (UID=0).
+\".TP
+.SS Subcommands:
+adduser [-a <public-key>] [-f] <user-name>
+.sp
+.RS 4n
+Add an new user with his/her public to SSHOUT user list, or add another key for an existing user. The key string is the SSH2 public key which is in form '<key-type> <base64-encoded-key>', for more details, see sshd(8).
+.sp
+Options:
+.TP
+.B "-a <key>"
+Specify the public key for user; if this option is not specified, public key string will be read from stdin.
+.TP
+.B -f
+Force add key; add new key for existing user without ask.
+.RE
+
+listuser
+.sp
+.RS 4n
+List registered user names and publib keys. Doing this action also verifys the format of the authorized_keys file.
+.RE
+
+.SH "SEE ALSO"
+sshd(8), ssh-keygen(1)
+.SH FILES
+(sshout home)/.ssh/authorized_keys
+.SH BUGS
+.PP
+This tool is currently does not verify the format of new key string.
+.PP
+The 'deluser' subcommand should be implemented.
+
