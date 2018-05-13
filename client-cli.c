@@ -303,9 +303,11 @@ void client_cli_do_after_signal() {
 	RL_UNSETSTATE(RL_STATE_ISEARCH|RL_STATE_NSEARCH|RL_STATE_VIMOTION|RL_STATE_NUMERICARG|RL_STATE_MULTIKEY);
 	//rl_done = 1;
 	rl_line_buffer[rl_point = rl_end = rl_mark = 0] = 0;
+	rl_restore_prompt();
 	//rl_echo_signal_char(sig);
 	//fputc('\n', stderr);
 	fputs("^C\n", stderr);
+	rl_redisplay();
 	got_sigint = 0;
 }
 
