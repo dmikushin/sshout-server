@@ -155,18 +155,24 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 
 	void (*client_do_local_packet)(int);
 	void (*client_do_stdin)(int);
+	void (*client_do_after_signal)(void) = NULL;
 	if(remote_mode == REMOTE_MODE_CLI) {
 		client_cli_init_io();
 		client_do_local_packet = client_cli_do_local_packet;
 		client_do_stdin = client_cli_do_stdin;
+		client_do_after_signal = client_cli_do_after_signal;
 	}
 	local_socket = fd;
 
 	while(1) {
 		fd_set rfdset = fdset;
 		if(select(maxfd + 1, &rfdset, NULL, NULL, NULL) < 0) {
-			if(errno == EINTR) continue;
+			if(errno == EINTR) {
+				if(client_do_after_signal) client_do_after_signal();
+				continue;
+			}
 			perror("select");
+			sleep(1);
 		}
 		if(FD_ISSET(fd, &rfdset)) client_do_local_packet(fd);
 		if(FD_ISSET(STDIN_FILENO, &rfdset)) client_do_stdin(fd);

@@ -169,7 +169,7 @@ static int adduser_command(int argc, char **argv) {
 			do {
 				int len = fgetline(stdin, answer, sizeof answer);
 				// Ignore line too long error
-				if(len == -1 || strncasecmp(answer, "no", 2) == 0 || strncmp(answer, "不", 3) == 0 || strncmp(answer, "否") == 0) {
+				if(len == -1 || strncasecmp(answer, "no", 2) == 0 || strncmp(answer, "不", 3) == 0 || strcmp(answer, "否") == 0) {
 					fputs("Operation canceled\n", stderr);
 					return 1;
 				}

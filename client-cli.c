@@ -25,6 +25,7 @@
 #include <termios.h>
 #include <time.h>
 #include <errno.h>
+#include <signal.h>
 
 static int option_alarm = 0;
 
@@ -209,7 +210,7 @@ static void do_command(int fd, const char *command) {
 static void print_online_users(const struct local_online_users_info *info) {
 	int i = 0;
 	print_with_time(-1, "your_id = %d", info->your_id);
-	print_with_time(-1, "count = %d", info->count);
+	//print_with_time(-1, "count = %d", info->count);
 	while(i < info->count) {
 		const struct local_online_user *u = info->user + i++;
 		printf("%d	%s	%s	%s\n",
@@ -278,10 +279,49 @@ static void do_input_line_from_readline(char *line) {
 	free(line);
 }
 
+static int got_sigint = 0;
+static int got_sigwinch = 0;
+
+static void signal_handler(int sig) {
+	switch(sig) {
+		case SIGINT:
+			got_sigint = 1;
+			break;
+		case SIGWINCH:
+			got_sigwinch = 1;
+			break;
+		default:
+			fprintf(stderr, "%s: unknown sig %d\n", __func__, sig);
+			break;
+	}
+}
+
+void client_cli_do_after_signal() {
+	if(!got_sigint) return;
+	//rl_reset_line_state();
+	rl_free_line_state();
+	RL_UNSETSTATE(RL_STATE_ISEARCH|RL_STATE_NSEARCH|RL_STATE_VIMOTION|RL_STATE_NUMERICARG|RL_STATE_MULTIKEY);
+	//rl_done = 1;
+	rl_line_buffer[rl_point = rl_end = rl_mark = 0] = 0;
+	//rl_echo_signal_char(sig);
+	//fputc('\n', stderr);
+	fputs("^C\n", stderr);
+	got_sigint = 0;
+}
+
 void client_cli_init_io() {
 	if(isatty(STDIN_FILENO)) {
 		rl_callback_handler_install(NULL, do_input_line_from_readline);
 		rl_attempted_completion_function = command_completion;
+		//rl_persistent_signal_handlers = 1;
+		/* We have to setup our own signals handler since 
+		 * rl_persistent_signal_handlers is not available in Readline 6
+		 */
+		static struct sigaction act = { .sa_handler = signal_handler };
+		sigaction(SIGINT, &act, NULL);
+		sigaction(SIGWINCH, &act, NULL);
+		rl_catch_signals = 0;
+		rl_catch_sigwinch = 0;
 	}
 	setvbuf(stdout, NULL, _IOLBF, 0);
 }
@@ -377,6 +417,10 @@ static int ss;
 // fd is for local packet
 void client_cli_do_stdin(int fd) {
 	if(isatty(STDIN_FILENO)) {
+		if(got_sigwinch) {
+			rl_resize_terminal();
+			got_sigwinch = 0;
+		}
 		rl_callback_read_char();
 	} else {
 		int s;

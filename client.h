@@ -9,5 +9,6 @@ extern int client_get_local_socket_fd(void);
 extern void client_cli_init_io(void);
 extern void client_cli_do_local_packet(int);
 extern void client_cli_do_stdin(int);
+extern void client_cli_do_after_signal(void);
 
 #endif
