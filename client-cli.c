@@ -296,7 +296,7 @@ static void signal_handler(int sig) {
 	}
 }
 
-void client_cli_do_after_signal() {
+static void client_cli_do_after_signal() {
 	if(!got_sigint) return;
 	//rl_reset_line_state();
 	rl_free_line_state();
@@ -311,7 +311,7 @@ void client_cli_do_after_signal() {
 	got_sigint = 0;
 }
 
-void client_cli_init_io() {
+static void client_cli_init_io() {
 	if(isatty(STDIN_FILENO)) {
 		rl_callback_handler_install(NULL, do_input_line_from_readline);
 		rl_attempted_completion_function = command_completion;
@@ -328,7 +328,7 @@ void client_cli_init_io() {
 	setvbuf(stdout, NULL, _IOLBF, 0);
 }
 
-void client_cli_do_local_packet(int fd) {
+static void client_cli_do_local_packet(int fd) {
 	struct local_packet *packet;
 	switch(get_local_packet(fd, &packet)) {
 		case GET_PACKET_EOF:
@@ -417,7 +417,7 @@ static char input_buffer[4906];
 static int ss;
 
 // fd is for local packet
-void client_cli_do_stdin(int fd) {
+static void client_cli_do_stdin(int fd) {
 	if(isatty(STDIN_FILENO)) {
 		if(got_sigwinch) {
 			rl_resize_terminal();
@@ -481,4 +481,12 @@ void client_cli_do_stdin(int fd) {
 			}
 		}
 	}
+}
+
+void client_cli_get_actions(struct client_backend_actions *a, int log_only) {
+	a->init_io = client_cli_init_io;
+	a->do_local_packet = client_cli_do_local_packet;
+	a->do_stdin = client_cli_do_stdin;
+	a->do_after_signal = client_cli_do_after_signal;
+	//client_log_only = log_only;	// TODO
 }

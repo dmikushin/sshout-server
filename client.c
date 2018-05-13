@@ -26,6 +26,7 @@
 #define MAX(A,B) ((A)>(B)?(A):(B))
 #define REMOTE_MODE_CLI 1
 #define REMOTE_MODE_API 2
+#define REMOTE_MODE_LOG 3
 
 static int send_login(int fd, const char *orig_user_name, const char *client_address) {
 	int r = 0;
@@ -153,28 +154,26 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 	FD_SET(STDIN_FILENO, &fdset);
 	int maxfd = MAX(fd, STDIN_FILENO);
 
-	void (*client_do_local_packet)(int);
-	void (*client_do_stdin)(int);
-	void (*client_do_after_signal)(void) = NULL;
-	if(remote_mode == REMOTE_MODE_CLI) {
-		client_cli_init_io();
-		client_do_local_packet = client_cli_do_local_packet;
-		client_do_stdin = client_cli_do_stdin;
-		client_do_after_signal = client_cli_do_after_signal;
+	struct client_backend_actions actions;
+	switch(remote_mode) {
+		case REMOTE_MODE_CLI:
+			client_cli_get_actions(&actions, 0);
+			break;
 	}
+	actions.init_io();
 	local_socket = fd;
 
 	while(1) {
 		fd_set rfdset = fdset;
 		if(select(maxfd + 1, &rfdset, NULL, NULL, NULL) < 0) {
 			if(errno == EINTR) {
-				if(client_do_after_signal) client_do_after_signal();
+				if(actions.do_after_signal) actions.do_after_signal();
 				continue;
 			}
 			perror("select");
 			sleep(1);
 		}
-		if(FD_ISSET(fd, &rfdset)) client_do_local_packet(fd);
-		if(FD_ISSET(STDIN_FILENO, &rfdset)) client_do_stdin(fd);
+		if(FD_ISSET(fd, &rfdset)) actions.do_local_packet(fd);
+		if(FD_ISSET(STDIN_FILENO, &rfdset)) actions.do_stdin(fd);
 	}
 }
