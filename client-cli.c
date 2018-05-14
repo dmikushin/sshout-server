@@ -279,6 +279,21 @@ static void do_input_line_from_readline(char *line) {
 	free(line);
 }
 
+static int last_day = -1;
+
+static void client_cli_do_tick() {
+	time_t t = time(NULL);
+	struct tm *tm = localtime(&t);
+	if(last_day == -1) last_day = tm->tm_yday;
+	else if(last_day != tm->tm_yday) {
+		char buffer[512];
+		size_t date_str_len = strftime(buffer, sizeof buffer, "%x", tm);
+		if(date_str_len) print_with_time(t, "[%s]", buffer);
+		else print_with_time(t, "Error: cannot format current date");
+		last_day = tm->tm_yday;
+	}
+}
+
 static int got_sigint = 0;
 static int got_sigwinch = 0;
 
@@ -309,6 +324,7 @@ static void client_cli_do_after_signal() {
 	fputs("^C\n", stderr);
 	rl_redisplay();
 	got_sigint = 0;
+	client_cli_do_tick();
 }
 
 static void client_cli_init_io(const char *user_name) {
@@ -488,5 +504,6 @@ void client_cli_get_actions(struct client_backend_actions *a, int log_only) {
 	a->do_local_packet = client_cli_do_local_packet;
 	a->do_stdin = client_cli_do_stdin;
 	a->do_after_signal = client_cli_do_after_signal;
+	a->do_tick = client_cli_do_tick;
 	//client_log_only = log_only;	// TODO
 }

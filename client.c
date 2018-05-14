@@ -149,6 +149,7 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 
 	send_login(fd, user_name, client_address);
 
+	struct timeval timeout = { .tv_sec = 60 };
 	fd_set fdset;
 	FD_ZERO(&fdset);
 	FD_SET(fd, &fdset);
@@ -169,7 +170,9 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 
 	while(1) {
 		fd_set rfdset = fdset;
-		if(select(maxfd + 1, &rfdset, NULL, NULL, NULL) < 0) {
+		struct timeval current_timeout = timeout;
+		int n = select(maxfd + 1, &rfdset, NULL, NULL, &current_timeout);
+		if(n < 0) {
 			if(errno == EINTR) {
 				if(actions.do_after_signal) actions.do_after_signal();
 				continue;
@@ -177,7 +180,10 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 			perror("select");
 			return 1;
 		}
-		if(FD_ISSET(fd, &rfdset)) actions.do_local_packet(fd);
-		if(FD_ISSET(STDIN_FILENO, &rfdset)) actions.do_stdin(fd);
+		if(actions.do_tick) actions.do_tick();
+		if(n) {
+			if(FD_ISSET(fd, &rfdset)) actions.do_local_packet(fd);
+			if(FD_ISSET(STDIN_FILENO, &rfdset)) actions.do_stdin(fd);
+		}
 	}
 }

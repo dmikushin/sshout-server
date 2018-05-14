@@ -11,6 +11,7 @@ struct client_backend_actions {
 	void (*do_local_packet)(int);
 	void (*do_stdin)(int);
 	void (*do_after_signal)(void);
+	void (*do_tick)(void);
 };
 
 extern void client_cli_get_actions(struct client_backend_actions *, int);
