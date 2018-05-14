@@ -24,7 +24,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include <time.h>
 #include <arpa/inet.h>
+
+#define hton64(a) (htons(1) == 1 ? (a) : ((uint64_t)htonl((a) & 0xFFFFFFFF) << 32) | htonl((a) >> 32))
 
 static void send_api_pass(int version) {
 	uint32_t length = 1 + 6 + 2;
@@ -46,9 +49,68 @@ static void send_api_pass(int version) {
 }
 
 static void send_api_error(int code, const char *message) {
+	uint32_t message_length = strlen(message);
+	uint32_t length = 1 + 4 + 4 + message_length;
+	struct sshout_api_packet *packet = malloc(4 + length);
+	if(!packet) {
+		syslog(LOG_ERR, "send_api_error: out of memory");
+		exit(1);
+	}
+	packet->length = htonl(length);
+	packet->type = htons(SSHOUT_API_ERROR);
+	*(uint32_t *)packet->data = htonl(code);
+	*(uint32_t *)(packet->data + 4) = htonl(message_length);
+	memcpy(packet->data + 8, message, message_length);
+	while(write(STDOUT_FILENO, packet, 4 + length) < 0) {
+		if(errno == EINTR) continue;
+		syslog(LOG_ERR, "send_api_pass: write: STDOUT_FILENO: errno %d", errno);
+		exit(1);
+	}
+	free(packet);
 }
 
 static void send_api_message(struct local_message *local_message) {
+	uint8_t from_user_name_len = strnlen(local_message->msg_from, USER_NAME_MAX_LENGTH);
+	uint8_t to_user_name_len = strnlen(local_message->msg_to, USER_NAME_MAX_LENGTH);
+	uint32_t length = 1 + 8 + 1 + from_user_name_len + 1 + to_user_name_len + 1 + 4 + local_message->msg_length;
+	struct sshout_api_packet *packet = malloc(4 + length);
+	if(!packet) {
+		syslog(LOG_ERR, "send_api_error: out of memory");
+		exit(1);
+	}
+	packet->length = htonl(length);
+	packet->type = htons(SSHOUT_API_RECEIVE_MESSAGE);
+	uint8_t *p = packet->data;
+	uint64_t t = time(NULL);
+	*(uint64_t *)p = hton64(t);
+	p += 8;
+	*p++ = from_user_name_len;
+	memcpy(p, local_message->msg_from, from_user_name_len);
+	p += from_user_name_len;
+	*p++ = to_user_name_len;
+	memcpy(p, local_message->msg_to, to_user_name_len);
+	p += to_user_name_len;
+	switch(local_message->msg_type) {
+		case SSHOUT_MSG_PLAIN:
+			*p = SSHOUT_API_MESSAGE_TYPE_PLAIN;
+			break;
+		case SSHOUT_MSG_RICH:
+			*p = SSHOUT_API_MESSAGE_TYPE_RICH;
+			break;
+		case SSHOUT_MSG_IMAGE:
+			*p = SSHOUT_API_MESSAGE_TYPE_IMAGE;
+			break;
+	}
+	p++;
+	*(uint32_t *)p = local_message->msg_length;
+	p += 4;
+	memcpy(p, local_message->msg, local_message->msg_length);
+	while(write(STDOUT_FILENO, packet, 4 + length) < 0) {
+		if(errno == EINTR) continue;
+		syslog(LOG_ERR, "send_api_message: write: STDOUT_FILENO: errno %d", errno);
+		exit(1);
+	}
+	free(packet);
 }
 
 static void send_api_online_users(struct local_online_users_info *local_info) {
@@ -71,19 +133,20 @@ static void send_api_online_users(struct local_online_users_info *local_info) {
 		uint8_t user_name_len = strnlen(u->user_name, USER_NAME_MAX_LENGTH);
 		uint8_t host_name_len = strnlen(u->host_name, HOST_NAME_MAX_LENGTH);
 		length += 2 + 1 + user_name_len + 1 + host_name_len;
-		packet = realloc(packet, 4 + length);
-		if(!packet) {
+		uint8_t *np = realloc(packet, 4 + length);
+		if(!np) {
 			syslog(LOG_ERR, "send_api_online_users: out of memory");
 			exit(1);
 		}
+		//p = np + (p - (uint8_t *)packet);
+		p += np - (uint8_t *)packet;
+		packet = (struct sshout_api_packet *)np;
 		*(uint16_t *)p = htons(u->id);
 		p += 2;
-		*(uint8_t *)p = user_name_len;
-		p += 4;
+		*p++ = user_name_len;
 		memcpy(p, u->user_name, user_name_len);
 		p += user_name_len;
-		*(uint8_t *)p = host_name_len;
-		p += 4;
+		*p++ = host_name_len;
 		memcpy(p, u->host_name, host_name_len);
 		p += host_name_len;
 	}
