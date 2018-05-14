@@ -175,7 +175,7 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 				continue;
 			}
 			perror("select");
-			sleep(1);
+			return 1;
 		}
 		if(FD_ISSET(fd, &rfdset)) actions.do_local_packet(fd);
 		if(FD_ISSET(STDIN_FILENO, &rfdset)) actions.do_stdin(fd);
