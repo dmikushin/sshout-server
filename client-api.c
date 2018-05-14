@@ -255,6 +255,28 @@ static void client_api_do_local_packet(int fd) {
 	free(packet);
 }
 
+static int post_message_from_raw_api_data(int fd, uint8_t *p, uint32_t data_length) {
+	size_t receiver_len = *p++;
+	if(receiver_len > data_length - 6) return -1;
+	void *receiver_p = p;
+	p += receiver_len;
+	enum local_msg_type t = *p++;
+	size_t text_len = *(uint32_t *)p;
+	p += 4;
+	if(receiver_len + text_len > data_length - 6) return -1;
+	struct local_message *message = malloc(sizeof(struct local_message) + text_len);
+	if(!message) return -1;
+	if(receiver_len > USER_NAME_MAX_LENGTH - 1) receiver_len = USER_NAME_MAX_LENGTH - 1;
+	memcpy(message->msg_to, receiver_p, receiver_len);
+	message->msg_to[receiver_len] = 0;
+	message->msg_type = t;
+	message->msg_length = text_len;
+	memcpy(message->msg, p, text_len);
+	int r = client_post_message(fd, message);
+	free(message);
+	return r;
+}
+
 static void client_api_do_stdin(int fd) {
 	struct sshout_api_packet *packet;
 	uint32_t length;
@@ -320,6 +342,7 @@ static void client_api_do_stdin(int fd) {
 			}
 			break;
 		case SSHOUT_API_SEND_MESSAGE:
+			post_message_from_raw_api_data(fd, packet->data, length - 1);
 			break;
 		default:
 			syslog(LOG_ERR, "Received unknown API packet type %hhu", ntohs(packet->type));
