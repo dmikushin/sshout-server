@@ -26,6 +26,7 @@
 #include <time.h>
 #include <errno.h>
 #include <signal.h>
+#include <locale.h>
 
 static int option_alarm = 0;
 
@@ -342,6 +343,7 @@ static void client_cli_init_io(const char *user_name) {
 		rl_catch_sigwinch = 0;
 	}
 	setvbuf(stdout, NULL, _IOLBF, 0);
+	setlocale(LC_TIME, "");
 }
 
 static void client_cli_do_local_packet(int fd) {
