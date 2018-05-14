@@ -320,7 +320,8 @@ static void client_api_do_stdin(int fd) {
 	switch(packet->type) {
 		case SSHOUT_API_HELLO:
 			if(length != 9) {
-				syslog(LOG_ERR, "SSHOUT_API_HELLO: handshake failed, packet length mismatch (%zu != 9)", length);
+				syslog(LOG_ERR, "SSHOUT_API_HELLO: handshake failed, packet length mismatch (%u != 9)",
+					(unsigned int)length);
 				close(fd);
 				exit(1);
 			}

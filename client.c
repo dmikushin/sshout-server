@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include <fcntl.h>
 
 #define MAX(A,B) ((A)>(B)?(A):(B))
 #define REMOTE_MODE_CLI 1
@@ -142,19 +143,24 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 		return 1;
 	}
 
-	if(remote_mode == REMOTE_MODE_LOG) {
-		fputs("This remote mode is currently not implemented\n", stderr);
-		return 1;
-	}
-
 	send_login(fd, user_name, client_address);
 
 	struct timeval timeout = { .tv_sec = 60 };
 	fd_set fdset;
 	FD_ZERO(&fdset);
 	FD_SET(fd, &fdset);
-	FD_SET(STDIN_FILENO, &fdset);
-	int maxfd = MAX(fd, STDIN_FILENO);
+	int max_fd;
+	if(remote_mode == REMOTE_MODE_LOG) {
+		max_fd = fd;
+		close(STDIN_FILENO);
+		if(open("/dev/null", O_RDONLY) != 0) {
+			fputs("Cannot open /dev/null for read as fd 0\n", stderr);
+			return 1;
+		}
+	} else {
+		FD_SET(STDIN_FILENO, &fdset);
+		max_fd = MAX(fd, STDIN_FILENO);
+	}
 
 	struct client_backend_actions actions;
 	switch(remote_mode) {
@@ -164,6 +170,9 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 		case REMOTE_MODE_API:
 			client_api_get_actions(&actions);
 			break;
+		case REMOTE_MODE_LOG:
+			client_cli_get_actions(&actions, 1);
+			break;
 	}
 	actions.init_io(user_name);
 	local_socket = fd;
@@ -171,7 +180,7 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 	while(1) {
 		fd_set rfdset = fdset;
 		struct timeval current_timeout = timeout;
-		int n = select(maxfd + 1, &rfdset, NULL, NULL, &current_timeout);
+		int n = select(max_fd + 1, &rfdset, NULL, NULL, &current_timeout);
 		if(n < 0) {
 			if(errno == EINTR) {
 				if(actions.do_after_signal) actions.do_after_signal();
