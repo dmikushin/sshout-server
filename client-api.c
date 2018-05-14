@@ -68,9 +68,9 @@ static void send_api_online_users(struct local_online_users_info *local_info) {
 	int i = 0;
 	while(i < local_info->count) {
 		const struct local_online_user *u = local_info->user + i++;
-		uint32_t user_name_len = strnlen(u->user_name, USER_NAME_MAX_LENGTH);
-		uint32_t host_name_len = strnlen(u->host_name, HOST_NAME_MAX_LENGTH);
-		length += 2 + 4 + user_name_len + 4 + host_name_len;
+		uint8_t user_name_len = strnlen(u->user_name, USER_NAME_MAX_LENGTH);
+		uint8_t host_name_len = strnlen(u->host_name, HOST_NAME_MAX_LENGTH);
+		length += 2 + 1 + user_name_len + 1 + host_name_len;
 		packet = realloc(packet, 4 + length);
 		if(!packet) {
 			syslog(LOG_ERR, "send_api_online_users: out of memory");
@@ -78,11 +78,11 @@ static void send_api_online_users(struct local_online_users_info *local_info) {
 		}
 		*(uint16_t *)p = htons(u->id);
 		p += 2;
-		*(uint32_t *)p = htonl(user_name_len);
+		*(uint8_t *)p = user_name_len;
 		p += 4;
 		memcpy(p, u->user_name, user_name_len);
 		p += user_name_len;
-		*(uint32_t *)p = htonl(host_name_len);
+		*(uint8_t *)p = host_name_len;
 		p += 4;
 		memcpy(p, u->host_name, host_name_len);
 		p += host_name_len;
@@ -119,6 +119,11 @@ static void client_api_init_io(const char *user_name) {
 }
 
 static void client_api_do_local_packet(int fd) {
+	if(!api_version) {
+		// XXX
+		sleep(1);
+		return;
+	}
 	struct local_packet *packet;
 	int e = get_local_packet(fd, &packet);
 	switch(e) {
