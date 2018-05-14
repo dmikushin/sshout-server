@@ -6,7 +6,7 @@
 #define USER_LIST_FILE ".ssh/authorized_keys"
 #define HOST_NAME_MAX_LENGTH 128
 
-//#include <stdint.h>
+#include <stdint.h>
 #include <sys/types.h>
 
 // Local packets are used in UNIX domain sockets
@@ -64,7 +64,9 @@ struct local_message {
 };
 
 struct sockaddr_un;
+struct sshout_api_packet;
 
+extern int get_api_packet(int, struct sshout_api_packet **, uint32_t *);
 extern int get_local_packet(int, struct local_packet **);
 extern int client_mode(const struct sockaddr_un *, const char *);
 extern int server_mode(const struct sockaddr_un *);

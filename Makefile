@@ -4,7 +4,7 @@ endif
 CFLAGS += -Wall -O1
 LIBS += -lreadline
 
-OBJECTS = client.o client-cli.o local-packet.o main.o server.o
+OBJECTS = api-packet.o client.o client-api.o client-cli.o local-packet.o main.o server.o
 
 all:	sshoutcfg sshoutd
 
@@ -12,4 +12,4 @@ sshoutd:	$(OBJECTS)
 	$(CC) $^ -o $@ $(LIBS)
 
 clean:
-	rm -f $(OBJECTS) sshoutd
+	rm -f $(OBJECTS) sshoutcfg sshoutd

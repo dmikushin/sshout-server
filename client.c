@@ -125,6 +125,7 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 	const char *command = getenv("SSH_ORIGINAL_COMMAND");
 	if(command) {
 		if(strcmp(command, "api") == 0) remote_mode = REMOTE_MODE_API;
+		else if(strcmp(command, "log") == 0) remote_mode = REMOTE_MODE_LOG;
 		else {
 			fprintf(stderr, "Command '%s' is not recognized\n", command);
 			return 1;
@@ -141,7 +142,7 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 		return 1;
 	}
 
-	if(remote_mode != REMOTE_MODE_CLI) {
+	if(remote_mode == REMOTE_MODE_LOG) {
 		fputs("This remote mode is currently not implemented\n", stderr);
 		return 1;
 	}
@@ -159,8 +160,11 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 		case REMOTE_MODE_CLI:
 			client_cli_get_actions(&actions, 0);
 			break;
+		case REMOTE_MODE_API:
+			client_api_get_actions(&actions);
+			break;
 	}
-	actions.init_io();
+	actions.init_io(user_name);
 	local_socket = fd;
 
 	while(1) {

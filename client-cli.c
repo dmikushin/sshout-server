@@ -311,7 +311,7 @@ static void client_cli_do_after_signal() {
 	got_sigint = 0;
 }
 
-static void client_cli_init_io() {
+static void client_cli_init_io(const char *user_name) {
 	if(isatty(STDIN_FILENO)) {
 		rl_callback_handler_install(NULL, do_input_line_from_readline);
 		rl_attempted_completion_function = command_completion;
