@@ -63,7 +63,7 @@ static void send_api_error(int code, const char *message) {
 	memcpy(packet->data + 8, message, message_length);
 	while(write(STDOUT_FILENO, packet, 4 + length) < 0) {
 		if(errno == EINTR) continue;
-		syslog(LOG_ERR, "send_api_pass: write: STDOUT_FILENO: errno %d", errno);
+		syslog(LOG_ERR, "send_api_error: write: STDOUT_FILENO: errno %d", errno);
 		exit(1);
 	}
 	free(packet);
@@ -75,7 +75,7 @@ static void send_api_message(struct local_message *local_message) {
 	uint32_t length = 1 + 8 + 1 + from_user_name_len + 1 + to_user_name_len + 1 + 4 + local_message->msg_length;
 	struct sshout_api_packet *packet = malloc(4 + length);
 	if(!packet) {
-		syslog(LOG_ERR, "send_api_error: out of memory");
+		syslog(LOG_ERR, "send_api_message: out of memory");
 		exit(1);
 	}
 	packet->length = htonl(length);
@@ -162,6 +162,23 @@ static void send_api_online_users(struct local_online_users_info *local_info) {
 }
 
 static void send_api_user_state(const char *user, int online) {
+	uint8_t user_name_len = strnlen(user, USER_NAME_MAX_LENGTH);
+	uint32_t length = 1 + 1 + user_name_len;
+	struct sshout_api_packet *packet = malloc(4 + length);
+	if(!packet) {
+		syslog(LOG_ERR, "send_api_user_state: out of memory");
+		exit(1);
+	}
+	packet->type = htons(SSHOUT_API_USER_STATE_CHANGE);
+	packet->data[0] = (uint8_t)online;
+	packet->data[1] = user_name_len;
+	memcpy(packet->data + 2, user, user_name_len);
+	while(write(STDOUT_FILENO, packet, 4 + length) < 0) {
+		if(errno == EINTR) continue;
+		syslog(LOG_ERR, "send_api_user_state: write: STDOUT_FILENO: errno %d", errno);
+		exit(1);
+	}
+	free(packet);
 }
 
 static int api_version = 0;
