@@ -27,8 +27,9 @@ enum local_packet_type {
 #define GET_PACKET_EOF -1
 #define GET_PACKET_ERROR -2
 #define GET_PACKET_SHORT_READ -3
-#define GET_PACKET_TOO_LARGE -4
-#define GET_PACKET_OUT_OF_MEMORY -5
+#define GET_PACKET_TOO_SMALL -4
+#define GET_PACKET_TOO_LARGE -5
+#define GET_PACKET_OUT_OF_MEMORY -6
 
 // Doesn't need to use types from stdint.h in local packets
 struct local_packet {

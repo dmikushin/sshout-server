@@ -29,9 +29,8 @@ int get_api_packet(int fd, struct sshout_api_packet **packet, uint32_t *length) 
 	if(!s) return GET_PACKET_EOF;
 	if(s < sizeof orig_length) return GET_PACKET_SHORT_READ;
 	*length = ntohl(orig_length);
-	if(*length > SSHOUT_API_PACKET_MAX_LENGTH) {
-		return GET_PACKET_TOO_LARGE;
-	}
+	if(*length < 1) return GET_PACKET_TOO_SMALL;
+	if(*length > SSHOUT_API_PACKET_MAX_LENGTH) return GET_PACKET_TOO_LARGE;
 	*packet = malloc(sizeof orig_length + *length);
 	if(!*packet) return GET_PACKET_OUT_OF_MEMORY;
 	(*packet)->length = orig_length;
