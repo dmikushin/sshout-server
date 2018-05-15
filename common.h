@@ -5,6 +5,7 @@
 #define GLOBAL_NAME "GLOBAL"
 #define USER_LIST_FILE ".ssh/authorized_keys"
 #define HOST_NAME_MAX_LENGTH 128
+#define SSHOUT_MOTD_FILE "motd"
 
 #include <stdint.h>
 #include <sys/types.h>

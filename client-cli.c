@@ -14,6 +14,7 @@
 
 #include "common.h"
 #include "client.h"
+#include "syncrw.h"
 #include <unistd.h>
 #include <string.h>
 #include <stdarg.h>
@@ -88,6 +89,37 @@ static void command_msg(int fd, int argc, char **argv) {
 	free(msg);
 }
 
+static void print_motd(int missing_ok) {
+	char buffer[1024];
+	int fd = open(SSHOUT_MOTD_FILE, O_RDONLY);
+	if(fd == -1) {
+		if(errno == ENOENT) {
+			if(!missing_ok) print_with_time(-1, "No MOTD available");
+			return;
+		}
+		perror(SSHOUT_MOTD_FILE);
+		return;
+	}
+	int s = sync_read(fd, buffer, sizeof buffer);
+	if(s < 0) {
+		perror("read: " SSHOUT_MOTD_FILE);
+		return;
+	}
+	if(!s) return;
+	int have_new_line = buffer[s - 1] == '\n';
+	print_with_time(-1, "Message of the day:");
+	s = sync_write(STDOUT_FILENO, buffer, s);
+	if(s < 0) {
+		perror("write: stdout");
+		return;
+	}
+	if(!have_new_line) putchar('\n');
+}
+
+static void command_motd(int fd, int argc, char **argv) {
+	print_motd(0);
+}
+
 static void command_quit(int fd, int argc, char **argv) {
 	close(fd);
 	exit(0);
@@ -105,6 +137,7 @@ static struct command {
 	{ "alarm", "off|on", command_alarm },
 	{ "msg", "<user> <message> [<message> ...]", command_msg },
 	{ "tell", "<user> <message> [<message> ...]", command_msg },
+	{ "motd", "", command_motd },
 	{ "quit", "", command_quit },
 	{ "help", "", command_help },
 	{ NULL, NULL, NULL }
@@ -344,6 +377,7 @@ static void client_cli_init_io(const char *user_name) {
 	}
 	setvbuf(stdout, NULL, _IOLBF, 0);
 	setlocale(LC_TIME, "");
+	print_motd(1);
 }
 
 static void client_cli_do_local_packet(int fd) {
