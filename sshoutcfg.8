@@ -5,10 +5,12 @@ sshoutcfg - Configuring Secure Shout Host Oriented Unified Talk server side
 .nf
 sshoutcfg adduser [-a <public-key>] [-f] <user-name>
 sshoutcfg listuser
+sshoutcfg getmotd
+sshoutcfg setmotd [-m <message> | -d]
 .fi
 .SH DESCRIPTION
 .PP
-The sshoutcfg tool is used for SSHOUT server side configuring. Currently only for user managment.
+The sshoutcfg tool is used for SSHOUT server side configuring.
 .PP
 This tool changes user information by altering .ssh/authorized_keys file in sshout user's home.
 .PP
@@ -35,10 +37,31 @@ listuser
 List registered user names and publib keys. Doing this action also verifys the format of the authorized_keys file.
 .RE
 
+getmotd
+.sp
+.RS 4n
+Print current MOTD to stdout
+.RE
+
+setmotd [-m <message> | -d]
+.sp
+.RS 4n
+Set a new MOTD, or delete the existing MOTD if option '-d' is specified.
+.sp
+Options:
+.TP
+.B "-m <message>"
+Set MOTD to <message>; if this option is not specified, stdin will be read to get the message.
+.TP
+.B -d
+Delete existing MOTD if any. This option cannot be used together with '-m'
+.RE
+
 .SH "SEE ALSO"
 sshd(8), ssh-keygen(1)
 .SH FILES
 (sshout home)/.ssh/authorized_keys
+(sshout home)/motd
 .SH BUGS
 .PP
 This tool is currently does not verify the format of new key string.

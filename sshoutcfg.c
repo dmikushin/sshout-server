@@ -13,12 +13,17 @@
  */
 
 #include "common.h"
+#include "syncrw.h"
 #include <unistd.h>
+#include <fcntl.h>
 #include <pwd.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
 #include <sys/stat.h>
+
+static void print_usage(const char *);
 
 static int fgetline(FILE *f, char *line, size_t len) {
 	size_t i = 0;
@@ -98,7 +103,7 @@ static int adduser_command(int argc, char **argv) {
 	char *key = NULL;
 	int force = 0;
 	while(1) {
-		int c = getopt(argc, argv, "a:f");
+		int c = getopt(argc, argv, "a:fh");
 		if(c == -1) break;
 		switch(c) {
 			case 'a':
@@ -111,13 +116,16 @@ static int adduser_command(int argc, char **argv) {
 			case 'f':
 				force = 1;
 				break;
+			case 'h':
+				print_usage(argv[0]);
+				return 0;
 			case '?':
 				return -1;
 		}
 	}
 	//fprintf(stderr, "optind = %d, argc = %d\n", optind, argc);
 	if(argc - optind != 1) {
-		fputs("Usage: sshoutcfg adduser [-a <public-key>] [-f] <user-name>\n", stderr);
+		print_usage(argv[0]);
 		return -1;
 	}
 	const char *user = argv[optind];
@@ -208,13 +216,109 @@ static int listuser_command(int argc, char **argv) {
 	return 0;
 }
 
+static int getmotd_command(int argc, char **argv) {
+	char buffer[4096];
+	int fd = open(SSHOUT_MOTD_FILE, O_RDONLY);
+	if(fd == -1) {
+		perror(SSHOUT_MOTD_FILE);
+		return 1;
+	}
+	while(1) {
+		int s = sync_read(fd, buffer, sizeof buffer);
+		if(s < 0) {
+			perror("read");
+			return 1;
+		}
+		if(!s) return 0;
+		s = sync_write(STDOUT_FILENO, buffer, s);
+		if(s < 0) {
+			perror("write");
+			return 1;
+		}
+	}
+}
+
+static int setmotd_command(int argc, char **argv) {
+	const char *message = NULL;
+	int need_del = 0;
+	while(1) {
+		int c = getopt(argc, argv, "m:dh");
+		if(c == -1) break;
+		switch(c) {
+			case 'm':
+				message = optarg;
+				break;
+			case 'd':
+				need_del = 1;
+				break;
+			case 'h':
+				print_usage(argv[0]);
+				return 0;
+			case '?':
+				return -1;
+		}
+	}
+	if(need_del) {
+		if(message) {
+			fputs("Option '-d' cannot be used together with '-m'\n", stderr);
+			return -1;
+		}
+		if(unlink(SSHOUT_MOTD_FILE) < 0) {
+			perror(SSHOUT_MOTD_FILE);
+			return 1;
+		}
+		return 0;
+	}
+	int fd = creat(SSHOUT_MOTD_FILE, 0600);
+	if(fd == -1) {
+		perror(SSHOUT_MOTD_FILE);
+		return 1;
+	}
+	if(message) {
+		size_t len = strlen(message);
+		int s = sync_write(fd, message, len);
+		if(s < 0) {
+			perror("write");
+			return 1;
+		}
+		if(len && message[len - 1] != '\n') {
+			char new_line = '\n';
+			if(sync_write(fd, &new_line, 1) < 0) {
+				perror("write");
+				return 1;
+			}
+		}
+		return 0;
+	} else {
+		char buffer[4096];
+		if(isatty(STDIN_FILENO)) fputs("Type message below:\n", stderr);
+		while(1) {
+			int s = read(STDIN_FILENO, buffer, sizeof buffer);
+			if(s < 0) {
+				if(errno == EINTR) continue;
+				perror("read");
+				return 1;
+			}
+			if(!s) return 0;
+			s = sync_write(fd, buffer, s);
+			if(s < 0) {
+				perror("write");
+				return 1;
+			}
+		}
+	}
+}
+
 static struct subcommand {
 	const char *name;
+	const char *usage;
 	int (*func)(int, char **);
 } commands[] = {
-#define SUBCOMMAND(N) { #N, N##_command }
-	SUBCOMMAND(adduser),
-	SUBCOMMAND(listuser),
+#define SUBCOMMAND(N,U) { #N, U, N##_command }
+	SUBCOMMAND(adduser, "[-a <public-key>] [-f] <user-name>"),
+	SUBCOMMAND(listuser, ""),
+	SUBCOMMAND(getmotd, ""),
+	SUBCOMMAND(setmotd, "[-m <message> | -d]"),
 #undef SUBCOMMAND
 	{ NULL, NULL }
 };
@@ -223,9 +327,21 @@ static void print_commands() {
 	struct subcommand *c = commands;
 	fputs("Following subcommands are available:\n", stderr);
 	while(c->name) {
-		fprintf(stderr, "	%s\n", c->name);
+		fprintf(stderr, "	%s %s\n", c->name, c->usage);
 		c++;
 	}
+}
+
+static void print_usage(const char *name) {
+	struct subcommand *c = commands;
+	while(c->name) {
+		if(strcmp(c->name, name) == 0) {
+			fprintf(stderr, "Usage: %s %s\n", name, c->usage);
+			return;
+		}
+		c++;
+	}
+	fprintf(stderr, "Error: cannot find usage for command '%s'", name);
 }
 
 int main(int argc, char **argv) {
