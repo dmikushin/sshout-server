@@ -18,10 +18,12 @@
 #include "common.h"
 #include "client.h"
 #include "api.h"
+#include "syncrw.h"
 #include <unistd.h>
 #include <syslog.h>
 #include <string.h>
 #include <stdlib.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <errno.h>
 #include <time.h>
@@ -37,7 +39,7 @@ static void send_api_pass(int version) {
 		exit(1);
 	}
 	packet->length = htonl(length);
-	packet->type = htons(SSHOUT_API_PASS);
+	packet->type = SSHOUT_API_PASS;
 	memcpy(packet->data, "SSHOUT", 6);
 	*(uint16_t *)(packet->data + 6) = htons(version);
 	while(write(STDOUT_FILENO, packet, 4 + length) < 0) {
@@ -57,7 +59,7 @@ static void send_api_error(int code, const char *message) {
 		exit(1);
 	}
 	packet->length = htonl(length);
-	packet->type = htons(SSHOUT_API_ERROR);
+	packet->type = SSHOUT_API_ERROR;
 	*(uint32_t *)packet->data = htonl(code);
 	*(uint32_t *)(packet->data + 4) = htonl(message_length);
 	memcpy(packet->data + 8, message, message_length);
@@ -79,7 +81,7 @@ static void send_api_message(struct local_message *local_message) {
 		exit(1);
 	}
 	packet->length = htonl(length);
-	packet->type = htons(SSHOUT_API_RECEIVE_MESSAGE);
+	packet->type = SSHOUT_API_RECEIVE_MESSAGE;
 	uint8_t *p = packet->data;
 	uint64_t t = time(NULL);
 	*(uint64_t *)p = hton64(t);
@@ -121,7 +123,7 @@ static void send_api_online_users(struct local_online_users_info *local_info) {
 		//return;
 		exit(1);
 	}
-	packet->type = htons(SSHOUT_API_ONLINE_USERS_INFO);
+	packet->type = SSHOUT_API_ONLINE_USERS_INFO;
 	uint8_t *p = packet->data;
 	*(uint16_t *)p = htons(local_info->your_id);
 	p += 2;
@@ -169,7 +171,7 @@ static void send_api_user_state(const char *user, int online) {
 		syslog(LOG_ERR, "send_api_user_state: out of memory");
 		exit(1);
 	}
-	packet->type = htons(SSHOUT_API_USER_STATE_CHANGE);
+	packet->type = SSHOUT_API_USER_STATE_CHANGE;
 	packet->data[0] = (uint8_t)online;
 	packet->data[1] = user_name_len;
 	memcpy(packet->data + 2, user, user_name_len);
@@ -179,6 +181,43 @@ static void send_api_user_state(const char *user, int online) {
 		exit(1);
 	}
 	free(packet);
+}
+
+static int send_api_motd() {
+	char buffer[4096];
+	int fd = open(SSHOUT_MOTD_FILE, O_RDONLY);
+	if(fd == -1) {
+		int e = errno;
+		if(e != ENOENT) syslog(LOG_WARNING, "send_api_motd: " SSHOUT_MOTD_FILE ": %s", strerror(e));
+		errno = e;
+		return -1;
+	}
+	int s = sync_read(fd, buffer, sizeof buffer);
+	if(s < 0) {
+		int e = errno;
+		if(e != ENOENT) syslog(LOG_WARNING, "send_api_motd: read: %s", strerror(e));
+		errno = e;
+		return -1;
+	}
+	if(!s) return -1;
+
+	uint32_t length = 1 + 4 + s;
+	struct sshout_api_packet *packet = malloc(4 + length);
+	if(!packet) {
+		syslog(LOG_ERR, "send_api_motd: out of memory");
+		exit(1);
+	}
+	packet->length = htonl(length);
+	packet->type = SSHOUT_API_MOTD;
+	*(uint32_t *)packet->data = s;
+	memcpy(packet->data + 4, buffer, s);
+	while(write(STDOUT_FILENO, packet, 4 + length) < 0) {
+		if(errno == EINTR) continue;
+		syslog(LOG_ERR, "send_api_motd: write: STDOUT_FILENO: errno %d", errno);
+		exit(1);
+	}
+	free(packet);
+	return 0;
 }
 
 static int api_version = 0;
@@ -338,6 +377,7 @@ static void client_api_do_stdin(int fd) {
 				exit(1);
 			}
 			send_api_pass(1);
+			send_api_motd();
 			break;
 		case SSHOUT_API_GET_ONLINE_USER:
 			if(client_send_request_get_online_users(fd) < 0) {
@@ -349,6 +389,13 @@ static void client_api_do_stdin(int fd) {
 			break;
 		case SSHOUT_API_SEND_MESSAGE:
 			post_message_from_raw_api_data(fd, packet->data, length - 1);
+			break;
+		case SSHOUT_API_GET_MOTD:
+			errno = ENOENT;
+			if(send_api_motd() < 0) {
+				send_api_error(SSHOUT_API_ERROR_MOTD_NOT_AVAILABLE,
+					errno == ENOENT ? "No MOTD" : strerror(errno));
+			}
 			break;
 		default:
 			syslog(LOG_ERR, "Received unknown API packet type %hhu", ntohs(packet->type));
