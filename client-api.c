@@ -404,7 +404,7 @@ static void client_api_do_stdin(int fd) {
 	free(packet);
 }
 
-void client_api_get_actions(struct client_backend_actions *a) {
+void client_api_get_actions(struct client_frontend_actions *a) {
 	a->init_io = client_api_init_io;
 	a->do_local_packet = client_api_do_local_packet;
 	a->do_stdin = client_api_do_stdin;

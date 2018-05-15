@@ -243,7 +243,7 @@ static void do_command(int fd, const char *command) {
 
 static void print_online_users(const struct local_online_users_info *info) {
 	int i = 0;
-	print_with_time(-1, "your_id = %d", info->your_id);
+	//print_with_time(-1, "your_id = %d", info->your_id);
 	//print_with_time(-1, "count = %d", info->count);
 	while(i < info->count) {
 		const struct local_online_user *u = info->user + i++;
@@ -535,7 +535,7 @@ static void client_cli_do_stdin(int fd) {
 	}
 }
 
-void client_cli_get_actions(struct client_backend_actions *a, int log_only) {
+void client_cli_get_actions(struct client_frontend_actions *a, int log_only) {
 	a->init_io = client_cli_init_io;
 	a->do_local_packet = client_cli_do_local_packet;
 	a->do_stdin = client_cli_do_stdin;

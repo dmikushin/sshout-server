@@ -162,7 +162,7 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 		max_fd = MAX(fd, STDIN_FILENO);
 	}
 
-	struct client_backend_actions actions;
+	struct client_frontend_actions actions;
 	switch(remote_mode) {
 		case REMOTE_MODE_CLI:
 			client_cli_get_actions(&actions, 0);
