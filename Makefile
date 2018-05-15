@@ -16,4 +16,4 @@ sshoutd:	$(SSHOUTD_OBJECTS)
 	$(CC) $^ -o $@ $(LIBS)
 
 clean:
-	rm -f $(OBJECTS) sshoutcfg sshoutd
+	rm -f $(SSHOUTCFG_OBJCTS) $(SSHOUTD_OBJECTS) sshoutcfg sshoutd
