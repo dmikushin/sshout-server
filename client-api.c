@@ -280,7 +280,7 @@ static int post_message_from_raw_api_data(int fd, uint8_t *p, uint32_t data_leng
 static void client_api_do_stdin(int fd) {
 	struct sshout_api_packet *packet;
 	uint32_t length;
-	int e = get_api_packet(STDIN_FILENO, &packet, &length);
+	int e = get_api_packet(STDIN_FILENO, &packet, &length, 1);
 	switch(e) {
 		case GET_PACKET_EOF:
 			close(fd);

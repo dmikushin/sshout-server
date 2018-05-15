@@ -151,6 +151,7 @@ static int dispatch_message(const struct local_online_user *sender, const struct
 		} else found = 1;
 		while(write(client_fds[online_users[i].id], packet, packet_len) < 0) {
 			if(errno == EINTR) continue;
+			syslog(LOG_WARNING, "i = %d, id = %d, fd = %d", i, online_users[i].id, client_fds[online_users[i].id]);
 			syslog_perror("dispatch_message: write");
 			r = -1;
 			break;

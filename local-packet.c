@@ -39,8 +39,10 @@ int get_local_packet(int fd, struct local_packet **packet) {
 	do {
 		s = read(fd, (char *)*packet + sizeof length, length);
 	} while(s < 0 && errno == EINTR);
-	if(s < 0) return GET_PACKET_ERROR;
-	if(!s) return GET_PACKET_EOF;
-	if(s < length) return GET_PACKET_SHORT_READ;
-	return 0;
+	int r = 0;
+	if(s < 0) r = GET_PACKET_ERROR;
+	else if(!s) r = GET_PACKET_EOF;
+	else if(s < length) r = GET_PACKET_SHORT_READ;
+	if(r) free(*packet);
+	return r;
 }

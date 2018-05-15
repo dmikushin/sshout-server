@@ -4,7 +4,7 @@ endif
 CFLAGS += -Wall -O1
 LIBS += -lreadline
 
-OBJECTS = api-packet.o client.o client-api.o client-cli.o local-packet.o main.o server.o
+OBJECTS = api-packet.o client.o client-api.o client-cli.o local-packet.o main.o server.o syncrw.o
 
 all:	sshoutcfg sshoutd
 

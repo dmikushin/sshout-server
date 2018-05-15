@@ -14,31 +14,38 @@
 
 #include "common.h"
 #include "api.h"
+#include "syncrw.h"
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <arpa/inet.h>
+#include <syslog.h>
 
-int get_api_packet(int fd, struct sshout_api_packet **packet, uint32_t *length) {
+int get_api_packet(int fd, struct sshout_api_packet **packet, uint32_t *length, int block_read) {
 	uint32_t orig_length;
 	int s;
-	do {
+	if(block_read) s = sync_read(fd, &orig_length, sizeof orig_length);
+	else do {
 		s = read(fd, &orig_length, sizeof orig_length);
 	} while(s < 0 && errno == EINTR);
 	if(s < 0) return GET_PACKET_ERROR;
 	if(!s) return GET_PACKET_EOF;
-	if(s < sizeof orig_length) return GET_PACKET_SHORT_READ;
+	if(s < sizeof orig_length) return block_read ? GET_PACKET_EOF : GET_PACKET_SHORT_READ;
 	*length = ntohl(orig_length);
 	if(*length < 1) return GET_PACKET_TOO_SMALL;
 	if(*length > SSHOUT_API_PACKET_MAX_LENGTH) return GET_PACKET_TOO_LARGE;
 	*packet = malloc(sizeof orig_length + *length);
 	if(!*packet) return GET_PACKET_OUT_OF_MEMORY;
 	(*packet)->length = orig_length;
-	do {
+	if(block_read) s = sync_read(fd, (char *)*packet + sizeof orig_length, *length);
+	else do {
 		s = read(fd, (char *)*packet + sizeof orig_length, *length);
 	} while(s < 0 && errno == EINTR);
-	if(s < 0) return GET_PACKET_ERROR;
-	if(!s) return GET_PACKET_EOF;
-	if(s < *length) return GET_PACKET_SHORT_READ;
-	return 0;
+	int r = 0;
+	//syslog(LOG_DEBUG, "*length = %u, s = %d", (unsigned int)*length, s);
+	if(s < 0) r = GET_PACKET_ERROR;
+	else if(!s) r = GET_PACKET_EOF;
+	else if(s < *length) r = block_read ? GET_PACKET_EOF : GET_PACKET_SHORT_READ;
+	if(r) free(*packet);
+	return r;
 }

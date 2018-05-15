@@ -67,7 +67,7 @@ struct local_message {
 struct sockaddr_un;
 struct sshout_api_packet;
 
-extern int get_api_packet(int, struct sshout_api_packet **, uint32_t *);
+extern int get_api_packet(int, struct sshout_api_packet **, uint32_t *, int);
 extern int get_local_packet(int, struct local_packet **);
 extern int client_mode(const struct sockaddr_un *, const char *);
 extern int server_mode(const struct sockaddr_un *);
