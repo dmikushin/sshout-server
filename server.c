@@ -145,8 +145,9 @@ static int dispatch_message(const struct local_online_user *sender, const struct
 	memcpy(packet->data, msg, sizeof(struct local_message) + msg->msg_length);
 	strncpy(((struct local_message *)packet->data)->msg_from, sender->user_name, USER_NAME_MAX_LENGTH);
 	do {
-		if(online_users[i].id == -1 || (!is_broadcast && strcmp(online_users[i].user_name, msg->msg_to))) {
-			// Not the target user, we also need to send the message back to sender
+		if(online_users[i].id == -1) continue;
+		if(!is_broadcast && strcmp(online_users[i].user_name, msg->msg_to)) {
+			// Not the target user, but we also need to send the message back to sender
 			if(strcmp(online_users[i].user_name, sender->user_name)) continue;
 		} else found = 1;
 		while(write(client_fds[online_users[i].id], packet, packet_len) < 0) {
