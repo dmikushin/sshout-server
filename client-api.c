@@ -295,12 +295,13 @@ static void client_api_do_local_packet(int fd) {
 }
 
 static int post_message_from_raw_api_data(int fd, uint8_t *p, uint32_t data_length) {
+	//syslog(LOG_ERR, "function: post_message_from_raw_api_data(%d, %p, %u)", fd, p, (unsigned int)data_length);
 	size_t receiver_len = *p++;
 	if(receiver_len > data_length - 6) return -1;
 	void *receiver_p = p;
 	p += receiver_len;
 	enum local_msg_type t = *p++;
-	size_t text_len = *(uint32_t *)p;
+	size_t text_len = ntohl(*(uint32_t *)p);
 	p += 4;
 	if(receiver_len + text_len > data_length - 6) return -1;
 	struct local_message *message = malloc(sizeof(struct local_message) + text_len);
@@ -350,6 +351,7 @@ static void client_api_do_stdin(int fd) {
 			syslog(LOG_ERR, "Unknown error %d from get_api_packet", e);
 			abort();
 	}
+	syslog(LOG_DEBUG, "length = %u, type = %hhu", (unsigned int)length, packet->type);
 	// packet->type have only 1 byte, doesn't need to convert byte order
 	if(!api_version && packet->type != SSHOUT_API_HELLO) {
 		syslog(LOG_ERR, "Received API packet type %hhu before handshake", ntohs(packet->type));
@@ -388,7 +390,9 @@ static void client_api_do_stdin(int fd) {
 			}
 			break;
 		case SSHOUT_API_SEND_MESSAGE:
-			post_message_from_raw_api_data(fd, packet->data, length - 1);
+			if(post_message_from_raw_api_data(fd, packet->data, length - 1) < 0) {
+				syslog(LOG_WARNING, "post_message_from_raw_api_data failed");
+			}
 			break;
 		case SSHOUT_API_GET_MOTD:
 			errno = ENOENT;
@@ -398,7 +402,7 @@ static void client_api_do_stdin(int fd) {
 			}
 			break;
 		default:
-			syslog(LOG_ERR, "Received unknown API packet type %hhu", ntohs(packet->type));
+			syslog(LOG_ERR, "Received unknown API packet type %hhu", packet->type);
 			break;
 	}
 	free(packet);
