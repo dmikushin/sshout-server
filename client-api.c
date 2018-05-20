@@ -104,7 +104,7 @@ static void send_api_message(struct local_message *local_message) {
 			break;
 	}
 	p++;
-	*(uint32_t *)p = local_message->msg_length;
+	*(uint32_t *)p = htonl(local_message->msg_length);
 	p += 4;
 	memcpy(p, local_message->msg, local_message->msg_length);
 	while(write(STDOUT_FILENO, packet, 4 + length) < 0) {
