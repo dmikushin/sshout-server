@@ -215,10 +215,12 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 	int max_fd = fd;
 
 	int client_fds[FD_SETSIZE];
+	struct private_buffer buffers[FD_SETSIZE];
 	int online_users_indexes[FD_SETSIZE];
 	int i;
 	for(i=0; i<FD_SETSIZE; i++) {
 		client_fds[i] = -1;
+		buffers[i].buffer = NULL;
 		online_users[i].id = -1;
 		online_users_indexes[i] = -1;
 	}
@@ -283,7 +285,7 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 			if(FD_ISSET(cfd, &rfdset)) {
 				n--;
 				struct local_packet *packet;
-				switch(get_local_packet(cfd, &packet)) {
+				switch(get_local_packet(cfd, &packet, buffers + i)) {
 					case GET_PACKET_EOF:
 						syslog(LOG_INFO, "client %d fd %d EOF\n", i, cfd);
 						goto end_of_connection;
@@ -337,6 +339,8 @@ end_of_connection:
 				FD_CLR(cfd, &fdset);
 				have_client_fd_closed = 1;
 				client_fds[i] = -1;
+				free(buffers[i].buffer);
+				buffers[i].buffer = NULL;
 				user_offline(i, client_fds);
 				online_users_indexes[i] = -1;
 			}

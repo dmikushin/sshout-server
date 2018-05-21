@@ -253,7 +253,7 @@ static void print_online_users(const struct local_online_users_info *info) {
 }
 
 static void print_message(const struct local_message *msg) {
-	if(msg->msg_type != SSHOUT_MSG_PLAIN) {
+	if(msg->msg_type == SSHOUT_MSG_IMAGE) {
 		print_with_time(-1, "%s: [Unsupported]", msg->msg_from);
 		return;
 	}
@@ -382,7 +382,7 @@ static void client_cli_init_io(const char *user_name) {
 
 static void client_cli_do_local_packet(int fd) {
 	struct local_packet *packet;
-	switch(get_local_packet(fd, &packet)) {
+	switch(get_local_packet(fd, &packet, NULL)) {
 		case GET_PACKET_EOF:
 			print_with_time(-1, "Server closed connection");
 			close(fd);

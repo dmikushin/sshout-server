@@ -31,6 +31,7 @@ enum local_packet_type {
 #define GET_PACKET_TOO_SMALL -4
 #define GET_PACKET_TOO_LARGE -5
 #define GET_PACKET_OUT_OF_MEMORY -6
+#define GET_PACKET_INCOMPLETE -7
 
 // Doesn't need to use types from stdint.h in local packets
 struct local_packet {
@@ -65,10 +66,16 @@ struct local_message {
 	char msg[0];
 };
 
+struct private_buffer {
+	char *buffer;
+	size_t total_length;
+	size_t read_length;
+};
+
 struct sockaddr_un;
 struct sshout_api_packet;
 
 extern int get_api_packet(int, struct sshout_api_packet **, uint32_t *, int);
-extern int get_local_packet(int, struct local_packet **);
+extern int get_local_packet(int, struct local_packet **, struct private_buffer *);
 extern int client_mode(const struct sockaddr_un *, const char *);
 extern int server_mode(const struct sockaddr_un *);

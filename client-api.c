@@ -75,6 +75,7 @@ static void send_api_message(struct local_message *local_message) {
 	uint8_t from_user_name_len = strnlen(local_message->msg_from, USER_NAME_MAX_LENGTH);
 	uint8_t to_user_name_len = strnlen(local_message->msg_to, USER_NAME_MAX_LENGTH);
 	uint32_t length = 1 + 8 + 1 + from_user_name_len + 1 + to_user_name_len + 1 + 4 + local_message->msg_length;
+	syslog(LOG_DEBUG, "send_api_message: length = %u, msg_length = %zu", (unsigned int)length, local_message->msg_length);
 	struct sshout_api_packet *packet = malloc(4 + length);
 	if(!packet) {
 		syslog(LOG_ERR, "send_api_message: out of memory");
@@ -107,8 +108,9 @@ static void send_api_message(struct local_message *local_message) {
 	*(uint32_t *)p = htonl(local_message->msg_length);
 	p += 4;
 	memcpy(p, local_message->msg, local_message->msg_length);
-	while(write(STDOUT_FILENO, packet, 4 + length) < 0) {
-		if(errno == EINTR) continue;
+	//while(write(STDOUT_FILENO, packet, 4 + length) < 0) {
+	//	if(errno == EINTR) continue;
+	if(sync_write(STDOUT_FILENO, packet, 4 + length) < 0) {
 		syslog(LOG_ERR, "send_api_message: write: STDOUT_FILENO: errno %d", errno);
 		exit(1);
 	}
@@ -165,12 +167,13 @@ static void send_api_online_users(struct local_online_users_info *local_info) {
 
 static void send_api_user_state(const char *user, int online) {
 	uint8_t user_name_len = strnlen(user, USER_NAME_MAX_LENGTH);
-	uint32_t length = 1 + 1 + user_name_len;
+	uint32_t length = 1 + 1 + 1 + user_name_len;
 	struct sshout_api_packet *packet = malloc(4 + length);
 	if(!packet) {
 		syslog(LOG_ERR, "send_api_user_state: out of memory");
 		exit(1);
 	}
+	packet->length = htonl(length);
 	packet->type = SSHOUT_API_USER_STATE_CHANGE;
 	packet->data[0] = (uint8_t)online;
 	packet->data[1] = user_name_len;
@@ -244,7 +247,7 @@ static void client_api_do_local_packet(int fd) {
 		return;
 	}
 	struct local_packet *packet;
-	int e = get_local_packet(fd, &packet);
+	int e = get_local_packet(fd, &packet, NULL);
 	switch(e) {
 		case GET_PACKET_EOF:
 			send_api_error(SSHOUT_API_ERROR_SERVER_CLOSED, "Server closed connection");
