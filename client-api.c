@@ -357,7 +357,7 @@ static void client_api_do_stdin(int fd) {
 	syslog(LOG_DEBUG, "length = %u, type = %hhu", (unsigned int)length, packet->type);
 	// packet->type have only 1 byte, doesn't need to convert byte order
 	if(!api_version && packet->type != SSHOUT_API_HELLO) {
-		syslog(LOG_ERR, "Received API packet type %hhu before handshake", ntohs(packet->type));
+		syslog(LOG_ERR, "Received API packet type %hhu before handshake", packet->type);
 		close(fd);
 		exit(1);
 	}

@@ -303,6 +303,10 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 						syslog(LOG_WARNING, "client %d fd %d out of memory (allocating %u bytes)\n",
 							i, cfd, *(unsigned int *)packet);
 						goto end_of_connection;
+					case GET_PACKET_INCOMPLETE:
+						syslog(LOG_INFO, "client %d fd %d incomplete packet received, read %zu bytes, total %zu bytes; will continue later\n",
+							i, cfd, buffers[i].read_length, buffers[i].total_length);
+						continue;
 					case 0:
 						break;
 					default:

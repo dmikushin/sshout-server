@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
+//#include <syslog.h>
 
 int get_local_packet(int fd, struct local_packet **packet, struct private_buffer *buffer) {
 	struct local_packet **p = buffer ? (struct local_packet **)&buffer->buffer : packet;
@@ -23,6 +24,8 @@ int get_local_packet(int fd, struct local_packet **packet, struct private_buffer
 	size_t length;
 	int s;
 	if(buffer && buffer->buffer) {
+		//syslog(LOG_DEBUG, "get_local_packet: continue from last packet: buffer = %p, total_length = %zu, read_length = %zu",
+		//	buffer->buffer, buffer->total_length, buffer->read_length);
 		length = buffer->total_length;
 		skip = buffer->read_length;
 	} else {
@@ -43,7 +46,10 @@ int get_local_packet(int fd, struct local_packet **packet, struct private_buffer
 		}
 		//((struct local_packet *)*p)->length = length;
 		(*p)->length = length;
-		if(buffer) buffer->total_length = length;
+		if(buffer) {
+			buffer->total_length = length;
+			buffer->read_length = 0;
+		}
 	}
 	do {
 		s = read(fd, (char *)*p + sizeof length + skip, length - skip);
@@ -51,9 +57,9 @@ int get_local_packet(int fd, struct local_packet **packet, struct private_buffer
 	int r = 0;
 	if(s < 0) r = GET_PACKET_ERROR;
 	else if(!s) r = GET_PACKET_EOF;
-	else if(s < length) {
+	else if(skip + s < length) {
 		if(buffer) {
-			buffer->read_length = s;
+			buffer->read_length += s;
 			return GET_PACKET_INCOMPLETE;
 		}
 		r = GET_PACKET_SHORT_READ;
