@@ -212,7 +212,7 @@ static int send_api_motd() {
 	}
 	packet->length = htonl(length);
 	packet->type = SSHOUT_API_MOTD;
-	*(uint32_t *)packet->data = s;
+	*(uint32_t *)packet->data = htonl(s);
 	memcpy(packet->data + 4, buffer, s);
 	while(write(STDOUT_FILENO, packet, 4 + length) < 0) {
 		if(errno == EINTR) continue;
