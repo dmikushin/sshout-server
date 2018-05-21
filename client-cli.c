@@ -253,13 +253,24 @@ static void print_online_users(const struct local_online_users_info *info) {
 }
 
 static void print_message(const struct local_message *msg) {
-	if(msg->msg_type == SSHOUT_MSG_IMAGE) {
-		print_with_time(-1, "%s: [Unsupported]", msg->msg_from);
-		return;
+	char *text = NULL;
+	switch(msg->msg_type) {
+		case SSHOUT_MSG_RICH:
+			text = strdup("[HTML]");
+			break;
+		case SSHOUT_MSG_IMAGE:
+			text = strdup("[Image]");
+			break;
 	}
-	char text[msg->msg_length + 1];
-	memcpy(text, msg->msg, msg->msg_length);
-	text[msg->msg_length] = 0;
+	if(!text) {
+		text = malloc(msg->msg_length + 1);
+		if(!text) {
+			print_with_time(-1, "Out of memory");
+			return;
+		}
+		memcpy(text, msg->msg, msg->msg_length);
+		text[msg->msg_length] = 0;
+	}
 	if(strcmp(msg->msg_to, GLOBAL_NAME) == 0) {
 		print_with_time(-1, "%s: %s", msg->msg_from, text);
 	} else {

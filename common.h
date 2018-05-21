@@ -12,7 +12,7 @@
 
 // Local packets are used in UNIX domain sockets
 
-#define LOCAL_PACKET_MAX_LENGTH (512 * 1024)
+#define LOCAL_PACKET_MAX_LENGTH (2 * 1024 * 1024)
 
 enum local_packet_type {
 	SSHOUT_LOCAL_LOGIN,

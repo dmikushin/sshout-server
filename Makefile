@@ -1,7 +1,7 @@
 ifeq ($(CC),cc)
 CC := gcc
 endif
-CFLAGS += -Wall -O1
+CFLAGS += -Wall -Wno-switch -O1
 LIBS += -lreadline
 
 SSHOUTCFG_OBJCTS = sshoutcfg.o syncrw.o
