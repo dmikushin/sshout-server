@@ -241,13 +241,14 @@ static void client_api_init_io(const char *user_name) {
 }
 
 static void client_api_do_local_packet(int fd) {
+	struct private_buffer buffer;
 	if(!api_version) {
 		// XXX
 		sleep(1);
 		return;
 	}
 	struct local_packet *packet;
-	int e = get_local_packet(fd, &packet, NULL);
+	int e = get_local_packet(fd, &packet, &buffer);
 	switch(e) {
 		case GET_PACKET_EOF:
 			send_api_error(SSHOUT_API_ERROR_SERVER_CLOSED, "Server closed connection");
@@ -269,6 +270,10 @@ static void client_api_do_local_packet(int fd) {
 			send_api_error(SSHOUT_API_ERROR_OUT_OF_MEMORY, "Out of memory");
 			close(fd);
 			exit(1);
+		case GET_PACKET_INCOMPLETE:
+			syslog(LOG_INFO, "incomplete packet received, read %zu bytes, total %zu bytes; will continue later\n",
+				buffer.read_length, buffer.total_length);
+			return;
 		case 0:
 			break;
 		default:

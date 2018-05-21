@@ -381,8 +381,9 @@ static void client_cli_init_io(const char *user_name) {
 }
 
 static void client_cli_do_local_packet(int fd) {
+	static struct private_buffer buffer;
 	struct local_packet *packet;
-	switch(get_local_packet(fd, &packet, NULL)) {
+	switch(get_local_packet(fd, &packet, &buffer)) {
 		case GET_PACKET_EOF:
 			print_with_time(-1, "Server closed connection");
 			close(fd);
@@ -408,6 +409,8 @@ static void client_cli_do_local_packet(int fd) {
 			close(fd);
 			if(isatty(STDIN_FILENO)) rl_callback_handler_remove();
 			exit(1);
+		case GET_PACKET_INCOMPLETE:
+			return;
 		case 0:
 			break;
 		default:
