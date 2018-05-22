@@ -278,6 +278,7 @@ static void print_message(const struct local_message *msg) {
 	} else {
 		print_with_time(-1, "%s to %s: %s", msg->msg_from, msg->msg_to, text);
 	}
+	free(text);
 }
 
 static char *command_generator(const char *text, int state) {
