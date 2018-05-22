@@ -29,6 +29,7 @@
 #include <signal.h>
 #include <locale.h>
 
+static int client_log_only;
 static int option_alarm = 0;
 
 static void print_with_time(time_t t, const char *format, ...) {
@@ -37,7 +38,8 @@ static void print_with_time(time_t t, const char *format, ...) {
 	if(t == -1) t = time(NULL);
 	localtime_r(&t, &tm);
 	if(option_alarm) putchar('\a');
-	printf("\r[%.2d:%.2d:%.2d] ", tm.tm_hour, tm.tm_min, tm.tm_sec);
+	if(!client_log_only) putchar('\r');
+	printf("[%.2d:%.2d:%.2d] ", tm.tm_hour, tm.tm_min, tm.tm_sec);
 	va_start(ap, format);
 	vprintf(format, ap);
 	va_end(ap);
@@ -555,5 +557,5 @@ void client_cli_get_actions(struct client_frontend_actions *a, int log_only) {
 	a->do_stdin = client_cli_do_stdin;
 	a->do_after_signal = client_cli_do_after_signal;
 	a->do_tick = client_cli_do_tick;
-	//client_log_only = log_only;	// TODO
+	client_log_only = log_only;
 }
