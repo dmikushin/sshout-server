@@ -241,7 +241,7 @@ static void client_api_init_io(const char *user_name) {
 }
 
 static void client_api_do_local_packet(int fd) {
-	struct private_buffer buffer;
+	static struct private_buffer buffer;
 	if(!api_version) {
 		// XXX
 		sleep(1);
