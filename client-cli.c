@@ -29,6 +29,7 @@
 #include <signal.h>
 #include <locale.h>
 
+static int use_readline;
 static int client_log_only;
 static int option_alarm = 0;
 
@@ -37,13 +38,19 @@ static void print_with_time(time_t t, const char *format, ...) {
 	struct tm tm;
 	if(t == -1) t = time(NULL);
 	localtime_r(&t, &tm);
-	if(option_alarm) putchar('\a');
-	if(!client_log_only) putchar('\r');
+	if(!client_log_only) {
+		if(option_alarm) putchar('\a');
+		putchar('\r');
+	}
 	printf("[%.2d:%.2d:%.2d] ", tm.tm_hour, tm.tm_min, tm.tm_sec);
 	va_start(ap, format);
 	vprintf(format, ap);
 	va_end(ap);
 	putchar('\n');
+	if(use_readline) {
+		rl_reset_line_state();
+		rl_redisplay();
+	}
 }
 
 static void command_who(int fd, int argc, char **argv) {
@@ -317,7 +324,7 @@ static void do_input_line(int, const char *);
 static void do_input_line_from_readline(char *line) {
 	if(!line) {
 		print_with_time(-1, "Exiting ...");
-		if(isatty(STDIN_FILENO)) rl_callback_handler_remove();
+		if(use_readline) rl_callback_handler_remove();
 		exit(0);
 	}
 	if(!*line) return;
@@ -361,22 +368,25 @@ static void signal_handler(int sig) {
 
 static void client_cli_do_after_signal() {
 	if(!got_sigint) return;
-	//rl_reset_line_state();
-	rl_free_line_state();
-	RL_UNSETSTATE(RL_STATE_ISEARCH|RL_STATE_NSEARCH|RL_STATE_VIMOTION|RL_STATE_NUMERICARG|RL_STATE_MULTIKEY);
-	//rl_done = 1;
-	rl_line_buffer[rl_point = rl_end = rl_mark = 0] = 0;
-	rl_restore_prompt();
-	//rl_echo_signal_char(sig);
-	//fputc('\n', stderr);
-	fputs("^C\n", stderr);
-	rl_redisplay();
-	got_sigint = 0;
+	if(use_readline) {
+		//rl_reset_line_state();
+		rl_free_line_state();
+		RL_UNSETSTATE(RL_STATE_ISEARCH|RL_STATE_NSEARCH|RL_STATE_VIMOTION|RL_STATE_NUMERICARG|RL_STATE_MULTIKEY);
+		//rl_done = 1;
+		rl_line_buffer[rl_point = rl_end = rl_mark = 0] = 0;
+		rl_restore_prompt();
+		//rl_echo_signal_char(sig);
+		//fputc('\n', stderr);
+		fputs("^C\n", stderr);
+		rl_redisplay();
+		got_sigint = 0;
+	}
 	client_cli_do_tick();
 }
 
 static void client_cli_init_io(const char *user_name) {
-	if(isatty(STDIN_FILENO)) {
+	use_readline = isatty(STDIN_FILENO);
+	if(use_readline) {
 		rl_callback_handler_install(NULL, do_input_line_from_readline);
 		rl_attempted_completion_function = command_completion;
 		//rl_persistent_signal_handlers = 1;
@@ -401,27 +411,27 @@ static void client_cli_do_local_packet(int fd) {
 		case GET_PACKET_EOF:
 			print_with_time(-1, "Server closed connection");
 			close(fd);
-			if(isatty(STDIN_FILENO)) rl_callback_handler_remove();
+			if(use_readline) rl_callback_handler_remove();
 			exit(0);
 		case GET_PACKET_ERROR:
 			perror("read");
 			close(fd);
-			if(isatty(STDIN_FILENO)) rl_callback_handler_remove();
+			if(use_readline) rl_callback_handler_remove();
 			exit(1);
 		case GET_PACKET_SHORT_READ:
 			print_with_time(-1, "Packet short read");
 			close(fd);
-			if(isatty(STDIN_FILENO)) rl_callback_handler_remove();
+			if(use_readline) rl_callback_handler_remove();
 			exit(1);
 		case GET_PACKET_TOO_LARGE:
 			print_with_time(-1, "Packet too large");
 			close(fd);
-			if(isatty(STDIN_FILENO)) rl_callback_handler_remove();
+			if(use_readline) rl_callback_handler_remove();
 			exit(1);
 		case GET_PACKET_OUT_OF_MEMORY:
 			print_with_time(-1, "Out of memory");
 			close(fd);
-			if(isatty(STDIN_FILENO)) rl_callback_handler_remove();
+			if(use_readline) rl_callback_handler_remove();
 			exit(1);
 		case GET_PACKET_INCOMPLETE:
 			return;
@@ -429,7 +439,7 @@ static void client_cli_do_local_packet(int fd) {
 			break;
 		default:
 			print_with_time(-1, "Internal error");
-			if(isatty(STDIN_FILENO)) rl_callback_handler_remove();
+			if(use_readline) rl_callback_handler_remove();
 			abort();
 	}
 	switch(packet->type) {
@@ -487,7 +497,7 @@ static int ss;
 
 // fd is for local packet
 static void client_cli_do_stdin(int fd) {
-	if(isatty(STDIN_FILENO)) {
+	if(use_readline) {
 		if(got_sigwinch) {
 			rl_resize_terminal();
 			got_sigwinch = 0;
