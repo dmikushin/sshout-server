@@ -65,7 +65,6 @@ static void send_irc_line_format(const char *format, ...) {
 
 static void send_irc_reply(const char *command, ...) {
 	va_list ap;
-	//sync_write(STDOUT_FILENO, command
 	fputs(command, stdout);
 	//if(isdigit(command[0]) && isdigit(command[1]) && isdigit(command[2]) && !command[3]) {
 	if(is_irc_registered) {
@@ -195,6 +194,7 @@ static void send_irc_online_users(const struct local_online_users_info *info) {
 		putchar(' ');
 	}
 	fputs("\r\n", stdout);
+	send_irc_reply(IRC_RPL_ENDOFNAMES, "#sshout", "End of NAMES", NULL);
 }
 
 static void send_irc_user_join(const char *user_name) {
