@@ -71,7 +71,7 @@ static void send_api_error(int code, const char *message) {
 	free(packet);
 }
 
-static void send_api_message(struct local_message *local_message) {
+static void send_api_message(const struct local_message *local_message) {
 	uint8_t from_user_name_len = strnlen(local_message->msg_from, USER_NAME_MAX_LENGTH);
 	uint8_t to_user_name_len = strnlen(local_message->msg_to, USER_NAME_MAX_LENGTH);
 	uint32_t length = 1 + 8 + 1 + from_user_name_len + 1 + to_user_name_len + 1 + 4 + local_message->msg_length;
@@ -117,7 +117,7 @@ static void send_api_message(struct local_message *local_message) {
 	free(packet);
 }
 
-static void send_api_online_users(struct local_online_users_info *local_info) {
+static void send_api_online_users(const struct local_online_users_info *local_info) {
 	uint32_t length = 1 + 2 + 2;
 	struct sshout_api_packet *packet = malloc(4 + length);
 	if(!packet) {

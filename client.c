@@ -28,6 +28,7 @@
 #define REMOTE_MODE_CLI 1
 #define REMOTE_MODE_API 2
 #define REMOTE_MODE_LOG 3
+#define REMOTE_MODE_IRC 4
 
 static int send_login(int fd, const char *orig_user_name, const char *client_address) {
 	int r = 0;
@@ -127,6 +128,7 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 	if(command) {
 		if(strcmp(command, "api") == 0) remote_mode = REMOTE_MODE_API;
 		else if(strcmp(command, "log") == 0) remote_mode = REMOTE_MODE_LOG;
+		else if(strcmp(command, "irc") == 0) remote_mode = REMOTE_MODE_IRC;
 		else {
 			fprintf(stderr, "Command '%s' is not recognized\n", command);
 			return 1;
@@ -172,6 +174,9 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 			break;
 		case REMOTE_MODE_LOG:
 			client_cli_get_actions(&actions, 1);
+			break;
+		case REMOTE_MODE_IRC:
+			client_irc_get_actions(&actions);
 			break;
 	}
 	actions.init_io(user_name);

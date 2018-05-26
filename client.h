@@ -16,5 +16,6 @@ struct client_frontend_actions {
 
 extern void client_cli_get_actions(struct client_frontend_actions *, int);
 extern void client_api_get_actions(struct client_frontend_actions *);
+extern void client_irc_get_actions(struct client_frontend_actions *);
 
 #endif
