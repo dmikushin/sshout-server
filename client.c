@@ -39,11 +39,11 @@ static int send_login(int fd, const char *orig_user_name, const char *client_add
 	//memset(user_name + user_name_len, 0, USER_NAME_MAX_LENGTH - user_name_len);
 	const char *space = strchr(client_address, ' ');
 	size_t host_name_len = space ? space - client_address : strlen(client_address);
-	if(host_name_len > HOST_NAME_MAX_LENGTH) host_name_len = HOST_NAME_MAX_LENGTH;
+	if(host_name_len > HOST_NAME_MAX_LENGTH - 1) host_name_len = HOST_NAME_MAX_LENGTH - 1;
 	//char host_name[host_name_len + 1];
 	//memcpy(host_name, client_address, host_name_len);
 	//host_name[host_name_len] = 0;
-	size_t packet_len = sizeof(struct local_packet) + USER_NAME_MAX_LENGTH + host_name_len;
+	size_t packet_len = sizeof(struct local_packet) + USER_NAME_MAX_LENGTH + host_name_len + 1;
 	struct local_packet *packet = malloc(packet_len);
 	if(!packet) return -1;
 	packet->length = packet_len - sizeof packet->length;

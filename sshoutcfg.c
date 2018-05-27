@@ -23,6 +23,8 @@
 #include <errno.h>
 #include <sys/stat.h>
 
+static uid_t myeuid;
+
 static void print_usage(const char *);
 
 static int fgetline(FILE *f, char *line, size_t len) {
@@ -144,6 +146,29 @@ static int adduser_command(int argc, char **argv) {
 	}	
 
 	// TODO: verify the key format
+
+	struct stat st;
+	if(stat(".ssh", &st) == 0) {
+		if(!S_ISDIR(st.st_mode)) {
+			fputs("'.ssh' is not a directory\n", stderr);
+			return 1;
+		}
+		if(st.st_uid != myeuid) {
+			fprintf(stderr, "'.ssh' is not owned by sshout (%u != %u)\n", st.st_uid, myeuid);
+			return 1;
+		}
+		if(st.st_mode | S_IWOTH) {
+			fputs("'.ssh' is global writable\n", stderr);
+			if(chmod(".ssh", st.st_mode | ~(S_IWOTH)) < 0) {
+				perror("chmod: .ssh");
+				return 1;
+			}
+			fputs("fixed\n", stderr);
+		}
+	} else if(mkdir(".ssh", 0755) < 0) {
+		perror("mkdir: .ssh");
+		return 1;
+	}
 
 	FILE *f = fopen(USER_LIST_FILE, "a+");
 	if(!f) {
@@ -360,8 +385,7 @@ int main(int argc, char **argv) {
 		return -1;
 	}
 
-	//uid_t myuid = getuid();
-	uid_t myeuid = geteuid();
+	myeuid = geteuid();
 	if(myeuid == 0) {
 		if(setreuid(pw->pw_uid, pw->pw_uid) < 0) {
 			perror("setreuid");
