@@ -126,7 +126,8 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 	}
 	const char *command = getenv("SSH_ORIGINAL_COMMAND");
 	if(command) {
-		if(strcmp(command, "api") == 0) remote_mode = REMOTE_MODE_API;
+		if(strcmp(command, "cli") == 0) remote_mode = REMOTE_MODE_CLI;
+		else if(strcmp(command, "api") == 0) remote_mode = REMOTE_MODE_API;
 		else if(strcmp(command, "log") == 0) remote_mode = REMOTE_MODE_LOG;
 		else if(strcmp(command, "irc") == 0) remote_mode = REMOTE_MODE_IRC;
 		else {

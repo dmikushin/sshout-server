@@ -470,10 +470,10 @@ static void parse_irc_arg(const char *line, size_t len, int *argc, struct fixed_
 		if(line[i] == ':') do {
 			i++;
 			colon = memchr(line + i, ':', len - i);
-			//if(colon && colon > line + 1 && colon[-1] == ' ') {
-			if(colon && (colon == line + 1 || colon[-1] != ' ')) {
-				syslog(LOG_INFO, "parse_irc_arg: malformed IRC line");
-				return;
+			if(colon && (colon == line + i + 1 || colon[-1] != ' ')) {
+				//syslog(LOG_INFO, "parse_irc_arg: malformed IRC line");
+				//return;
+				continue;
 			}
 			size_t a_len = (colon ? (colon - 1 - line) : len) - i;
 			(*argc)++;
