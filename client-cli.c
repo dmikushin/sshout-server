@@ -33,7 +33,7 @@ static int use_readline;
 static int client_log_only;
 static int option_alarm = 0;
 
-static void print_with_time(time_t t, const char *format, ...) {
+static void print_with_time(time_t t, int redisplay_input, const char *format, ...) {
 	va_list ap;
 	struct tm tm;
 	if(t == -1) t = time(NULL);
@@ -47,7 +47,7 @@ static void print_with_time(time_t t, const char *format, ...) {
 	vprintf(format, ap);
 	va_end(ap);
 	putchar('\n');
-	if(use_readline) {
+	if(use_readline && redisplay_input) {
 		rl_reset_line_state();
 		rl_redisplay();
 	}
@@ -103,7 +103,7 @@ static void print_motd(int missing_ok) {
 	int fd = open(SSHOUT_MOTD_FILE, O_RDONLY);
 	if(fd == -1) {
 		if(errno == ENOENT) {
-			if(!missing_ok) print_with_time(-1, "No MOTD available");
+			if(!missing_ok) print_with_time(-1, 0, "No MOTD available");
 			return;
 		}
 		perror(SSHOUT_MOTD_FILE);
@@ -116,7 +116,7 @@ static void print_motd(int missing_ok) {
 	}
 	if(!s) return;
 	int have_new_line = buffer[s - 1] == '\n';
-	print_with_time(-1, "Message of the day:");
+	print_with_time(-1, 0, "Message of the day:");
 	s = sync_write(STDOUT_FILENO, buffer, s);
 	if(s < 0) {
 		perror("write: stdout");
@@ -222,13 +222,13 @@ static void do_command(int fd, const char *command) {
 	char **argv = malloc(sizeof(char *));
 	char *buffer;
 	if(!argv || !(buffer = strdup(command))) {
-		print_with_time(-1, "do_command: out of memory");
+		print_with_time(-1, 0, "do_command: out of memory");
 		free(argv);
 		return;
 	}
 	int argc = parse_tokens(buffer, &argv, 0);
 	if(argc < 0) {
-		print_with_time(-1, "do_command: out of memory");
+		print_with_time(-1, 0, "do_command: out of memory");
 		free(argv);
 		free(buffer);
 		return;
@@ -245,15 +245,15 @@ static void do_command(int fd, const char *command) {
 		}
 		c++;
 	}
-	print_with_time(-1, "Error: Unknown command '%s'", argv[0]);
+	print_with_time(-1, 0, "Error: Unknown command '%s'", argv[0]);
 	free(argv);
 	free(buffer);
 }
 
 static void print_online_users(const struct local_online_users_info *info) {
 	int i = 0;
-	//print_with_time(-1, "your_id = %d", info->your_id);
-	//print_with_time(-1, "count = %d", info->count);
+	//print_with_time(-1, 0, "your_id = %d", info->your_id);
+	//print_with_time(-1, 0, "count = %d", info->count);
 	while(i < info->count) {
 		const struct local_online_user *u = info->user + i++;
 		printf("%d	%s	%s	%s\n",
@@ -274,16 +274,16 @@ static void print_message(const struct local_message *msg) {
 	if(!text) {
 		text = malloc(msg->msg_length + 1);
 		if(!text) {
-			print_with_time(-1, "Out of memory");
+			print_with_time(-1, 1, "Out of memory");
 			return;
 		}
 		memcpy(text, msg->msg, msg->msg_length);
 		text[msg->msg_length] = 0;
 	}
 	if(strcmp(msg->msg_to, GLOBAL_NAME) == 0) {
-		print_with_time(-1, "%s: %s", msg->msg_from, text);
+		print_with_time(-1, 1, "%s: %s", msg->msg_from, text);
 	} else {
-		print_with_time(-1, "%s to %s: %s", msg->msg_from, msg->msg_to, text);
+		print_with_time(-1, 1, "%s to %s: %s", msg->msg_from, msg->msg_to, text);
 	}
 	free(text);
 }
@@ -323,14 +323,15 @@ static void do_input_line(int, const char *);
 
 static void do_input_line_from_readline(char *line) {
 	if(!line) {
-		print_with_time(-1, "Exiting ...");
+		print_with_time(-1, 0, "Exiting ...");
 		if(use_readline) rl_callback_handler_remove();
 		exit(0);
 	}
-	if(!*line) return;
-	do_input_line(client_get_local_socket_fd(), line);
-	HIST_ENTRY *last = history_get(history_length);
-	if(!last || strcmp(last->line, line)) add_history(line);
+	if(*line) {
+		do_input_line(client_get_local_socket_fd(), line);
+		HIST_ENTRY *last = history_get(history_length);
+		if(!last || strcmp(last->line, line)) add_history(line);
+	}
 	free(line);
 }
 
@@ -343,8 +344,8 @@ static void client_cli_do_tick() {
 	else if(last_day != tm->tm_yday) {
 		char buffer[512];
 		size_t date_str_len = strftime(buffer, sizeof buffer, "%x", tm);
-		if(date_str_len) print_with_time(t, "[%s]", buffer);
-		else print_with_time(t, "Error: cannot format current date");
+		if(date_str_len) print_with_time(t, 1, "[%s]", buffer);
+		else print_with_time(t, 1, "Error: cannot format current date");
 		last_day = tm->tm_yday;
 	}
 }
@@ -409,7 +410,7 @@ static void client_cli_do_local_packet(int fd) {
 	struct local_packet *packet;
 	switch(get_local_packet(fd, &packet, &buffer)) {
 		case GET_PACKET_EOF:
-			print_with_time(-1, "Server closed connection");
+			print_with_time(-1, 0, "Server closed connection");
 			close(fd);
 			if(use_readline) rl_callback_handler_remove();
 			exit(0);
@@ -419,17 +420,17 @@ static void client_cli_do_local_packet(int fd) {
 			if(use_readline) rl_callback_handler_remove();
 			exit(1);
 		case GET_PACKET_SHORT_READ:
-			print_with_time(-1, "Packet short read");
+			print_with_time(-1, 0, "Packet short read");
 			close(fd);
 			if(use_readline) rl_callback_handler_remove();
 			exit(1);
 		case GET_PACKET_TOO_LARGE:
-			print_with_time(-1, "Packet too large");
+			print_with_time(-1, 0, "Packet too large");
 			close(fd);
 			if(use_readline) rl_callback_handler_remove();
 			exit(1);
 		case GET_PACKET_OUT_OF_MEMORY:
-			print_with_time(-1, "Out of memory");
+			print_with_time(-1, 0, "Out of memory");
 			close(fd);
 			if(use_readline) rl_callback_handler_remove();
 			exit(1);
@@ -438,7 +439,7 @@ static void client_cli_do_local_packet(int fd) {
 		case 0:
 			break;
 		default:
-			print_with_time(-1, "Internal error");
+			print_with_time(-1, 0, "Internal error");
 			if(use_readline) rl_callback_handler_remove();
 			abort();
 	}
@@ -451,14 +452,14 @@ static void client_cli_do_local_packet(int fd) {
 			break;
 		case SSHOUT_LOCAL_USER_ONLINE:
 		case SSHOUT_LOCAL_USER_OFFLINE:
-			print_with_time(-1, "User %s is %s", (char *)packet->data,
+			print_with_time(-1, 1, "User %s is %s", (char *)packet->data,
 				packet->type == SSHOUT_LOCAL_USER_ONLINE ? "online" : "offline");
 			break;
 		case SSHOUT_LOCAL_USER_NOT_FOUND:
-			print_with_time(-1, "User %s not found",  (char *)packet->data);
+			print_with_time(-1, 1, "User %s not found",  (char *)packet->data);
 			break;
 		default:
-			print_with_time(-1, "Unknown packet type %d", packet->type);
+			print_with_time(-1, 1, "Unknown packet type %d", packet->type);
 			break;
 	}
 	free(packet);
@@ -516,7 +517,7 @@ static void client_cli_do_stdin(int fd) {
 				exit(1);
 			}
 			if(!s) {
-				print_with_time(-1, "Exiting ...");
+				print_with_time(-1, 0, "Exiting ...");
 				exit(0);
 			}
 			char *bs = buffer;
@@ -534,7 +535,7 @@ static void client_cli_do_stdin(int fd) {
 				exit(1);
 			}
 			if(!s) {
-				print_with_time(-1, "Exiting ...");
+				print_with_time(-1, 0, "Exiting ...");
 				exit(0);
 			}
 			char *br = mem3chr(input_buffer + ss, 0, '\r', '\n', s);
