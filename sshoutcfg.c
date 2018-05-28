@@ -99,6 +99,25 @@ static int read_user_info(FILE *f, char **name, char **public_key) {
 	}
 }
 
+static int remove_ssh_rc_file() {
+	struct stat st;
+	if(lstat(".ssh/rc", &st) < 0) {
+		if(errno == ENOENT) return 0;
+		perror(".ssh/rc");
+		return -1;
+	}
+	if(S_ISDIR(st.st_mode)) {
+		fputs("'.ssh/rc' exists, and it is a directory!\n", stderr);
+		return -1;
+	}
+	fputs("sshout shouldn't have a SSH RC file '.ssh/rc'; removing\n", stderr);
+	if(unlink(".ssh/rc") < 0) {
+		perror("unlink: .ssh/rc");
+		return -1;
+	}
+	return 0;
+}
+
 static int adduser_command(int argc, char **argv) {
 	char *key = NULL;
 	int force = 0;
@@ -148,11 +167,13 @@ static int adduser_command(int argc, char **argv) {
 	struct stat st;
 	if(stat(".ssh", &st) == 0) {
 		if(!S_ISDIR(st.st_mode)) {
+			free(key);
 			fputs("'.ssh' is not a directory\n", stderr);
 			return 1;
 		}
 		uid_t myuid = getuid();
 		if(st.st_uid != myuid) {
+			free(key);
 			fprintf(stderr, "'.ssh' is not owned by sshout (%u != %u)\n", st.st_uid, myuid);
 			return 1;
 		}
@@ -160,12 +181,19 @@ static int adduser_command(int argc, char **argv) {
 			fputs("'.ssh' is global writable\n", stderr);
 			if(chmod(".ssh", st.st_mode & ~(S_IWOTH)) < 0) {
 				perror("chmod: .ssh");
+				free(key);
 				return 1;
 			}
 			fputs("fixed\n", stderr);
 		}
+		if(remove_ssh_rc_file() < 0) {
+			free(key);
+			fputs("Cannot continue\n", stderr);
+			return 1;
+		}
 	} else if(mkdir(".ssh", 0755) < 0) {
 		perror("mkdir: .ssh");
+		free(key);
 		return 1;
 	}
 
@@ -203,6 +231,7 @@ static int adduser_command(int argc, char **argv) {
 				// Ignore line too long error
 				if(len == -1 || strncasecmp(answer, "no", 2) == 0 || strncmp(answer, "不", 3) == 0 || strcmp(answer, "否") == 0) {
 					fputs("Operation canceled\n", stderr);
+					free(key);
 					return 1;
 				}
 			} while(strncasecmp(answer, "yes", 3) && strncmp(answer, "是", 3) && strncmp(answer, "好", 3) && strcmp(answer, "可以"));
@@ -219,6 +248,10 @@ static int adduser_command(int argc, char **argv) {
 }
 
 static int listuser_command(int argc, char **argv) {
+	if(remove_ssh_rc_file() < 0) {
+		fputs("Warning: configuration error left unresolved\n", stderr);
+	}
+
 	FILE *f = fopen(USER_LIST_FILE, "r");
 	if(!f) {
 		perror(USER_LIST_FILE);
