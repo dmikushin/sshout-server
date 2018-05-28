@@ -23,8 +23,6 @@
 #include <errno.h>
 #include <sys/stat.h>
 
-static uid_t myeuid;
-
 static void print_usage(const char *);
 
 static int fgetline(FILE *f, char *line, size_t len) {
@@ -153,13 +151,14 @@ static int adduser_command(int argc, char **argv) {
 			fputs("'.ssh' is not a directory\n", stderr);
 			return 1;
 		}
-		if(st.st_uid != myeuid) {
-			fprintf(stderr, "'.ssh' is not owned by sshout (%u != %u)\n", st.st_uid, myeuid);
+		uid_t myuid = getuid();
+		if(st.st_uid != myuid) {
+			fprintf(stderr, "'.ssh' is not owned by sshout (%u != %u)\n", st.st_uid, myuid);
 			return 1;
 		}
-		if(st.st_mode | S_IWOTH) {
+		if(st.st_mode & S_IWOTH) {
 			fputs("'.ssh' is global writable\n", stderr);
-			if(chmod(".ssh", st.st_mode | ~(S_IWOTH)) < 0) {
+			if(chmod(".ssh", st.st_mode & ~(S_IWOTH)) < 0) {
 				perror("chmod: .ssh");
 				return 1;
 			}
@@ -340,7 +339,7 @@ static struct subcommand {
 	int (*func)(int, char **);
 } commands[] = {
 #define SUBCOMMAND(N,U) { #N, U, N##_command }
-	SUBCOMMAND(adduser, "[-a <public-key>] [-f] <user-name>"),
+	SUBCOMMAND(adduser, "[-a <public-key-in-base64>] [-f] <user-name>"),
 	SUBCOMMAND(listuser, ""),
 	SUBCOMMAND(getmotd, ""),
 	SUBCOMMAND(setmotd, "[-m <message> | -d]"),
@@ -385,7 +384,7 @@ int main(int argc, char **argv) {
 		return -1;
 	}
 
-	myeuid = geteuid();
+	uid_t myeuid = geteuid();
 	if(myeuid == 0) {
 		if(setreuid(pw->pw_uid, pw->pw_uid) < 0) {
 			perror("setreuid");
