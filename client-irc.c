@@ -1,11 +1,11 @@
 /*
  * Copyright 2015-2018 Rivoreo
- * 
+ *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at your
  * option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
@@ -473,7 +473,8 @@ static void parse_irc_arg(const char *line, size_t len, int *argc, struct fixed_
 			if(colon && (colon == line + i + 1 || colon[-1] != ' ')) {
 				//syslog(LOG_INFO, "parse_irc_arg: malformed IRC line");
 				//return;
-				continue;
+				//continue;
+				colon = NULL;
 			}
 			size_t a_len = (colon ? (colon - 1 - line) : len) - i;
 			(*argc)++;
@@ -504,6 +505,7 @@ static void parse_irc_arg(const char *line, size_t len, int *argc, struct fixed_
 
 static void do_irc_line(int fd, const char *line, size_t len) {
 	//fprintf(stderr, "function: do_irc_line(%d, %p, %zu)\n", fd, line, len);
+	//syslog(LOG_DEBUG, "function: do_irc_line(%d, %p, %zu)", fd, line, len);
 	if(!len) return;
 	const char *prefix = NULL;
 	size_t prefix_len;
