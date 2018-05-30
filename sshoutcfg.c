@@ -120,32 +120,40 @@ static int remove_ssh_rc_file() {
 	return 0;
 }
 
-static int is_valid_key_type(const char *key, size_t type_len) {
+static enum key_types {
+	KEY_INVALID = -1,
+	KEY_RSA,
+	KEY_DSA,
+	KEY_ECDSA,
+	KEY_ED25519
+} get_key_type(const char *key, size_t type_len) {
 	switch(type_len) {
 		case 3:
-			if(memcmp(key, "RSA", 3) == 0 || memcmp(key, "DSA", 3) == 0) return 1;
-			return 0;
+			if(strncasecmp(key, "RSA", 3) == 0) return KEY_RSA;
+			if(strncasecmp(key, "DSA", 3) == 0) return KEY_DSA;
+			return KEY_INVALID;
 		case 5:
-			if(memcmp(key, "ECDSA", 5) == 0) return 1;
-			return 0;
+			if(strncasecmp(key, "ECDSA", 5) == 0) return KEY_ECDSA;
+			return KEY_INVALID;
 		case 7:
-			if(memcmp(key, "ED25519", 7) == 0) return 1;
-			else if(memcmp(key, "ssh-rsa", 7) == 0 || memcmp(key, "ssh-dss", 7) == 0) return 1;
-			return 0;
+			if(strncasecmp(key, "ED25519", 7) == 0) return KEY_ED25519;
+			if(memcmp(key, "ssh-rsa", 7) == 0) return KEY_RSA;
+			if(memcmp(key, "ssh-dss", 7) == 0) return KEY_DSA;
+			return KEY_INVALID;
 		case 11:
-			if(memcmp(key, "ssh-ed25519", 11) == 0) return 1;
-			return 0;
+			if(memcmp(key, "ssh-ed25519", 11) == 0) return KEY_ED25519;
+			return KEY_INVALID;
 		case 19:
 			if(memcmp(key, "ecdsa-sha2-nistp", 16) == 0) {
 				if(memcmp(key + 16, "256", 3) == 0 ||
 				   memcmp(key + 16, "384", 3) == 0 ||
 				   memcmp(key + 16, "521", 3) == 0) {
-					return 1;
+					return KEY_ECDSA;
 				}
 			}
-			return 0;
+			return KEY_INVALID;
 	}
-	return 0;
+	return KEY_INVALID;
 }
 
 static int get_length_and_type_string_length_of_key_in_base64(const char *key, size_t *base64_len, size_t *type_len, char *buffer, size_t buffer_size) {
@@ -211,28 +219,24 @@ static int adduser_command(int argc, char **argv) {
 	if(space) {
 		//int ok = 0;
 		size_t type_len = space - key;
-		if(!is_valid_key_type(key, type_len)) {
-#if 0
-			char key_type[type_len + 1];
-			memcpy(key_type, key, type_len);
-			key_type[type_len] = 0;
-			fprintf(stderr, "Invalid key type '%s'\n", key_type);
-#else
+		enum key_types key_type = get_key_type(key, type_len);
+		if(key_type == KEY_INVALID) {
 			*space = 0;
 			fprintf(stderr, "Invalid key type '%s'\n", key);
-#endif
 			return 1;
 		}
 		const char *base64 = space + 1;
 		char buffer[32];
 		size_t base64_len, inner_type_len;
 		if(get_length_and_type_string_length_of_key_in_base64(base64, &base64_len, &inner_type_len, buffer, sizeof buffer) < 0) return 1;
-		if(inner_type_len != type_len) {
-			fputs("Invalid key: key type didn't match\n", stderr);
+		char *inner_key_type_string = buffer + 4;
+		enum key_types inner_key_type = get_key_type(inner_key_type_string, inner_type_len);
+		if(inner_key_type == KEY_INVALID) {
+			inner_key_type_string[inner_type_len] = 0;
+			fprintf(stderr, "Invalid key type '%s'\n", inner_key_type_string);
 			return 1;
 		}
-		char *inner_key_type = buffer + 4;
-		if(memcmp(inner_key_type, key, type_len)) {
+		if(inner_key_type != key_type) {
 			fputs("Invalid key: key type didn't match\n", stderr);
 			return 1;
 		}
@@ -240,10 +244,11 @@ static int adduser_command(int argc, char **argv) {
 		char buffer[32];
 		size_t base64_len, type_len;
 		if(get_length_and_type_string_length_of_key_in_base64(key, &base64_len, &type_len, buffer, sizeof buffer) < 0) return 1;
-		char *key_type = buffer + 4;
-		if(!is_valid_key_type(key_type, type_len)) {
-			key_type[type_len] = 0;
-			fprintf(stderr, "Invalid key type '%s'\n", key_type);
+		char *key_type_string = buffer + 4;
+		enum key_types key_type = get_key_type(key_type_string, type_len);
+		if(key_type == KEY_INVALID) {
+			key_type_string[type_len] = 0;
+			fprintf(stderr, "Invalid key type '%s'\n", key_type_string);
 			return 1;
 		}
 		char *type_and_key_in_base64 = malloc(type_len + 1 + base64_len + 1);
@@ -251,7 +256,7 @@ static int adduser_command(int argc, char **argv) {
 			perror("malloc");
 			return 1;
 		}
-		memcpy(type_and_key_in_base64, key_type, type_len);
+		memcpy(type_and_key_in_base64, key_type_string, type_len);
 		type_and_key_in_base64[type_len] = ' ';
 		memcpy(type_and_key_in_base64 + type_len + 1, key, base64_len);
 		type_and_key_in_base64[type_len + 1 + base64_len] = 0;
