@@ -266,7 +266,7 @@ static int listuser_command(int argc, char **argv) {
 */
 	char *user_name, *public_key;
 	while(read_user_info(f, &user_name, &public_key) == 0) {
-		fprintf(stderr, "User \"%s\", Public key \"%s\"\n", user_name, public_key);
+		fprintf(stdout, "User \"%s\", Public key \"%s\"\n", user_name, public_key);
 		free(user_name);
 		free(public_key);
 	}

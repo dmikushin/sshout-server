@@ -194,7 +194,6 @@ static void command_pasteimage(int fd, int argc, char **argv) {
 			buffer->msg_to[receiver_len] = 0;
 			buffer->msg_type = SSHOUT_MSG_IMAGE;
 			buffer->msg_length = data_len;
-			fprintf(stderr, "data_len = %zu\n", data_len);
 			client_post_message(fd, buffer);
 		}
 		free(buffer);
