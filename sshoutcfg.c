@@ -14,6 +14,7 @@
 
 #include "common.h"
 #include "syncrw.h"
+#include "base64.h"
 #include <unistd.h>
 #include <fcntl.h>
 #include <pwd.h>
@@ -22,6 +23,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <arpa/inet.h>
 
 static void print_usage(const char *);
 
@@ -118,6 +120,49 @@ static int remove_ssh_rc_file() {
 	return 0;
 }
 
+static int is_valid_key_type(const char *key, size_t type_len) {
+	switch(type_len) {
+		case 3:
+			if(memcmp(key, "RSA", 3) == 0 || memcmp(key, "DSA", 3) == 0) return 1;
+			return 0;
+		case 5:
+			if(memcmp(key, "ECDSA", 5) == 0) return 1;
+			return 0;
+		case 7:
+			if(memcmp(key, "ED25519", 7) == 0) return 1;
+			else if(memcmp(key, "ssh-rsa", 7) == 0 || memcmp(key, "ssh-dss", 7) == 0) return 1;
+			return 0;
+		case 11:
+			if(memcmp(key, "ssh-ed25519", 11) == 0) return 1;
+			return 0;
+		case 19:
+			if(memcmp(key, "ecdsa-sha2-nistp", 16) == 0) {
+				if(memcmp(key + 16, "256", 3) == 0 ||
+				   memcmp(key + 16, "384", 3) == 0 ||
+				   memcmp(key + 16, "521", 3) == 0) {
+					return 1;
+				}
+			}
+			return 0;
+	}
+	return 0;
+}
+
+static int get_length_and_type_string_length_of_key_in_base64(const char *key, size_t *base64_len, size_t *type_len, char *buffer, size_t buffer_size) {
+	*base64_len = strlen(key);
+	int blob_len = base64_decode(key, *base64_len, buffer, buffer_size);
+	if(blob_len == -1) {
+		fputs("Invalid key: invalid BASE64 encoding\n", stderr);
+		return -1;
+	}
+	*type_len = ntohl(*(uint32_t *)buffer);
+	if(*type_len > blob_len - 4) {
+		fprintf(stderr, "Invalid key: key type string length %u too long\n", (unsigned int)*type_len);
+		return -1;
+	}
+	return 0;
+}
+
 static int adduser_command(int argc, char **argv) {
 	char *key = NULL;
 	int force = 0;
@@ -162,7 +207,57 @@ static int adduser_command(int argc, char **argv) {
 		}
 	}	
 
-	// TODO: verify the key format
+	char *space = strchr(key, ' ');
+	if(space) {
+		//int ok = 0;
+		size_t type_len = space - key;
+		if(!is_valid_key_type(key, type_len)) {
+#if 0
+			char key_type[type_len + 1];
+			memcpy(key_type, key, type_len);
+			key_type[type_len] = 0;
+			fprintf(stderr, "Invalid key type '%s'\n", key_type);
+#else
+			*space = 0;
+			fprintf(stderr, "Invalid key type '%s'\n", key);
+#endif
+			return 1;
+		}
+		const char *base64 = space + 1;
+		char buffer[32];
+		size_t base64_len, inner_type_len;
+		if(get_length_and_type_string_length_of_key_in_base64(base64, &base64_len, &inner_type_len, buffer, sizeof buffer) < 0) return 1;
+		if(inner_type_len != type_len) {
+			fputs("Invalid key: key type didn't match\n", stderr);
+			return 1;
+		}
+		char *inner_key_type = buffer + 4;
+		if(memcmp(inner_key_type, key, type_len)) {
+			fputs("Invalid key: key type didn't match\n", stderr);
+			return 1;
+		}
+	} else {
+		char buffer[32];
+		size_t base64_len, type_len;
+		if(get_length_and_type_string_length_of_key_in_base64(key, &base64_len, &type_len, buffer, sizeof buffer) < 0) return 1;
+		char *key_type = buffer + 4;
+		if(!is_valid_key_type(key_type, type_len)) {
+			key_type[type_len] = 0;
+			fprintf(stderr, "Invalid key type '%s'\n", key_type);
+			return 1;
+		}
+		char *type_and_key_in_base64 = malloc(type_len + 1 + base64_len + 1);
+		if(!type_and_key_in_base64) {
+			perror("malloc");
+			return 1;
+		}
+		memcpy(type_and_key_in_base64, key_type, type_len);
+		type_and_key_in_base64[type_len] = ' ';
+		memcpy(type_and_key_in_base64 + type_len + 1, key, base64_len);
+		type_and_key_in_base64[type_len + 1 + base64_len] = 0;
+		free(key);
+		key = type_and_key_in_base64;
+	}
 
 	struct stat st;
 	if(stat(".ssh", &st) == 0) {

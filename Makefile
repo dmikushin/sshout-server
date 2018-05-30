@@ -1,10 +1,10 @@
 ifeq ($(CC),cc)
 CC := gcc
 endif
-CFLAGS += -Wall -Wno-switch -O1
+CFLAGS += -Wall -Wno-switch -Wno-char-subscripts -O1
 #LIBS += 
 
-SSHOUTCFG_OBJCTS = sshoutcfg.o syncrw.o
+SSHOUTCFG_OBJCTS = base64.o sshoutcfg.o syncrw.o
 SSHOUTD_OBJECTS = api-packet.o client.o client-api.o client-cli.o client-irc.o local-packet.o main.o server.o syncrw.o
 SSHOUTD_LIBS = -lreadline
 
