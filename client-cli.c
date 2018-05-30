@@ -28,6 +28,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <locale.h>
+#include <sys/wait.h>
 
 static int use_readline;
 static int client_log_only;
@@ -129,6 +130,87 @@ static void command_motd(int fd, int argc, char **argv) {
 	print_motd(0);
 }
 
+static void command_pasteimage(int fd, int argc, char **argv) {
+	if(argc < 2) {
+		fprintf(stderr, "Usage: %s <user>\n", argv[0]);
+		return;
+	}
+	int pipe_fds[2];
+	if(pipe(pipe_fds) < 0) {
+		perror("pipe");
+		return;
+	}
+	pid_t pid = fork();
+	if(pid == -1) {
+		perror("fork");
+		close(pipe_fds[0]);
+		close(pipe_fds[1]);
+		return;
+	}
+	if(pid) {
+		int status;
+		close(pipe_fds[1]);
+		struct local_message *buffer = NULL;
+		//size_t local_msg_len = sizeof(struct local_message);
+		size_t local_msg_len;
+		size_t data_len = 0;
+		int s;
+		do {
+			//local_msg_len += 256 * 1024;
+			local_msg_len = sizeof(struct local_message) + data_len + 256 * 1024;
+			if(local_msg_len > 1024 * 1024) {
+				fputs("Image too large\n", stderr);
+				kill(pid, SIGKILL);
+				break;
+			}
+			struct local_message *new_buffer = realloc(buffer, local_msg_len);
+			if(!new_buffer) {
+				fputs("Failed to receive image, out of memory\n", stderr);
+				kill(pid, SIGKILL);
+				break;
+			}
+			buffer = new_buffer;
+			s = sync_read(pipe_fds[0], buffer->msg + data_len, 256 * 1024);
+			if(s < 0) {
+				perror("read");
+				kill(pid, SIGKILL);
+				break;
+			}
+		} while(s && (data_len += s));
+		close(pipe_fds[0]);
+		while(waitpid(pid, &status, 0) < 0) {
+			if(errno == EINTR) continue;
+			perror("waitpid");
+			free(buffer);
+			return;
+		}
+		if(WIFSIGNALED(status)) {
+			fprintf(stderr, "child process terminated by signal %d\n", WTERMSIG(status));
+		}
+		if(status == 0) {
+			size_t receiver_len = strlen(argv[1]);
+			if(receiver_len > USER_NAME_MAX_LENGTH - 1) receiver_len = USER_NAME_MAX_LENGTH - 1;
+			memcpy(buffer->msg_to, argv[1], receiver_len);
+			buffer->msg_to[receiver_len] = 0;
+			buffer->msg_type = SSHOUT_MSG_IMAGE;
+			buffer->msg_length = data_len;
+			fprintf(stderr, "data_len = %zu\n", data_len);
+			client_post_message(fd, buffer);
+		}
+		free(buffer);
+	} else {
+		close(pipe_fds[0]);
+		close(1);
+		if(dup2(pipe_fds[1], 1) == -1) {
+			perror("dup2");
+			_exit(1);
+		}
+		execlp("xclip", "xclip", "-o", "-selection", "clipboard", "-target", "image/jpeg", "-verbose", NULL);
+		perror("xclip");
+		_exit(127);
+	}
+}
+
 static void command_quit(int fd, int argc, char **argv) {
 	close(fd);
 	exit(0);
@@ -147,6 +229,7 @@ static struct command {
 	{ "msg", "<user> <message> [<message> ...]", command_msg },
 	{ "tell", "<user> <message> [<message> ...]", command_msg },
 	{ "motd", "", command_motd },
+	{ "pasteimage", "<user>", command_pasteimage },
 	{ "quit", "", command_quit },
 	{ "help", "", command_help },
 	{ NULL, NULL, NULL }
