@@ -1,6 +1,8 @@
 ifeq ($(CC),cc)
 CC := gcc
 endif
+INSTALL ?= install
+
 CFLAGS += -Wall -Wno-switch -Wno-char-subscripts -O1
 #LIBS += 
 
@@ -31,6 +33,6 @@ install:	all
 	[ -d "$(SBINDIR)" ] || mkdir -p "$(SBINDIR)"
 	[ -d "$(DATADIR)" ] || mkdir -p "$(DATADIR)"
 	[ -d "$(MANDIR)/man8" ] || mkdir -p "$(MANDIR)/man8"
-	cp sshoutd "$(LIBEXECDIR)/"
-	cp sshoutcfg "$(SBINDIR)/"
-	cp sshoutcfg.8 "$(MANDIR)/man8/"
+	$(INSTALL) -m 755 sshoutd "$(LIBEXECDIR)/"
+	$(INSTALL) -m 755 sshoutcfg "$(SBINDIR)/"
+	$(INSTALL) -m 644 sshoutcfg.8 "$(MANDIR)/man8/"
