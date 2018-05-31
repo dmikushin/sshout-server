@@ -42,7 +42,64 @@ static int fgetline(FILE *f, char *line, size_t len) {
 	return i;
 }
 
-static int read_user_info(FILE *f, char **name, char **public_key) {
+static enum key_types {
+	KEY_INVALID = -1,
+	KEY_RSA,
+	KEY_DSA,
+	KEY_ECDSA,
+	KEY_ED25519
+} get_key_type(const char *key, size_t type_len) {
+	switch(type_len) {
+		case 3:
+			if(strncasecmp(key, "RSA", 3) == 0) return KEY_RSA;
+			if(strncasecmp(key, "DSA", 3) == 0) return KEY_DSA;
+			return KEY_INVALID;
+		case 5:
+			if(strncasecmp(key, "ECDSA", 5) == 0) return KEY_ECDSA;
+			return KEY_INVALID;
+		case 7:
+			if(strncasecmp(key, "ED25519", 7) == 0) return KEY_ED25519;
+			if(memcmp(key, "ssh-rsa", 7) == 0) return KEY_RSA;
+			if(memcmp(key, "ssh-dss", 7) == 0) return KEY_DSA;
+			return KEY_INVALID;
+		case 11:
+			if(memcmp(key, "ssh-ed25519", 11) == 0) return KEY_ED25519;
+			return KEY_INVALID;
+		case 19:
+			if(memcmp(key, "ecdsa-sha2-nistp", 16) == 0) {
+				if(memcmp(key + 16, "256", 3) == 0 ||
+				   memcmp(key + 16, "384", 3) == 0 ||
+				   memcmp(key + 16, "521", 3) == 0) {
+					return KEY_ECDSA;
+				}
+			}
+			return KEY_INVALID;
+	}
+	return KEY_INVALID;
+}
+
+static int get_length_and_type_string_length_of_key_in_base64(const char *key, size_t *base64_len, size_t *type_len, char *buffer, size_t buffer_size) {
+#if 0
+	const char *space = strchr(key, ' ');
+	*base64_len = space ? space - key : strlen(key);
+#else
+	*base64_len = 0;
+	while(key[*base64_len] && key[*base64_len] != ' ') (*base64_len)++;
+#endif
+	int blob_len = base64_decode(key, *base64_len, buffer, buffer_size);
+	if(blob_len == -1) {
+		fputs("Invalid key: invalid BASE64 encoding\n", stderr);
+		return -1;
+	}
+	*type_len = ntohl(*(uint32_t *)buffer);
+	if(*type_len > blob_len - 4) {
+		fprintf(stderr, "Invalid key: key type string length %u too long\n", (unsigned int)*type_len);
+		return -1;
+	}
+	return 0;
+}
+
+static int read_user_info(FILE *f, char **name, char **public_key, char **comment, enum key_types *key_type) {
 	int i = 0;
 	char line[4096];
 	while(1) {
@@ -85,6 +142,34 @@ static int read_user_info(FILE *f, char **name, char **public_key) {
 			fprintf(stderr, "Warning: empty user name in file " USER_LIST_FILE " line %u\n", i);
 			continue;
 		}
+		char *type_string = space + 1;
+		space = strchr(type_string, ' ');
+		if(!space) {
+			fprintf(stderr, "Warning: syntax error in file " USER_LIST_FILE " line %u\n", i);
+			continue;
+		}
+		size_t type_len = space - type_string;
+		enum key_types key_type_1 = get_key_type(type_string, type_len);
+		if(key_type_1 == KEY_INVALID) {
+			*space = 0;
+			fprintf(stderr, "Warning: invalid key type '%s' in file " USER_LIST_FILE " line %u\n", type_string, i);
+			continue;
+		}
+		const char *base64 = space + 1;
+		char buffer[32];
+		size_t base64_len, inner_type_len;
+		if(get_length_and_type_string_length_of_key_in_base64(base64, &base64_len, &inner_type_len, buffer, sizeof buffer) < 0) return 1;
+		char *inner_key_type_string = buffer + 4;
+		enum key_types key_type_2 = get_key_type(inner_key_type_string, inner_type_len);
+		if(key_type_2 == KEY_INVALID) {
+			inner_key_type_string[inner_type_len] = 0;
+			fprintf(stderr, "Warning: invalid key type '%s' from BASE64 in file " USER_LIST_FILE " line %u\n", inner_key_type_string, i);
+			continue;
+		}
+		if(key_type_2 != key_type_1) {
+			fprintf(stderr, "Warning: key type didn't match in file " USER_LIST_FILE " line %u; key ignored\n", i);
+			continue;
+		}
 		*name = malloc(user_name_len + 1);
 		if(!*name) {
 			fprintf(stderr, "Error: allocate %zu bytes failed when processing file " USER_LIST_FILE " line %u\n", user_name_len + 1, i);
@@ -92,11 +177,23 @@ static int read_user_info(FILE *f, char **name, char **public_key) {
 		}
 		memcpy(*name, q1, user_name_len);
 		(*name)[user_name_len] = 0;
-		*public_key = strdup(space + 1);
+		*public_key = malloc(type_len + 1 + base64_len + 1);
 		if(!*public_key) {
 			fprintf(stderr, "Error: out of memory when processing file " USER_LIST_FILE " line %u\n", i);
 			return -1;
 		}
+		memcpy(*public_key, type_string, type_len + 1 + base64_len);
+		(*public_key)[type_len + 1 + base64_len] = 0;
+		if(comment) {
+			if(base64[base64_len] == ' ') {
+				*comment = strdup(base64 + base64_len + 1);
+				if(!*comment) {
+					fprintf(stderr, "Error: out of memory when processing file " USER_LIST_FILE " line %u\n", i);
+					return -1;
+				}
+			} else *comment = NULL;
+		}
+		if(key_type) *key_type = key_type_1;
 		return 0;
 	}
 }
@@ -115,57 +212,6 @@ static int remove_ssh_rc_file() {
 	fputs("sshout shouldn't have a SSH RC file '.ssh/rc'; removing\n", stderr);
 	if(unlink(".ssh/rc") < 0) {
 		perror("unlink: .ssh/rc");
-		return -1;
-	}
-	return 0;
-}
-
-static enum key_types {
-	KEY_INVALID = -1,
-	KEY_RSA,
-	KEY_DSA,
-	KEY_ECDSA,
-	KEY_ED25519
-} get_key_type(const char *key, size_t type_len) {
-	switch(type_len) {
-		case 3:
-			if(strncasecmp(key, "RSA", 3) == 0) return KEY_RSA;
-			if(strncasecmp(key, "DSA", 3) == 0) return KEY_DSA;
-			return KEY_INVALID;
-		case 5:
-			if(strncasecmp(key, "ECDSA", 5) == 0) return KEY_ECDSA;
-			return KEY_INVALID;
-		case 7:
-			if(strncasecmp(key, "ED25519", 7) == 0) return KEY_ED25519;
-			if(memcmp(key, "ssh-rsa", 7) == 0) return KEY_RSA;
-			if(memcmp(key, "ssh-dss", 7) == 0) return KEY_DSA;
-			return KEY_INVALID;
-		case 11:
-			if(memcmp(key, "ssh-ed25519", 11) == 0) return KEY_ED25519;
-			return KEY_INVALID;
-		case 19:
-			if(memcmp(key, "ecdsa-sha2-nistp", 16) == 0) {
-				if(memcmp(key + 16, "256", 3) == 0 ||
-				   memcmp(key + 16, "384", 3) == 0 ||
-				   memcmp(key + 16, "521", 3) == 0) {
-					return KEY_ECDSA;
-				}
-			}
-			return KEY_INVALID;
-	}
-	return KEY_INVALID;
-}
-
-static int get_length_and_type_string_length_of_key_in_base64(const char *key, size_t *base64_len, size_t *type_len, char *buffer, size_t buffer_size) {
-	*base64_len = strlen(key);
-	int blob_len = base64_decode(key, *base64_len, buffer, buffer_size);
-	if(blob_len == -1) {
-		fputs("Invalid key: invalid BASE64 encoding\n", stderr);
-		return -1;
-	}
-	*type_len = ntohl(*(uint32_t *)buffer);
-	if(*type_len > blob_len - 4) {
-		fprintf(stderr, "Invalid key: key type string length %u too long\n", (unsigned int)*type_len);
 		return -1;
 	}
 	return 0;
@@ -307,7 +353,7 @@ static int adduser_command(int argc, char **argv) {
 	int existing_count = 0;
 	{
 		char *user_name, *public_key;
-		while(read_user_info(f, &user_name, &public_key) == 0) {
+		while(read_user_info(f, &user_name, &public_key, NULL, NULL) == 0) {
 			if(strcmp(key, public_key) == 0) {
 				free(key);
 				fprintf(stderr, "This public key is already used by user %s.\n"
@@ -364,11 +410,14 @@ static int listuser_command(int argc, char **argv) {
 		fprintf(stderr, "line = \"%s\"\n", line);
 	}
 */
-	char *user_name, *public_key;
-	while(read_user_info(f, &user_name, &public_key) == 0) {
-		fprintf(stdout, "User \"%s\", Public key \"%s\"\n", user_name, public_key);
+	char *user_name, *public_key, *comment;
+	while(read_user_info(f, &user_name, &public_key, &comment, NULL) == 0) {
+		printf("User \"%s\", Public key \"%s\"", user_name, public_key);
+		if(comment) printf(", Comment \"%s\"", comment);
+		putchar('\n');
 		free(user_name);
 		free(public_key);
+		free(comment);
 	}
 	return 0;
 }
