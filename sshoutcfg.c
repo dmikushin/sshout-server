@@ -24,6 +24,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <arpa/inet.h>
+#include <mhash.h>
 
 static void print_usage(const char *);
 
@@ -394,6 +395,25 @@ static int adduser_command(int argc, char **argv) {
 }
 
 static int listuser_command(int argc, char **argv) {
+	hashid hash_type = -1;
+	while(1) {
+		int c = getopt(argc, argv, "h:");
+		if(c == -1) break;
+		switch(c) {
+			case 'h':
+				if(strcmp(optarg, "md5") == 0) hash_type = MHASH_MD5;
+				else if(strcmp(optarg, "sha256") == 0) hash_type = MHASH_SHA256;
+				else {
+					fprintf(stderr, "Invalid hash algorithm '%s'\n", optarg);
+					return -1;
+				}
+				break;
+			case '?':
+				print_usage(argv[0]);
+				return -1;
+		}
+	}
+
 	if(remove_ssh_rc_file() < 0) {
 		fputs("Warning: configuration error left unresolved\n", stderr);
 	}
@@ -412,7 +432,42 @@ static int listuser_command(int argc, char **argv) {
 */
 	char *user_name, *public_key, *comment;
 	while(read_user_info(f, &user_name, &public_key, &comment, NULL) == 0) {
-		printf("User \"%s\", Public key \"%s\"", user_name, public_key);
+		//printf("User \"%s\", Public key \"%s\"", user_name, public_key);
+		printf("User \"%s\", ", user_name);
+		if(hash_type == -1) {
+			printf("Public key \"%s\"", public_key);
+		} else {
+			MHASH h = mhash_init(hash_type);
+			if(h == MHASH_FAILED) {
+				fputs("Cannot start hash public key\n", stderr);
+				return 1;
+			}
+			fputs("Public key fingerprint ", stdout);
+			char *space = strchr(public_key, ' ');
+			if(space) {
+				char *base64 = space + 1;
+				int len = strlen(base64);
+				char buffer[len];
+				len = base64_decode(base64, len, buffer, sizeof buffer);
+				if(len < 0) {
+					fputs("Invalid BASE64 encoding\n", stderr);
+					return 1;
+				}
+				mhash(h, buffer, len);
+				unsigned char *hash = mhash_end(h);
+				unsigned int i = 0, hash_len = mhash_get_block_size(hash_type);
+				if(hash_type == MHASH_SHA256) {
+					char buffer[44];
+					len = base64_encode(hash, hash_len, buffer, sizeof buffer, 0);
+					fputs(len < 0 ? "Cannot encode SHA-256 fingerprint" : buffer, stdout);
+				} else while(i < hash_len) {
+					if(i) putchar(':');
+					printf("%.2hhx", hash[i++]);
+				}
+			} else {
+				fputs("Invalid key", stdout);
+			}
+		}
 		if(comment) printf(", Comment \"%s\"", comment);
 		putchar('\n');
 		free(user_name);
@@ -522,7 +577,7 @@ static struct subcommand {
 } commands[] = {
 #define SUBCOMMAND(N,U) { #N, U, N##_command }
 	SUBCOMMAND(adduser, "[-a <public-key-in-base64>] [-f] <user-name>"),
-	SUBCOMMAND(listuser, ""),
+	SUBCOMMAND(listuser, "[-h {md5|sha256}]"),
 	SUBCOMMAND(getmotd, ""),
 	SUBCOMMAND(setmotd, "[-m <message> | -d]"),
 #undef SUBCOMMAND

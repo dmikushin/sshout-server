@@ -4,7 +4,7 @@ sshoutcfg - Configuring Secure Shout Host Oriented Unified Talk server side
 .SH SYNOPSIS
 .nf
 sshoutcfg adduser [-a <public-key>] [-f] <user-name>
-sshoutcfg listuser
+sshoutcfg listuser [-h {md5|sha256}]
 sshoutcfg getmotd
 sshoutcfg setmotd [-m <message> | -d]
 .fi
@@ -20,7 +20,7 @@ This tool must be run under sshout user account or root (UID=0).
 adduser [-a <public-key>] [-f] <user-name>
 .sp
 .RS 4n
-Add an new user with his/her public key to SSHOUT user list, or add another key for an existing user. The key string is the SSH2 public key, which is in form '<key-type> <base64-encoded-key>'; for more details, see sshd(8).
+Add an new user with his/her public key to SSHOUT user list, or add another key for an existing user. The key string is the SSH2 public key, which is in form '<key-type> <base64-encoded-key> [<comment>]', or omit \fI<key-type>\fR and \fI<comment>\fR, just '<base64-encoded-key>'; see sshd(8) for more details on SSH2 public key format.
 .sp
 Options:
 .TP
@@ -31,16 +31,16 @@ Specify the public key for user; if this option is not specified, public key str
 Force add key; add new key for existing user without ask.
 .RE
 
-listuser
+listuser [-h {md5|sha256}]
 .sp
 .RS 4n
-List registered user names and publib keys. Doing this action also verifys the format of the authorized_keys file.
+List registered user names and publib keys. Doing this action also verifys the format of the authorized_keys file. Key fingerprints will be printed instead of original public keys, if option '-h' is used; the available hash algorithms used to hash public keys are \fImd5\fR and \fIsha256\fR.
 .RE
 
 getmotd
 .sp
 .RS 4n
-Print current MOTD to stdout
+Print current MOTD to stdout.
 .RE
 
 setmotd [-m <message> | -d]
@@ -51,7 +51,7 @@ Set a new MOTD, or delete the existing MOTD if option '-d' is specified.
 Options:
 .TP
 .B "-m <message>"
-Set MOTD to <message>; if this option is not specified, stdin will be read to get the message.
+Set MOTD to \fI<message>\fR; if this option is not specified, stdin will be read to get the message.
 .TP
 .B -d
 Delete existing MOTD if any. This option cannot be used together with '-m'
@@ -61,10 +61,9 @@ Delete existing MOTD if any. This option cannot be used together with '-m'
 sshd(8), ssh-keygen(1)
 .SH FILES
 (sshout home)/.ssh/authorized_keys
+.br
 (sshout home)/motd
 .SH BUGS
 .PP
-This tool is currently does not verify the format of new key string.
-.PP
-The 'deluser' subcommand should be implemented.
+The 'rmuser' subcommand should be implemented.
 
