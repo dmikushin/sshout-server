@@ -56,22 +56,28 @@ int base64_decode(const char *in_buffer, size_t in_len, void *out_buffer, size_t
 					 iter++; // increment the number of iteration
 					 /* If the buffer is full, split it into bytes */
 					 if(iter == 4) {
-						 if((len += 3) > buffer_size) return len; /* buffer overflow */
-						 *(out_p++) = (buf >> 16) & 255;
-						 *(out_p++) = (buf >> 8) & 255;
-						 *(out_p++) = buf & 255;
-						 buf = 0; iter = 0;
+						if(len + 1 > buffer_size) return len;
+						*(out_p++) = (buf >> 16) & 255;
+						if(++len + 1 > buffer_size) return len;
+						*(out_p++) = (buf >> 8) & 255;
+						if(++len + 1 > buffer_size) return len;
+						*(out_p++) = buf & 255;
+						len++;
+						buf = 0; iter = 0;
 					 }   
 		}
 	}
 
 	if(iter == 3) {
-		if((len += 2) > buffer_size) return len; /* buffer overflow */
+		if(len + 1 > buffer_size) return len;
 		*(out_p++) = (buf >> 10) & 255;
+		if(++len + 1 > buffer_size) return len;
 		*(out_p++) = (buf >> 2) & 255;
+		len++;
 	} else if(iter == 2) {
-		if(++len > buffer_size) return len; /* buffer overflow */
+		if(len + 1 > buffer_size) return len;
 		*(out_p++) = (buf >> 4) & 255;
+		len++;
 	}
 
 	return len;
