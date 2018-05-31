@@ -32,7 +32,7 @@ static void syslog_perror(const char *ident) {
 }
 
 static void broadcast_user_state(const char *user_name, int on, const int *client_fds) {
-	int i = 0;
+	unsigned int i = 0;
 	size_t packet_len = sizeof(struct local_packet) + USER_NAME_MAX_LENGTH;
 	struct local_packet *packet = malloc(packet_len);
 	if(!packet) {
@@ -55,7 +55,7 @@ static void broadcast_user_state(const char *user_name, int on, const int *clien
 
 static int user_online(int id, const char *user_name, const char *host_name, int *index, const int *client_fds) {
 	int found_dup = 0;
-	int i = 0;
+	unsigned int i = 0;
 	while(online_users[i].id != -1) {
 		if(!found_dup && strcmp(online_users[i].user_name, user_name) == 0) found_dup = 1;
 		if(++i >= sizeof online_users / sizeof *online_users) {
@@ -78,7 +78,7 @@ static int user_online(int id, const char *user_name, const char *host_name, int
 
 static void user_offline(int id, const int *client_fds) {
 	int found_dup = 0;
-	int i = 0;
+	unsigned int i = 0;
 	while(online_users[i].id != id) {
 		if(++i >= sizeof online_users / sizeof *online_users) return;
 	}
@@ -98,7 +98,7 @@ static void user_offline(int id, const int *client_fds) {
 
 static int send_online_users(int receiver_id, int receiver_fd) {
 	int r = 0;
-	int i = 0, count = 0;
+	unsigned int i = 0, count = 0;
 	do {
 		if(online_users[i].id != -1) count++;
 	} while(++i < sizeof online_users / sizeof *online_users);
@@ -131,7 +131,7 @@ static int send_online_users(int receiver_id, int receiver_fd) {
 
 static int dispatch_message(const struct local_online_user *sender, const struct local_message *msg, const int *client_fds) {
 	int r = 0;
-	int i = 0;
+	unsigned int i = 0;
 	int found = 0;
 	int is_broadcast = strcmp(msg->msg_to, GLOBAL_NAME) == 0;
 	size_t packet_len = sizeof(struct local_packet) + sizeof(struct local_message) + msg->msg_length;

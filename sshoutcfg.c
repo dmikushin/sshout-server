@@ -15,6 +15,7 @@
 #include "common.h"
 #include "syncrw.h"
 #include "base64.h"
+#include "misc.h"
 #include <unistd.h>
 #include <fcntl.h>
 #include <pwd.h>
@@ -78,8 +79,12 @@ static int get_length_and_type_string_length_of_key_in_base64(const char *key, s
 		fputs("Invalid key: invalid BASE64 encoding\n", stderr);
 		return -1;
 	}
+	if(blob_len < 4) {
+		fputs("Invalid key: too short\n", stderr);
+		return -1;
+	}
 	*type_len = ntohl(*(uint32_t *)buffer);
-	if(*type_len > blob_len - 4) {
+	if(*type_len > (size_t)blob_len - 4) {
 		fprintf(stderr, "Invalid key: key type string length %u too long\n", (unsigned int)*type_len);
 		return -1;
 	}
@@ -234,6 +239,10 @@ static int adduser_command(int argc, char **argv) {
 		return -1;
 	}
 	const char *user = argv[optind];
+	if(!is_valid_user_name(user)) {
+		fprintf(stderr, "Invalid user name '%s'\n", user);
+		return 1;
+	}
 	if(!key) {
 		key = malloc(4096);
 		if(!key) {
@@ -420,7 +429,7 @@ static int listuser_command(int argc, char **argv) {
 	while(read_user_info(f, &user_name, &public_key, &comment, NULL) == 0) {
 		//printf("User \"%s\", Public key \"%s\"", user_name, public_key);
 		printf("User \"%s\", ", user_name);
-		if(hash_type == -1) {
+		if((int)hash_type == -1) {
 			printf("Public key \"%s\"", public_key);
 		} else {
 			MHASH h = mhash_init(hash_type);

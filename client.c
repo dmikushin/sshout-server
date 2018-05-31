@@ -14,6 +14,7 @@
 
 #include "common.h"
 #include "client.h"
+#include "misc.h"
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
@@ -122,6 +123,10 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 	const char *client_address = getenv("SSH_CLIENT");
 	if(!client_address) {
 		fputs("client mode can only be used in a SSH session\n", stderr);
+		return 1;
+	}
+	if(!is_valid_user_name(user_name)) {
+		fprintf(stderr, "Invalid user name '%s'\n", user_name);
 		return 1;
 	}
 	const char *command = getenv("SSH_ORIGINAL_COMMAND");
