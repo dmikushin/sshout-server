@@ -66,6 +66,16 @@ static enum key_types {
 	return KEY_INVALID;
 }
 
+static const char *key_type_to_string(enum key_types t) {
+	switch(t) {
+		case KEY_RSA: return "RSA";
+		case KEY_DSA: return "DSA";
+		case KEY_ECDSA: return "ECDSA";
+		case KEY_ED25519: return "ED25519";
+		default: return NULL;
+	}
+}
+
 static int get_length_and_type_string_length_of_key_in_base64(const char *key, size_t *base64_len, size_t *type_len, char *buffer, size_t buffer_size) {
 #if 0
 	const char *space = strchr(key, ' ');
@@ -437,30 +447,39 @@ static int listuser_command(int argc, char **argv) {
 				fputs("Cannot start hash public key\n", stderr);
 				return 1;
 			}
-			fputs("Public key fingerprint ", stdout);
 			char *space = strchr(public_key, ' ');
-			if(space) {
-				char *base64 = space + 1;
-				int len = strlen(base64);
-				char buffer[len];
-				len = base64_decode(base64, len, buffer, sizeof buffer);
-				if(len < 0) {
-					fputs("Invalid BASE64 encoding\n", stderr);
-					return 1;
-				}
-				mhash(h, buffer, len);
-				unsigned char *hash = mhash_end(h);
-				unsigned int i = 0, hash_len = mhash_get_block_size(hash_type);
-				if(hash_type == MHASH_SHA256) {
-					char buffer[44];
-					len = base64_encode(hash, hash_len, buffer, sizeof buffer, 0);
-					fputs(len < 0 ? "Cannot encode SHA-256 fingerprint" : buffer, stdout);
-				} else while(i < hash_len) {
-					if(i) putchar(':');
-					printf("%.2hhx", hash[i++]);
-				}
-			} else {
-				fputs("Invalid key", stdout);
+			if(!space) {
+				fputs("Invalid key\n", stderr);
+				return 1;
+			}
+			char *base64 = space + 1;
+			int len = strlen(base64);
+			char buffer[len];
+			len = base64_decode(base64, len, buffer, sizeof buffer);
+			if(len < 0) {
+				fputs("Invalid BASE64 encoding\n", stderr);
+				return 1;
+			}
+			if(len < 8) {
+				fputs("Invalid key\n", stderr);
+				return 1;
+			}
+			size_t type_len = ntohl(*(uint32_t *)buffer);
+			if(type_len > len - 4) {
+				fputs("Invalid key\n", stderr);
+				return 1;
+			}
+			printf("Public key fingerprint %s ", key_type_to_string(get_key_type(buffer + 4, type_len)));
+			mhash(h, buffer, len);
+			unsigned char *hash = mhash_end(h);
+			unsigned int i = 0, hash_len = mhash_get_block_size(hash_type);
+			if(hash_type == MHASH_SHA256) {
+				char buffer[44];
+				len = base64_encode(hash, hash_len, buffer, sizeof buffer, 0);
+				fputs(len < 0 ? "Cannot encode SHA-256 fingerprint" : buffer, stdout);
+			} else while(i < hash_len) {
+				if(i) putchar(':');
+				printf("%.2hhx", hash[i++]);
 			}
 		}
 		if(comment) printf(", Comment \"%s\"", comment);
