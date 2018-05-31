@@ -12,6 +12,8 @@
  * more details.
  */
 
+#ifdef ENABLE_IRC_FRONTEND
+
 #include "common.h"
 #include "client.h"
 #include "irc.h"
@@ -690,3 +692,5 @@ void client_irc_get_actions(struct client_frontend_actions *a) {
 	a->do_after_signal = NULL;
 	a->do_tick = NULL;
 }
+
+#endif

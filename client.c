@@ -129,7 +129,9 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 		if(strcmp(command, "cli") == 0) remote_mode = REMOTE_MODE_CLI;
 		else if(strcmp(command, "api") == 0) remote_mode = REMOTE_MODE_API;
 		else if(strcmp(command, "log") == 0) remote_mode = REMOTE_MODE_LOG;
+#ifdef ENABLE_IRC_FRONTEND
 		else if(strcmp(command, "irc") == 0) remote_mode = REMOTE_MODE_IRC;
+#endif
 		else {
 			fprintf(stderr, "Command '%s' is not recognized\n", command);
 			return 1;
@@ -176,9 +178,11 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 		case REMOTE_MODE_LOG:
 			client_cli_get_actions(&actions, 1);
 			break;
+#ifdef ENABLE_IRC_FRONTEND
 		case REMOTE_MODE_IRC:
 			client_irc_get_actions(&actions);
 			break;
+#endif
 	}
 	actions.init_io(user_name);
 	local_socket = fd;
