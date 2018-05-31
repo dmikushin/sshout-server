@@ -4,8 +4,8 @@ endif
 CFLAGS += -Wall -Wno-switch -Wno-char-subscripts -O1
 #LIBS += 
 
-SSHOUTCFG_OBJCTS = base64.o sshoutcfg.o syncrw.o
-SSHOUTD_OBJECTS = api-packet.o client.o client-api.o client-cli.o client-irc.o local-packet.o main.o server.o syncrw.o
+SSHOUTCFG_OBJCTS = base64.o file-helpers.o sshoutcfg.o syncrw.o
+SSHOUTD_OBJECTS = api-packet.o client.o client-api.o client-cli.o client-irc.o file-helpers.o local-packet.o main.o server.o syncrw.o
 SSHOUTCFG_LIBS = -lmhash
 SSHOUTD_LIBS = -lreadline
 

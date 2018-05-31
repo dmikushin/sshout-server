@@ -6,6 +6,7 @@
 #define USER_LIST_FILE ".ssh/authorized_keys"
 #define HOST_NAME_MAX_LENGTH 128
 #define SSHOUT_MOTD_FILE "motd"
+#define SSHOUT_USERS_PREFERENCES_DIR "users-preferences"
 
 #include <stdint.h>
 #include <sys/types.h>

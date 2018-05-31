@@ -23,16 +23,19 @@
 #include <readline/history.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include "file-helpers.h"
 #include <termios.h>
 #include <time.h>
 #include <errno.h>
 #include <signal.h>
 #include <locale.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 
 static int use_readline;
 static int client_log_only;
-static int option_alarm = 0;
+static FILE *preference_file;
+static int option_alert = 0;
 
 static void print_with_time(time_t t, int redisplay_input, const char *format, ...) {
 	va_list ap;
@@ -40,7 +43,7 @@ static void print_with_time(time_t t, int redisplay_input, const char *format, .
 	if(t == -1) t = time(NULL);
 	localtime_r(&t, &tm);
 	if(!client_log_only) {
-		if(option_alarm) putchar('\a');
+		if(option_alert) putchar('\a');
 		putchar('\r');
 	}
 	printf("[%.2d:%.2d:%.2d] ", tm.tm_hour, tm.tm_min, tm.tm_sec);
@@ -54,21 +57,53 @@ static void print_with_time(time_t t, int redisplay_input, const char *format, .
 	}
 }
 
+static void write_preference(const char *name, const char *value) {
+	if(!preference_file) return;
+	if(fseek(preference_file, 0, SEEK_SET) < 0) return;
+	size_t name_len = strlen(name);
+	size_t value_len = strlen(value);
+	char name_equal[name_len + 2];
+	memcpy(name_equal, name, name_len);
+	name_equal[name_len] = '=';
+	name_equal[name_len + 1] = 0;
+	char buffer[256];
+	while(1) {
+		int len = fgetline(preference_file, buffer, sizeof buffer);
+		if(len == -1) break;
+		if(len == -2) continue;
+		if(len == 0 || *buffer == '#') continue;
+		if(strncmp(buffer, name_equal, name_len + 1) == 0) {
+			if(len == name_len + 1 + value_len) {
+				if(fseek(preference_file, -1 - value_len, SEEK_CUR) < 0) return;
+				fputs(value, preference_file);
+				return;
+			} else {
+				if(fbackwardoverwrite(preference_file, len + 1) < 0) return;
+				if(fseek(preference_file, 0, SEEK_END) < 0) return;
+				break;
+			}
+		}
+	}
+	if(fseek(preference_file, -1, SEEK_CUR) == 0 && fgetc(preference_file) != '\n') fputc('\n', preference_file);
+	fprintf(preference_file, "%s=%s\n", name, value);
+}
+
 static void command_who(int fd, int argc, char **argv) {
 	if(client_send_request_get_online_users(fd) < 0) {
 		perror("who: write");
 	}
 }
 
-static void command_alarm(int fd, int argc, char **argv) {
+static void command_alert(int fd, int argc, char **argv) {
 	if(argc != 2) {
 usage:
 		fprintf(stderr, "Usage: %s off|on\n", argv[0]);
 		return;
 	}
-	if(strcmp(argv[1], "off") == 0) option_alarm = 0;
-	else if(strcmp(argv[1], "on") == 0) option_alarm = 1;
+	if(strcmp(argv[1], "off") == 0) option_alert = 0;
+	else if(strcmp(argv[1], "on") == 0) option_alert = 1;
 	else goto usage;
+	write_preference("alert", option_alert ? "1" : "0");
 }
 
 static void command_msg(int fd, int argc, char **argv) {
@@ -224,7 +259,8 @@ static struct command {
 } command_list[] = {
 	{ "who", "", command_who },
 	{ "list", "", command_who },
-	{ "alarm", "off|on", command_alarm },
+	{ "alert", "off|on", command_alert },
+	{ "bell", "off|on", command_alert },
 	{ "msg", "<user> <message> [<message> ...]", command_msg },
 	{ "tell", "<user> <message> [<message> ...]", command_msg },
 	{ "motd", "", command_motd },
@@ -467,6 +503,46 @@ static void client_cli_do_after_signal() {
 	client_cli_do_tick();
 }
 
+static void open_preference(const char *user_name) {
+	struct stat st;
+	if(stat(SSHOUT_USERS_PREFERENCES_DIR, &st) < 0 && (errno != ENOENT || mkdir(SSHOUT_USERS_PREFERENCES_DIR, 0750) < 0)) {
+		perror(SSHOUT_USERS_PREFERENCES_DIR);
+		fputs("Cannot load or save perferences in this session\n", stderr);
+		return;
+	}
+	size_t user_name_len = strlen(user_name) + 1;
+	char file_name[sizeof SSHOUT_USERS_PREFERENCES_DIR + user_name_len];
+	memcpy(file_name, SSHOUT_USERS_PREFERENCES_DIR, sizeof SSHOUT_USERS_PREFERENCES_DIR - 1);
+	file_name[sizeof SSHOUT_USERS_PREFERENCES_DIR - 1] = '/';
+	memcpy(file_name + sizeof SSHOUT_USERS_PREFERENCES_DIR, user_name, user_name_len);
+#if 0
+	preference_file = fopen(file_name, "r+");
+	if(!preference_file) {
+#else
+	int fd = open(file_name, O_RDWR | O_CREAT, 0640);
+	if(fd == -1 || !(preference_file = fdopen(fd, "r+"))) {
+#endif
+		perror(file_name);
+		fputs("Cannot load or save perferences in this session\n", stderr);
+		if(fd != -1) close(fd);
+		return;
+	}
+	char buffer[256];
+	while(1) {
+		int len = fgetline(preference_file, buffer, sizeof buffer);
+		if(len == -1) break;
+		if(len == -2) continue;
+		if(len == 0 || *buffer == '#') continue;
+		if(strncmp(buffer, "alert=", 6) == 0) {
+			if(len == 7) option_alert = buffer[6] == '1';
+			else if(fbackwardoverwrite(preference_file, len + 1) < 0) break;
+		} else {
+			fprintf(stderr, "Unrecognized option '%s', removing\n", buffer);
+			if(fbackwardoverwrite(preference_file, len + 1) < 0) break;
+		}
+	}
+}
+
 static void client_cli_init_io(const char *user_name) {
 	use_readline = isatty(STDIN_FILENO);
 	if(use_readline) {
@@ -484,6 +560,7 @@ static void client_cli_init_io(const char *user_name) {
 	}
 	setvbuf(stdout, NULL, _IOLBF, 0);
 	setlocale(LC_TIME, "");
+	open_preference(user_name);
 	print_motd(1);
 }
 

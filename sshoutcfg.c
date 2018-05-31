@@ -21,27 +21,13 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "file-helpers.h"
 #include <errno.h>
 #include <sys/stat.h>
 #include <arpa/inet.h>
 #include <mhash.h>
 
 static void print_usage(const char *);
-
-static int fgetline(FILE *f, char *line, size_t len) {
-	size_t i = 0;
-	int c;
-	while((c = fgetc(f)) != '\n') {
-		if(c == EOF) {
-			if(!i) return -1;
-			break;
-		}
-		if(i >= len - 1) return -2;
-		line[i++] = c;
-	}
-	line[i] = 0;
-	return i;
-}
 
 static enum key_types {
 	KEY_INVALID = -1,
