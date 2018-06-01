@@ -1,6 +1,8 @@
-
+#define VERSION "1.0"
+#if defined __DATE__ && defined __TIME__
+#define BUILD_DATE __DATE__ " " __TIME__
+#endif
 #define SOCKET_NAME "socket"
-
 #define USER_NAME_MAX_LENGTH 32
 #define GLOBAL_NAME "GLOBAL"
 #define USER_LIST_FILE ".ssh/authorized_keys"

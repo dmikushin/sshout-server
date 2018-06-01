@@ -245,6 +245,29 @@ static void command_pasteimage(int fd, int argc, char **argv) {
 	}
 }
 
+static void command_version(int fd, int argc, char **argv) {
+	puts("SSHOUT " VERSION
+#if defined GIT_COMMIT || defined BUILD_DATE
+		" ("
+#ifdef GIT_COMMIT
+		"commit " GIT_COMMIT
+#endif
+#ifdef BUILD_DATE
+#ifdef GIT_COMMIT
+		", "
+#endif
+		"built on " BUILD_DATE
+#endif
+		")"
+#endif
+		"\nCommand line interface frontend\n"
+		"Copyright 2015-2018 Rivoreo\n"
+		"This is free software; see the source for copying conditions.\n"
+		"There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n"
+		"PARTICULAR PURPOSE.\n"
+		"Project page: https://sourceforge.net/projects/sshout/");
+}
+
 static void command_quit(int fd, int argc, char **argv) {
 	close(fd);
 	exit(0);
@@ -265,6 +288,7 @@ static struct command {
 	{ "tell", "<user> <message> [<message> ...]", command_msg },
 	{ "motd", "", command_motd },
 	{ "pasteimage", "<user>", command_pasteimage },
+	{ "version", "", command_version },
 	{ "quit", "", command_quit },
 	{ "help", "", command_help },
 	{ NULL, NULL, NULL }
