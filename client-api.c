@@ -31,8 +31,11 @@
 
 #define hton64(a) (htons(1) == 1 ? (a) : ((uint64_t)htonl((a) & 0xFFFFFFFF) << 32) | htonl((a) >> 32))
 
+static const char *sshout_user_name;
+
 static void send_api_pass(int version) {
-	uint32_t length = 1 + 6 + 2;
+	uint8_t user_name_len = strlen(sshout_user_name);
+	uint32_t length = 1 + 6 + 2 + 1 + user_name_len;
 	struct sshout_api_packet *packet = malloc(4 + length);
 	if(!packet) {
 		syslog(LOG_ERR, "send_api_pass: out of memory");
@@ -40,8 +43,13 @@ static void send_api_pass(int version) {
 	}
 	packet->length = htonl(length);
 	packet->type = SSHOUT_API_PASS;
-	memcpy(packet->data, "SSHOUT", 6);
-	*(uint16_t *)(packet->data + 6) = htons(version);
+	uint8_t *p = packet->data;
+	memcpy(p, "SSHOUT", 6);
+	p += 6;
+	*(uint16_t *)p = htons(version);
+	p += 2;
+	*p++ = user_name_len;
+	memcpy(p, sshout_user_name, user_name_len);
 	while(write(STDOUT_FILENO, packet, 4 + length) < 0) {
 		if(errno == EINTR) continue;
 		syslog(LOG_ERR, "send_api_pass: write: STDOUT_FILENO: errno %d", errno);
@@ -237,6 +245,7 @@ static void client_api_init_io(const char *user_name) {
 	}
 	snprintf(syslog_ident, len, "sshoutd:%s:api", user_name);
 	openlog(syslog_ident, LOG_PID, LOG_DAEMON);
+	sshout_user_name = user_name;
 	syslog(LOG_INFO, "API server started");
 }
 
