@@ -101,7 +101,7 @@ static int get_length_and_type_string_length_of_key_in_base64(const char *key, s
 	return 0;
 }
 
-static int read_user_info(FILE *f, char **name, char **public_key, char **comment, enum key_types *key_type) {
+static int read_user_info(FILE *f, char **name, char **public_key, char **comment, enum key_types *key_type, size_t *line_len) {
 	int i = 0;
 	char line[4096];
 	while(1) {
@@ -196,6 +196,7 @@ static int read_user_info(FILE *f, char **name, char **public_key, char **commen
 			} else *comment = NULL;
 		}
 		if(key_type) *key_type = key_type_1;
+		if(line_len) *line_len = len;
 		return 0;
 	}
 }
@@ -217,6 +218,18 @@ static int remove_ssh_rc_file() {
 		return -1;
 	}
 	return 0;
+}
+
+static int ask_confirm() {
+	char answer[16];
+	do {
+		int len = fgetline(stdin, answer, sizeof answer);
+		// Ignore line too long error
+		if(len == -1 || strncasecmp(answer, "no", 2) == 0 || strncmp(answer, "不", 3) == 0 || strcmp(answer, "否") == 0) {
+			return 0;
+		}
+	} while(strncasecmp(answer, "yes", 3) && strncmp(answer, "是", 3) && strncmp(answer, "好", 3) && strcmp(answer, "可以"));
+	return 1;
 }
 
 static int adduser_command(int argc, char **argv) {
@@ -359,7 +372,7 @@ static int adduser_command(int argc, char **argv) {
 	int existing_count = 0;
 	{
 		char *user_name, *public_key;
-		while(read_user_info(f, &user_name, &public_key, NULL, NULL) == 0) {
+		while(read_user_info(f, &user_name, &public_key, NULL, NULL, NULL) == 0) {
 			if(strcmp(key, public_key) == 0) {
 				free(key);
 				fprintf(stderr, "This public key is already used by user %s.\n"
@@ -376,17 +389,12 @@ static int adduser_command(int argc, char **argv) {
 	if(existing_count) {
 		fprintf(stderr, "%d key%s already exist for user %s\n", existing_count, existing_count > 1 ? "s" : "", user);
 		if(!force) {
-			char answer[16];
 			fprintf(stderr, "Are you sure you want to add this key for user %s? ", user);
-			do {
-				int len = fgetline(stdin, answer, sizeof answer);
-				// Ignore line too long error
-				if(len == -1 || strncasecmp(answer, "no", 2) == 0 || strncmp(answer, "不", 3) == 0 || strcmp(answer, "否") == 0) {
-					fputs("Operation canceled\n", stderr);
-					free(key);
-					return 1;
-				}
-			} while(strncasecmp(answer, "yes", 3) && strncmp(answer, "是", 3) && strncmp(answer, "好", 3) && strcmp(answer, "可以"));
+			if(!ask_confirm()) {
+				fputs("Operation canceled\n", stderr);
+				free(key);
+				return 1;
+			}
 		}
 	}
 
@@ -397,6 +405,120 @@ static int adduser_command(int argc, char **argv) {
 	}
 	free(key);
 	return 0;
+}
+
+static int removeuser_command(int argc, char **argv) {
+	int force = 0;
+	while(1) {
+		int c = getopt(argc, argv, "fh");
+		if(c == -1) break;
+		switch(c) {
+			case 'f':
+				force = 1;
+				break;
+			case 'h':
+				print_usage(argv[0]);
+				return 0;
+			case '?':
+				return -1;
+		}
+	}
+	if(argc - optind != 1) {
+		print_usage(argv[0]);
+		return -1;
+	}
+	const char *user = argv[optind];
+	if(!is_valid_user_name(user)) {
+		fprintf(stderr, "Invalid user name '%s'\n", user);
+		return 1;
+	}
+
+	FILE *f = fopen(USER_LIST_FILE, "r+");
+	if(!f) {
+		perror(USER_LIST_FILE);
+		return 1;
+	}
+
+	struct line_info {
+		long int end_offset;
+		size_t length;
+	} *match_lines = NULL;
+	size_t line_count = 0, match_lines_allocated_size = 0;
+	char *user_name, *public_key;
+	size_t line_len;
+	while(read_user_info(f, &user_name, &public_key, NULL, NULL, &line_len) == 0) {
+		if(strcmp(user, user_name) == 0) {
+			if(line_count * sizeof(struct line_info) >= match_lines_allocated_size) {
+				match_lines = realloc(match_lines, match_lines_allocated_size += 2 * sizeof(struct line_info));
+				if(!match_lines) {
+					perror("realloc");
+					return 1;
+				}
+			}
+			match_lines[line_count].end_offset = ftell(f);
+			match_lines[line_count].length = line_len;
+			line_count++;
+		}
+		free(user_name);
+		free(public_key);
+	}
+
+	if(!line_count) {
+		fclose(f);
+		fprintf(stderr, "User %s not found\n", user);
+		return 1;
+	}
+
+	if(line_count == 1) {
+		if(!force) {
+			fprintf(stderr, "Remove user %s from SSHOUT user list? ", user);
+			if(!ask_confirm()) {
+				fclose(f);
+				fputs("Operation canceled\n", stderr);
+				return 1;
+			}
+		}
+		if(fseek(f, match_lines->end_offset, SEEK_SET) < 0 ||
+		fbackwardoverwrite(f, match_lines->length + 1) < 0) {
+			perror("Failed to remove user");
+			fclose(f);
+			return 1;
+		}
+		if(fclose(f) == EOF) {
+			perror("fclose");
+			return 1;
+		}
+		return 0;
+	} else {
+		if(!force) {
+			fprintf(stderr, "User %s have %zu public keys registered in the user list\n", user, line_count);
+			fprintf(stderr, "If you want to remove only some of the user's keys, edit file '%s/ " USER_LIST_FILE "' manually\n",
+				getenv("HOME"));
+			fprintf(stderr, "Remove all keys for user %s? ", user);
+			if(!ask_confirm()) {
+				fclose(f);
+				fputs("Operation canceled\n", stderr);
+				return 1;
+			}
+		}
+		unsigned int i = line_count;
+		do {
+			i--;
+			if(fseek(f, match_lines[i].end_offset, SEEK_SET) < 0 ||
+			fbackwardoverwrite(f, match_lines[i].length + 1) < 0) {
+				perror("Failed to remove user");
+				fprintf(stderr, "when removing key %u from user list\n", i);
+				fclose(f);
+				return 1;
+			}
+		} while(i > 0);
+		if(fclose(f) == EOF) {
+			perror("fclose");
+			return 1;
+		}
+		fprintf(stderr, "Removed %zu keys for user %s\n", line_count, user);
+		return 0;
+	}
 }
 
 static int listuser_command(int argc, char **argv) {
@@ -429,14 +551,8 @@ static int listuser_command(int argc, char **argv) {
 		return 1;
 	}
 
-/*
-	char line[4096];
-	while(fgetline(f, line, sizeof line) > 0) {
-		fprintf(stderr, "line = \"%s\"\n", line);
-	}
-*/
 	char *user_name, *public_key, *comment;
-	while(read_user_info(f, &user_name, &public_key, &comment, NULL) == 0) {
+	while(read_user_info(f, &user_name, &public_key, &comment, NULL, NULL) == 0) {
 		//printf("User \"%s\", Public key \"%s\"", user_name, public_key);
 		printf("User \"%s\", ", user_name);
 		if((int)hash_type == -1) {
@@ -530,6 +646,7 @@ static int setmotd_command(int argc, char **argv) {
 				print_usage(argv[0]);
 				return 0;
 			case '?':
+				print_usage(argv[0]);
 				return -1;
 		}
 	}
@@ -591,6 +708,7 @@ static struct subcommand {
 } commands[] = {
 #define SUBCOMMAND(N,U) { #N, U, N##_command }
 	SUBCOMMAND(adduser, "[-a <public-key-in-base64>] [-f] <user-name>"),
+	SUBCOMMAND(removeuser, "[-f] <user-name>"),
 	SUBCOMMAND(listuser, "[-h {md5|sha256}]"),
 	SUBCOMMAND(getmotd, ""),
 	SUBCOMMAND(setmotd, "[-m <message> | -d]"),

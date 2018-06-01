@@ -23,6 +23,8 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <errno.h>
+#include "file-helpers.h"
+#include <signal.h>
 
 static struct local_online_user online_users[FD_SETSIZE];
 
@@ -182,6 +184,38 @@ static int dispatch_message(const struct local_online_user *sender, const struct
 int server_mode(const struct sockaddr_un *socket_addr) {
 	static const struct timeval timeout = { .tv_sec = 2 };
 
+#if 0
+	char pid_file_path[home_len + 1 + sizeof "sshoutd.pid"];
+	memcpy(pid_file_path, home, home_len);
+	pid_file_path[home_len] = '/';
+	strcpy(pid_file_path + home_len + 1, "sshoutd.pid");
+#else
+	FILE *pid_file = fopen("sshoutd.pid", "r");
+	if(pid_file) {
+		char buffer[16];
+		if(fgetline(pid_file, buffer, sizeof buffer) > 0) {
+			int pid = atoi(buffer);
+			if(pid > 0 && kill(pid, 0) == 0) {
+				fprintf(stderr, "Another server process %d is running\n", pid);
+				return 1;
+			}
+		}
+		fclose(pid_file);
+	}
+	pid_file = fopen("sshoutd.pid", "w");
+	if(!pid_file) {
+		perror("sshoutd.pid");
+		return 1;
+	}
+	if(fprintf(pid_file, "%d\n", (int)getpid()) < 0) {
+		perror("fprintf");
+		return 1;
+	}
+	if(fclose(pid_file) == EOF) {
+		perror("fclose");
+		return 1;
+	}
+#endif
 	int fd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if(fd == -1) {
 		perror("socket");

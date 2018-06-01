@@ -64,22 +64,15 @@ int main(int argc, char **argv) {
 	sockaddr.sun_path[home_len] = '/';
 	memcpy(sockaddr.sun_path + home_len + 1, SOCKET_NAME, sizeof SOCKET_NAME);
 
+	if(chdir(home) < 0) {
+		perror(home);
+		return 1;
+	}
+
 	if(argc == 3 && strcmp(argv[1], "-c") == 0) return client_mode(&sockaddr, argv[2]);
 	if(argc != 1) {
 		print_usage(argv[0]);
 		return 255;
-	}
-
-/*
-	char pid_file_path[home_len + 1 + sizeof "sshoutd.pid"];
-	memcpy(pid_file_path, home, home_len);
-	pid_file_path[home_len] = '/';
-	strcpy(pid_file_path + home_len + 1, "sshoutd.pid");
-*/
-
-	if(chdir(home) < 0) {
-		perror(home);
-		return 1;
 	}
 	return server_mode(&sockaddr);
 }

@@ -4,6 +4,7 @@ sshoutcfg - Configuring Secure Shout Host Oriented Unified Talk server side
 .SH SYNOPSIS
 .nf
 sshoutcfg adduser [-a <public-key>] [-f] <user-name>
+sshoutcfg removeuser [-f] <user-name>
 sshoutcfg listuser [-h {md5|sha256}]
 sshoutcfg getmotd
 sshoutcfg setmotd [-m <message> | -d]
@@ -12,7 +13,7 @@ sshoutcfg setmotd [-m <message> | -d]
 .PP
 The sshoutcfg tool is used for SSHOUT server side configuring.
 .PP
-This tool changes user information by altering .ssh/authorized_keys file in sshout user's home.
+This tool changes user information by altering \fI.ssh/authorized_keys\fR file in sshout user's home.
 .PP
 This tool must be run under sshout user account or root (UID=0).
 \".TP
@@ -29,6 +30,17 @@ Specify the public key for user; if this option is not specified, public key str
 .TP
 .B -f
 Force add key; add new key for existing user without ask.
+.RE
+
+sshoutcfg removeuser [-f] <user-name>
+.sp
+.RS 4n
+Remove user \fI<user-name>\fR and his/her all public keys from SSHOUT user list. If an user have multiple public keys registered in user list, and you want remove some of the user's keys, instead of all keys; don't use this command, edit the user list file \fI.ssh/authorized_keys\fR manually instead.
+.sp
+Options:
+.TP
+.B -f
+Force remove user without ask.
 .RE
 
 listuser [-h {md5|sha256}]
@@ -65,5 +77,4 @@ sshd(8), ssh-keygen(1)
 (sshout home)/motd
 .SH BUGS
 .PP
-The 'rmuser' subcommand should be implemented.
-
+I don't think there are any known bugs in this tool; if you found one, please report at \fIhttps://sourceforge.net/p/sshout/tickets/\fR.
