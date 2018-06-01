@@ -246,21 +246,8 @@ static void command_pasteimage(int fd, int argc, char **argv) {
 }
 
 static void command_version(int fd, int argc, char **argv) {
-	puts("SSHOUT " VERSION
-#if defined GIT_COMMIT || defined BUILD_DATE
-		" ("
-#ifdef GIT_COMMIT
-		"commit " GIT_COMMIT
-#endif
-#ifdef BUILD_DATE
-#ifdef GIT_COMMIT
-		", "
-#endif
-		"built on " BUILD_DATE
-#endif
-		")"
-#endif
-		"\nCommand line interface frontend\n"
+	puts(VERSION_STRING "\n"
+		"Command line interface frontend\n"
 		"Copyright 2015-2018 Rivoreo\n"
 		"This is free software; see the source for copying conditions.\n"
 		"There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n"

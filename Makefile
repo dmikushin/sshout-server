@@ -6,6 +6,10 @@ INSTALL ?= install
 CFLAGS += -Wall -Wno-switch -Wno-char-subscripts -O1
 #LIBS += 
 
+ifneq ($(wildcard .git/HEAD),)
+CFLAGS += -D GIT_COMMIT=\"`cut -c -7 ".git/\`sed 's/^ref: //' .git/HEAD\`"`\"
+endif
+
 PREFIX ?= /usr
 LIBEXECDIR ?= $(PREFIX)/lib/sshout
 SBINDIR ?= $(PREFIX)/sbin

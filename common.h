@@ -1,6 +1,15 @@
 #define VERSION "1.0"
-#if defined __DATE__ && defined __TIME__
+#if !defined BUILD_DATE && defined __DATE__ && defined __TIME__
 #define BUILD_DATE __DATE__ " " __TIME__
+#endif
+#if defined GIT_COMMIT && defined BUILD_DATE
+#define VERSION_STRING "SSHOUT " VERSION " (commit " GIT_COMMIT ", built on " BUILD_DATE ")"
+#elif defined GIT_COMMIT
+#define VERSION_STRING "SSHOUT " VERSION " (commit " GIT_COMMIT ")"
+#elif defined BUILD_DATE
+#define VERSION_STRING "SSHOUT " VERSION " (built on " BUILD_DATE ")"
+#else
+#define VERSION_STRING "SSHOUT " VERSION
 #endif
 #define SOCKET_NAME "socket"
 #define USER_NAME_MAX_LENGTH 32

@@ -113,8 +113,18 @@ static void send_irc_reply(const char *command, ...) {
 }
 
 static void send_irc_welcome() {
-	is_irc_registered = 1;
 	send_irc_reply(IRC_RPL_WELCOME, "Welcome to SSHOUT IRC frontend", NULL);
+}
+
+static void send_irc_myinfo() {
+	//send_irc_reply(IRC_RPL_MYINFO, "SSHOUT IRC frontend", VERSION_STRING, "wr", "n", NULL);
+	printf(IRC_RPL_MYINFO " %s " VERSION_STRING " wr n\r\n", sshout_user_name);
+}
+
+static void do_registered() {
+	is_irc_registered = 1;
+	send_irc_welcome();
+	send_irc_myinfo();
 }
 
 /*
@@ -224,7 +234,7 @@ static void irc_command_nick(int fd, int argc, struct fixed_length_string *argv)
 		return;
 	}
 	is_irc_nick_name_set = 1;
-	if(*irc_user_name) send_irc_welcome();
+	if(*irc_user_name) do_registered();
 }
 
 static void irc_command_user(int fd, int argc, struct fixed_length_string *argv) {
@@ -265,7 +275,7 @@ static void irc_command_user(int fd, int argc, struct fixed_length_string *argv)
 		send_irc_reply(IRC_ERR_UNKNOWNMODE, c, "User modes other than 0 are not supported", NULL);
 	}
 */
-	if(is_irc_nick_name_set) send_irc_welcome();
+	if(is_irc_nick_name_set) do_registered();
 }
 
 static void irc_command_oper(int fd, int argc, struct fixed_length_string *argv) {
@@ -294,7 +304,7 @@ static void irc_command_mode(int fd, int argc, struct fixed_length_string *argv)
 }
 
 static void irc_command_quit(int fd, int argc, struct fixed_length_string *argv) {
-	if(argc > 0) {
+	if(argc > 0 && *irc_channel_name) {
 		char buffer[22 + 504 + 1] = "Leaving IRC frontend: ";
 		size_t len = argv->len;
 		if(len > 504) len = len;
@@ -404,7 +414,15 @@ static void irc_command_motd(int fd, int argc, struct fixed_length_string *argv)
 
 static void irc_command_version(int fd, int argc, struct fixed_length_string *argv) {
 	if(argc > 0) return;
-	send_irc_reply(IRC_RPL_VERSION, "SSHOUT IRC frontend", NULL);
+	char buffer[506];
+	snprintf(buffer, sizeof buffer, VERSION_STRING "\n"
+		"IRC frontend\n"
+		"Copyright 2015-2018 Rivoreo\n"
+		"This is free software; see the source for copying conditions.\n"
+		"There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n"
+		"PARTICULAR PURPOSE.\n"
+		"Project page: https://sourceforge.net/projects/sshout/");
+	send_irc_reply(IRC_RPL_VERSION, buffer, NULL);
 }
 
 static void irc_command_time(int fd, int argc, struct fixed_length_string *argv) {
@@ -538,7 +556,7 @@ static void do_irc_line(int fd, const char *line, size_t len) {
 	else memset(argv, 0, sizeof(struct fixed_length_string));
 	struct command *c = irc_commands;
 	while(c->name) {
-		if(strlen(c->name) == command_len && strncmp(c->name, line, command_len) == 0) {
+		if(strlen(c->name) == command_len && strncasecmp(c->name, line, command_len) == 0) {
 			if(c->do_command) c->do_command(fd, argc, argv);
 			free(argv);
 			return;

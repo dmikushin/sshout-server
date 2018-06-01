@@ -1,4 +1,5 @@
 #define IRC_RPL_WELCOME "001"
+#define IRC_RPL_MYINFO "004"
 #define IRC_RPL_UMODEIS "221"
 #define IRC_RPL_LISTSTART "321"
 #define IRC_RPL_LIST "322"
