@@ -6,9 +6,9 @@ INSTALL ?= install
 CFLAGS += -Wall -Wno-switch -Wno-char-subscripts -O1
 #LIBS += 
 
-ifneq ($(wildcard .git/HEAD),)
-CFLAGS += -D GIT_COMMIT=\"`cut -c -7 ".git/\`sed 's/^ref: //' .git/HEAD\`"`\"
-endif
+#ifneq ($(wildcard .git/HEAD),)
+#CFLAGS += -D GIT_COMMIT=\"`cut -c -7 ".git/\`sed 's/^ref: //' .git/HEAD\`"`\"
+#endif
 
 PREFIX ?= /usr
 LIBEXECDIR ?= $(PREFIX)/lib/sshout
@@ -23,6 +23,13 @@ SSHOUTD_LIBS = -lreadline
 
 all:	sshoutcfg sshoutd
 
+build-info.h:
+	{ [ -f .git/HEAD ] && printf "#define GIT_COMMIT \"%s\"\\n" "`cut -c -7 ".git/\`sed 's/^ref: //' .git/HEAD\`"`"; } > $@
+
+common.h:	build-info.h
+
+$(SSHOUTCFG_OBJCTS) $(SSHOUTD_OBJECTS):	common.h
+
 sshoutcfg:	$(SSHOUTCFG_OBJCTS)
 	$(CC) $^ -o $@ $(SSHOUTCFG_LIBS) $(LIBS)
 
@@ -30,7 +37,7 @@ sshoutd:	$(SSHOUTD_OBJECTS)
 	$(CC) $^ -o $@ $(SSHOUTD_LIBS) $(LIBS)
 
 clean:
-	rm -f $(SSHOUTCFG_OBJCTS) $(SSHOUTD_OBJECTS) sshoutcfg sshoutd
+	rm -f build-info.h $(SSHOUTCFG_OBJCTS) $(SSHOUTD_OBJECTS) sshoutcfg sshoutd
 
 install:	all
 	[ -d "$(LIBEXECDIR)" ] || mkdir -p "$(LIBEXECDIR)"

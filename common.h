@@ -1,4 +1,5 @@
 #define VERSION "1.0"
+#include "build-info.h"
 #if !defined BUILD_DATE && defined __DATE__ && defined __TIME__
 #define BUILD_DATE __DATE__ " " __TIME__
 #endif
