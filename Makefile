@@ -31,10 +31,10 @@ common.h:	build-info.h
 $(SSHOUTCFG_OBJCTS) $(SSHOUTD_OBJECTS):	common.h
 
 sshoutcfg:	$(SSHOUTCFG_OBJCTS)
-	$(CC) $^ -o $@ $(SSHOUTCFG_LIBS) $(LIBS)
+	$(CC) $(LDFLAGS) $^ -o $@ $(SSHOUTCFG_LIBS) $(LIBS)
 
 sshoutd:	$(SSHOUTD_OBJECTS)
-	$(CC) $^ -o $@ $(SSHOUTD_LIBS) $(LIBS)
+	$(CC) $(LDFLAGS) $^ -o $@ $(SSHOUTD_LIBS) $(LIBS)
 
 clean:
 	rm -f build-info.h $(SSHOUTCFG_OBJCTS) $(SSHOUTD_OBJECTS) sshoutcfg sshoutd

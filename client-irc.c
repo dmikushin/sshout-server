@@ -117,7 +117,7 @@ static void send_irc_welcome() {
 }
 
 static void send_irc_myinfo() {
-	//send_irc_reply(IRC_RPL_MYINFO, "SSHOUT IRC frontend", VERSION_STRING, "wr", "n", NULL);
+	//send_irc_reply(IRC_RPL_MYINFO, "SSHOUT IRC frontend", SSHOUT_VERSION_STRING, "wr", "n", NULL);
 	printf(IRC_RPL_MYINFO " %s " VERSION_STRING " wr n\r\n", sshout_user_name);
 }
 
@@ -415,7 +415,7 @@ static void irc_command_motd(int fd, int argc, struct fixed_length_string *argv)
 static void irc_command_version(int fd, int argc, struct fixed_length_string *argv) {
 	if(argc > 0) return;
 	char buffer[506];
-	snprintf(buffer, sizeof buffer, VERSION_STRING "\n"
+	snprintf(buffer, sizeof buffer, SSHOUT_VERSION_STRING "\n"
 		"IRC frontend\n"
 		"Copyright 2015-2018 Rivoreo\n"
 		"This is free software; see the source for copying conditions.\n"

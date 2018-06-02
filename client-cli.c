@@ -19,10 +19,10 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <fcntl.h>
-#include <stdio.h>
 #include "file-helpers.h"
 #include <termios.h>
 #include <time.h>
@@ -246,7 +246,7 @@ static void command_pasteimage(int fd, int argc, char **argv) {
 }
 
 static void command_version(int fd, int argc, char **argv) {
-	puts(VERSION_STRING "\n"
+	puts(SSHOUT_VERSION_STRING "\n"
 		"Command line interface frontend\n"
 		"Copyright 2015-2018 Rivoreo\n"
 		"This is free software; see the source for copying conditions.\n"
