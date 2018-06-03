@@ -118,7 +118,7 @@ static void send_irc_welcome() {
 
 static void send_irc_myinfo() {
 	//send_irc_reply(IRC_RPL_MYINFO, "SSHOUT IRC frontend", SSHOUT_VERSION_STRING, "wr", "n", NULL);
-	printf(IRC_RPL_MYINFO " %s " VERSION_STRING " wr n\r\n", sshout_user_name);
+	printf(IRC_RPL_MYINFO " %s " SSHOUT_VERSION_STRING " wr n\r\n", sshout_user_name);
 }
 
 static void do_registered() {
@@ -210,6 +210,7 @@ static void send_irc_online_users(const struct local_online_users_info *info) {
 }
 
 static void send_irc_user_join(const char *user_name) {
+	if(strcmp(user_name, sshout_user_name) == 0) return;
 	printf(":%s JOIN :#sshout\r\n", user_name);
 }
 
@@ -307,7 +308,7 @@ static void irc_command_quit(int fd, int argc, struct fixed_length_string *argv)
 	if(argc > 0 && *irc_channel_name) {
 		char buffer[22 + 504 + 1] = "Leaving IRC frontend: ";
 		size_t len = argv->len;
-		if(len > 504) len = len;
+		if(len > 504) len = 504;
 		memcpy(buffer + 22, argv->p, len);
 		buffer[22 + len] = 0;
 		client_post_plain_text_message(fd, GLOBAL_NAME, buffer);
