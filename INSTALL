@@ -1,0 +1,32 @@
+To build programs, type:
+	$ make
+Some useful environment variables:
+	CC	change C compiler
+	CFLAGS	prepend flags to C compiler
+	LDFLAGS	prepend flags to linker (e.g. -L <path>)
+	LIBS	additional libraries pass to linker
+To enable to experimental IRC frontend, add '-D ENABLE_IRC_FRONTEND' to
+CFLAGS, for example:
+	$ CFLAGS="-D ENABLE_IRC_FRONTEND" make
+
+To install built programs and manual pages, type:
+	$ make install
+Some useful environment variables:
+	PREFIX		change installing prefix, default /usr
+	LIBEXECDIR	default ${PREFIX}/lib/sshout
+	SBINDIR		default ${PREFIX}/sbin
+	DATADIR		default ${PREFIX}/share
+	MANDIR		default ${DATADIR}/man
+
+Some additional steps after 'make install' are needed to get this program
+work:
+Add a local user account, with name 'sshout' and shell set to the path of
+installed sshoutd program; an example of the line in passwd(5):
+sshout:x:115:115:Secure Shout Host Oriented Unified Talk:/var/lib/sshout:/usr/lib/sshout/sshoutd
+This user account must be allowed to log in with SSH public key
+authentication.
+This program is currently assuming the AuthorizedKeysFile option in
+sshd_config(5) is left default, or contains '.ssh/authorized_keys'; otherwise
+the anthentication won't be work.
+And of course you need a working SSH server installed; currently only OpenSSH
+server is supported.
