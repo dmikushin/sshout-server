@@ -12,6 +12,7 @@
  * more details.
  */
 
+#define _GNU_SOURCE
 #include "common.h"
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -25,6 +26,9 @@
 #include <errno.h>
 #include "file-helpers.h"
 #include <signal.h>
+#ifdef HAVE_UPDWTMPX
+#include <utmpx.h>
+#endif
 
 static struct local_online_user online_users[FD_SETSIZE];
 
@@ -74,6 +78,23 @@ static int user_online(int id, const char *user_name, const char *host_name, int
 		if(online_users[i].id != -1 && strcmp(online_users[i].user_name, user_name) == 0) found_dup = 1;
 	}
 	syslog(LOG_INFO, "user %s login from %s id %d dup %d", user_name, host_name, id, found_dup);
+#ifdef HAVE_UPDWTMPX
+	if(access("wtmpx", W_OK) == 0) {
+		struct timeval tv;
+		if(gettimeofday(&tv, NULL) == 0) {
+			struct utmpx utx = {
+				.ut_type = USER_PROCESS,
+				.ut_pid = id,
+				.ut_tv.tv_sec = tv.tv_sec,
+				.ut_tv.tv_usec = tv.tv_usec
+			};
+			snprintf(utx.ut_line, sizeof utx.ut_line, "%d", id);
+			strncpy(utx.ut_user, user_name, sizeof utx.ut_user);
+			strncpy(utx.ut_host, host_name, sizeof utx.ut_host);
+			updwtmpx("wtmpx", &utx);
+		}
+	}
+#endif
 	if(!found_dup) broadcast_user_state(user_name, 1, client_fds);
 	return 0;
 }
@@ -85,6 +106,9 @@ static void user_offline(int id, const int *client_fds) {
 		if(++i >= sizeof online_users / sizeof *online_users) return;
 	}
 	const char *user_name = online_users[i].user_name;
+#ifdef HAVE_UPDWTMPX
+	const char *host_name = online_users[i].host_name;
+#endif
 	online_users[i].id = -1;
 	i = 0;
 	while(i < sizeof online_users / sizeof *online_users) {
@@ -96,6 +120,23 @@ static void user_offline(int id, const int *client_fds) {
 	}
 	if(!found_dup) broadcast_user_state(user_name, 0, client_fds);
 	syslog(LOG_INFO, "user %s logout id %d dup %d", user_name, id, found_dup);
+#ifdef HAVE_UPDWTMPX
+	if(access("wtmpx", W_OK) == 0) {
+		struct timeval tv;
+		if(gettimeofday(&tv, NULL) == 0) {
+			struct utmpx utx = {
+				.ut_type = DEAD_PROCESS,
+				.ut_pid = id,
+				.ut_tv.tv_sec = tv.tv_sec,
+				.ut_tv.tv_usec = tv.tv_usec
+			};
+			snprintf(utx.ut_line, sizeof utx.ut_line, "%d", id);
+			strncpy(utx.ut_user, user_name, sizeof utx.ut_user);
+			strncpy(utx.ut_host, host_name, sizeof utx.ut_host);
+			updwtmpx("wtmpx", &utx);
+		}
+	}
+#endif
 }
 
 static int send_online_users(int receiver_id, int receiver_fd) {
