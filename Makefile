@@ -1,5 +1,5 @@
 ifeq ($(CC),cc)
-CC := gcc
+CC := $(shell gcc --version > /dev/null 2>&1 && echo gcc || echo cc)
 endif
 INSTALL ?= install
 
@@ -24,7 +24,7 @@ SSHOUTD_LIBS = -lreadline
 all:	sshoutcfg sshoutd
 
 build-info.h:
-	{ [ -f .git/HEAD ] && printf "#define GIT_COMMIT \"%s\"\\n" "`cut -c -7 ".git/\`sed 's/^ref: //' .git/HEAD\`"`"; } > $@
+	{ [ -f .git/HEAD ] && printf "#define GIT_COMMIT \"%s\"\\n" "`cut -c -7 ".git/\`sed 's/^ref: //' .git/HEAD\`"`" || true; } > $@
 
 common.h:	build-info.h
 
