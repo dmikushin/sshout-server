@@ -40,10 +40,10 @@ clean:
 	rm -f build-info.h $(SSHOUTCFG_OBJCTS) $(SSHOUTD_OBJECTS) sshoutcfg sshoutd
 
 install:	all
-	[ -d "$(LIBEXECDIR)" ] || mkdir -p "$(LIBEXECDIR)"
-	[ -d "$(SBINDIR)" ] || mkdir -p "$(SBINDIR)"
-	[ -d "$(DATADIR)" ] || mkdir -p "$(DATADIR)"
-	[ -d "$(MANDIR)/man8" ] || mkdir -p "$(MANDIR)/man8"
-	$(INSTALL) -m 755 sshoutd "$(LIBEXECDIR)/"
-	$(INSTALL) -m 755 sshoutcfg "$(SBINDIR)/"
-	$(INSTALL) -m 644 sshoutcfg.8 "$(MANDIR)/man8/"
+	[ -d "$(DESTDIR)$(LIBEXECDIR)" ] || mkdir -p "$(DESTDIR)$(LIBEXECDIR)"
+	[ -d "$(DESTDIR)$(SBINDIR)" ] || mkdir -p "$(DESTDIR)$(SBINDIR)"
+	[ -d "$(DESTDIR)$(DATADIR)" ] || mkdir -p "$(DESTDIR)$(DATADIR)"
+	[ -d "$(DESTDIR)$(MANDIR)/man8" ] || mkdir -p "$(DESTDIR)$(MANDIR)/man8"
+	$(INSTALL) -m 755 sshoutd "$(DESTDIR)$(LIBEXECDIR)/"
+	$(INSTALL) -m 755 sshoutcfg "$(DESTDIR)$(SBINDIR)/"
+	$(INSTALL) -m 644 sshoutcfg.8 "$(DESTDIR)$(MANDIR)/man8/"
