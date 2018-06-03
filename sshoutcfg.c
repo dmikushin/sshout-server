@@ -1,4 +1,4 @@
-/*
+/* Secure Shout Host Oriented Unified Talk
  * Copyright 2015-2018 Rivoreo
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -256,7 +256,6 @@ static int adduser_command(int argc, char **argv) {
 				return -1;
 		}
 	}
-	//fprintf(stderr, "optind = %d, argc = %d\n", optind, argc);
 	if(argc - optind != 1) {
 		print_usage(argv[0]);
 		return -1;
@@ -282,7 +281,6 @@ static int adduser_command(int argc, char **argv) {
 
 	char *space = strchr(key, ' ');
 	if(space) {
-		//int ok = 0;
 		size_t type_len = space - key;
 		enum key_types key_type = get_key_type(key, type_len);
 		if(key_type == KEY_INVALID) {
@@ -713,7 +711,7 @@ static struct subcommand {
 	SUBCOMMAND(getmotd, ""),
 	SUBCOMMAND(setmotd, "[-m <message> | -d]"),
 #undef SUBCOMMAND
-	{ NULL, NULL }
+	{ NULL, NULL, NULL }
 };
 
 static void print_commands() {

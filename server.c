@@ -1,4 +1,4 @@
-/*
+/* Secure Shout Host Oriented Unified Talk
  * Copyright 2015-2018 Rivoreo
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -195,7 +195,7 @@ static int dispatch_message(const struct local_online_user *sender, const struct
 		} else found = 1;
 		while(write(client_fds[online_users[i].id], packet, packet_len) < 0) {
 			if(errno == EINTR) continue;
-			syslog(LOG_WARNING, "i = %d, id = %d, fd = %d", i, online_users[i].id, client_fds[online_users[i].id]);
+			//syslog(LOG_WARNING, "i = %d, id = %d, fd = %d", i, online_users[i].id, client_fds[online_users[i].id]);
 			syslog_perror("dispatch_message: write");
 			r = -1;
 			break;
@@ -225,12 +225,6 @@ static int dispatch_message(const struct local_online_user *sender, const struct
 int server_mode(const struct sockaddr_un *socket_addr) {
 	static const struct timeval timeout = { .tv_sec = 2 };
 
-#if 0
-	char pid_file_path[home_len + 1 + sizeof "sshoutd.pid"];
-	memcpy(pid_file_path, home, home_len);
-	pid_file_path[home_len] = '/';
-	strcpy(pid_file_path + home_len + 1, "sshoutd.pid");
-#else
 	FILE *pid_file = fopen("sshoutd.pid", "r");
 	if(pid_file) {
 		char buffer[16];
@@ -256,7 +250,6 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 		perror("fclose");
 		return 1;
 	}
-#endif
 	int fd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if(fd == -1) {
 		perror("socket");
@@ -300,14 +293,6 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 		online_users_indexes[i] = -1;
 	}
 
-/*
-	char *buffer = malloc(LOCAL_PACKET_BUFFER_SIZE);
-	if(!buffer) {
-		perror("malloc");
-		return 1;
-	}
-*/
-
 	while(1) {
 		int have_client_fd_closed = 0;
 		fd_set rfdset = fdset;
@@ -327,9 +312,6 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 			} while(cfd == -1 && errno == EINTR);
 			if(cfd == -1) {
 				syslog_perror("accept");
-				//if(errno == EMFILE) continue;
-				//return 1;
-				//continue;
 				if(errno == EMFILE && n < 2) sleep(1);
 			} else {
 				syslog(LOG_INFO, "client fd %d\n", cfd);

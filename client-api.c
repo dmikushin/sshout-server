@@ -1,4 +1,4 @@
-/*
+/* Secure Shout Host Oriented Unified Talk
  * Copyright 2015-2018 Rivoreo
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -83,7 +83,6 @@ static void send_api_message(const struct local_message *local_message) {
 	uint8_t from_user_name_len = strnlen(local_message->msg_from, USER_NAME_MAX_LENGTH);
 	uint8_t to_user_name_len = strnlen(local_message->msg_to, USER_NAME_MAX_LENGTH);
 	uint32_t length = 1 + 8 + 1 + from_user_name_len + 1 + to_user_name_len + 1 + 4 + local_message->msg_length;
-	syslog(LOG_DEBUG, "send_api_message: length = %u, msg_length = %zu", (unsigned int)length, local_message->msg_length);
 	struct sshout_api_packet *packet = malloc(4 + length);
 	if(!packet) {
 		syslog(LOG_ERR, "send_api_message: out of memory");
@@ -165,8 +164,6 @@ static void send_api_online_users(const struct local_online_users_info *local_in
 	packet->length = htonl(length);
 	while(write(STDOUT_FILENO, packet, 4 + length) < 0) {
 		if(errno == EINTR) continue;
-		//r = -1;
-		//break;
 		syslog(LOG_ERR, "send_api_online_users: write: STDOUT_FILENO: errno %d", errno);
 		exit(1);
 	}
@@ -236,7 +233,6 @@ static int api_version = 0;
 static char *syslog_ident;
 
 static void client_api_init_io(const char *user_name) {
-	//char ident[8 + USER_NAME_MAX_LENGTH + 4 + 1];
 	size_t len = 8 + USER_NAME_MAX_LENGTH + 4 + 1;
 	syslog_ident = malloc(len);
 	if(!syslog_ident) {
@@ -368,7 +364,6 @@ static void client_api_do_stdin(int fd) {
 			syslog(LOG_ERR, "Unknown error %d from get_api_packet", e);
 			abort();
 	}
-	syslog(LOG_DEBUG, "length = %u, type = %hhu", (unsigned int)length, packet->type);
 	// packet->type have only 1 byte, doesn't need to convert byte order
 	if(!api_version && packet->type != SSHOUT_API_HELLO) {
 		syslog(LOG_ERR, "Received API packet type %hhu before handshake", packet->type);

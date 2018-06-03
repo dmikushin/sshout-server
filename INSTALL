@@ -21,8 +21,8 @@ Some useful environment variables:
 Some additional steps after 'make install' are needed to get this program
 work:
 Add a local user account, with name 'sshout' and shell set to the path of
-installed sshoutd program; an example of the line in passwd(5):
-sshout:x:115:115:Secure Shout Host Oriented Unified Talk:/var/lib/sshout:/usr/lib/sshout/sshoutd
+installed sshoutd program; there is an example of suitable passwd(5) line:
+sshout:*:115:115:Secure Shout Host Oriented Unified Talk:/var/lib/sshout:/usr/lib/sshout/sshoutd
 This user account must be allowed to log in with SSH public key
 authentication.
 This program is currently assuming the AuthorizedKeysFile option in

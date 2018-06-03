@@ -1,4 +1,4 @@
-/*
+/* Secure Shout Host Oriented Unified Talk
  * Copyright 2015-2018 Rivoreo
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -36,7 +36,6 @@ int fbackwardoverwrite(FILE *f, size_t len) {
 	long int offset = ftell(f);
 	if(offset < 0) return -1;
 	if(len > offset) {
-		//fprintf(stderr, "debug: fbackwardoverwrite: len = %zu, offset = %ld\n", len, offset);
 #if 0
 		errno = ERANGE;
 		return -1;

@@ -26,7 +26,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
-#include <signal.h>
 #include <locale.h>
 #include <ctype.h>
 #include <time.h>
@@ -61,9 +60,6 @@ static void send_irc_line_format(const char *format, ...) {
 	fputs("\r\n", stdout);
 }
 #endif
-
-//static void send_irc_numeric_reply(const char *number, const char *message) {
-//}
 
 static void send_irc_reply(const char *command, ...) {
 	va_list ap;
@@ -101,7 +97,7 @@ static void send_irc_reply(const char *command, ...) {
 			return;
 		}
 #endif
-		syslog(LOG_DEBUG, "send_irc_reply: last_arg = %p<%s>", last_arg, last_arg);
+		//syslog(LOG_DEBUG, "send_irc_reply: last_arg = %p<%s>", last_arg, last_arg);
 	}
 	va_end(ap);
 	if(last_arg) {
@@ -126,13 +122,6 @@ static void do_registered() {
 	send_irc_welcome();
 	send_irc_myinfo();
 }
-
-/*
-static void send_irc_topic() {
-	//send_irc_rply(IRC_RPL_TOPIC, "This is a server side wrapper for SSHOUT platform", NULL);
-	send_irc_rply(IRC_RPL_TOPIC, "", NULL);
-}
-*/
 
 static void send_irc_motd() {
 	char buffer[503];
@@ -245,21 +234,14 @@ static void irc_command_user(int fd, int argc, struct fixed_length_string *argv)
 		return;
 	}
 
+/*
 	int i = 0;
 	while(i <= argc) {
 		syslog(LOG_DEBUG, "argv[%d].len = %zu", i, argv[i].len);
 		if(argv[i].len) syslog(LOG_DEBUG, "argv[%d].p[0] = %hhu'%c'", i, argv[i].p[0], argv[i].p[0]);
 		i++;
 	}
-/*
-	fprintf(stderr, "argc = %d\n", argc);
-	while(argv->p) {
-		fprintf(stderr, "len = %zu\n", argv->len);
-		fprintf(stderr, "p = \"%s\"\n", argv->p);
-		argv++;
-	}
 */
-	//if(*irc_user_name) {
 	if(is_irc_registered) {
 		send_irc_reply(IRC_ERR_ALREADYREGISTRED, "You cannot register again", NULL);
 		return;
@@ -267,7 +249,7 @@ static void irc_command_user(int fd, int argc, struct fixed_length_string *argv)
 	size_t user_name_len = argv[0].len > 9 ? 9 : argv[0].len;
 	memcpy(irc_user_name, argv[0].p, user_name_len);
 	irc_user_name[user_name_len] = 0;
-	syslog(LOG_DEBUG, "argv[1].len = %zu", argv[1].len);
+	//syslog(LOG_DEBUG, "argv[1].len = %zu", argv[1].len);
 /*
 	if(argv[1].len != 1) {
 		send_irc_reply(IRC_ERR_UNKNOWNMODE, "?", "User mode takes only 1 numeric", NULL);
@@ -382,7 +364,6 @@ static void irc_command_privmsg(int fd, int argc, struct fixed_length_string *ar
 		send_irc_reply(IRC_ERR_NOTREGISTERED, "PRIVMSG", "You have not registered", NULL);
 		return;
 	}
-	//if(!*irc_channel_name)
 	struct local_message *message = malloc(sizeof(struct local_message) + argv[1].len);
 	if(!message) {
 		syslog(LOG_ERR, "irc_command_privmsg: out of memory");
@@ -484,7 +465,6 @@ static struct command {
 
 static void parse_irc_arg(const char *line, size_t len, int *argc, struct fixed_length_string **argv) {
 	const char *space = "BUG!", *colon = line;
-	//const char *p = line;
 	unsigned int i = 0;
 	do {
 		while(line[i] == ' ') i++;
@@ -584,8 +564,7 @@ static void client_irc_init(const char *user_name) {
 	snprintf(syslog_ident, len, "sshoutd:%s:irc", user_name);
 	openlog(syslog_ident, LOG_PID, LOG_DAEMON);
 	sshout_user_name = user_name;
-	syslog(LOG_DEBUG, "IRC server started");
-	//raise(SIGSTOP);
+	syslog(LOG_INFO, "IRC server started");
 }
 
 static void client_irc_do_local_packet(int fd) {
@@ -660,7 +639,6 @@ static void client_irc_do_stdin(int fd) {
 		perror("read");
 		exit(1);
 	}
-	//fprintf(stderr, "client_irc_do_stdin: s = %d\n", s);
 	if(!s) {
 		exit(0);
 	}
@@ -674,29 +652,6 @@ static void client_irc_do_stdin(int fd) {
 	}
 	ss += s - skip_len;
 	if(last_lf) memmove(input_buffer, last_lf + 1, ss);
-/*
-	char *br = mem3chr(input_buffer + ss, 0, '\r', '\n', s);
-	if(br) {
-		int skip_len = 0;
-		char *last_br;
-		do {
-			if(*br) *br = 0;
-			br++;
-			int line_len = br - input_buffer - skip_len;
-			fputc('\r', stderr);
-			do_input_line(fd, input_buffer + skip_len);
-			last_br = br;
-			br = mem3chr(br, 0, '\r', '\n', s - (br - (input_buffer + ss)));
-			skip_len += line_len;
-		} while(br);
-		ss += s - skip_len;
-		memmove(input_buffer, last_br, ss);
-		//write(STDERR_FILENO, input_buffer, ss);
-	} else {
-		//write(STDERR_FILENO, input_buffer + ss, s);
-		ss += s;
-	}
-*/
 	if(ss == sizeof input_buffer) {
 		//sync_write(STDOUT_FILENO, "ERROR :Closing Link: line too long\r\n", 35);
 		send_irc_line("ERROR :Closing Link: line too long");

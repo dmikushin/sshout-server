@@ -1,4 +1,4 @@
-/*
+/* Secure Shout Host Oriented Unified Talk
  * Copyright 2015-2018 Rivoreo
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -346,7 +346,6 @@ static int parse_tokens(char *string, char ***tokens, int length) {
 }
 
 static void do_command(int fd, const char *command) {
-	//size_t len = strlen(commnd) + 1;
 	if(!*command) return;
 	char **argv = malloc(sizeof(char *));
 	char *buffer;
@@ -526,13 +525,8 @@ static void open_preference(const char *user_name) {
 	memcpy(file_name, SSHOUT_USERS_PREFERENCES_DIR, sizeof SSHOUT_USERS_PREFERENCES_DIR - 1);
 	file_name[sizeof SSHOUT_USERS_PREFERENCES_DIR - 1] = '/';
 	memcpy(file_name + sizeof SSHOUT_USERS_PREFERENCES_DIR, user_name, user_name_len);
-#if 0
-	preference_file = fopen(file_name, "r+");
-	if(!preference_file) {
-#else
 	int fd = open(file_name, O_RDWR | O_CREAT, 0640);
 	if(fd == -1 || !(preference_file = fdopen(fd, "r+"))) {
-#endif
 		perror(file_name);
 		fputs("Cannot load or save perferences in this session\n", stderr);
 		if(fd != -1) close(fd);
