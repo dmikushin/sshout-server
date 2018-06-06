@@ -485,7 +485,7 @@ static void print_message(const struct local_message *msg) {
 				_exit(1);
 			}
 			if(pipe_fds[0] != 0) close(pipe_fds[0]);
-			execlp("elinks", "elinks", "-dump", "-dump-color-mode",
+			execlp("elinks", "elinks", "-force-html", "-dump", "-dump-color-mode",
 				option_showhtml == SHOWHTML_COLOR ? "1" : "0", "/dev/stdin", NULL);
 			perror("elinks");
 			_exit(1);
@@ -617,6 +617,9 @@ static void open_preference(const char *user_name) {
 		if(len == 0 || *buffer == '#') continue;
 		if(strncmp(buffer, "alert=", 6) == 0) {
 			if(len == 7) option_alert = buffer[6] == '1';
+			else if(fbackwardoverwrite(preference_file, len + 1) < 0) break;
+		} else if(strncmp(buffer, "showhtml=", 9) == 0) {
+			if(len == 10) option_showhtml = buffer[9] - '0';
 			else if(fbackwardoverwrite(preference_file, len + 1) < 0) break;
 		} else {
 			fprintf(stderr, "Unrecognized option '%s', removing\n", buffer);
