@@ -32,10 +32,16 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 
+#define SHOWHTML_OFF 0
+#define SHOWHTML_COLOR 1
+#define SHOWHTML_PLAIN 2
+#define SHOWHTML_RAW 3
+
 static int use_readline;
 static int client_log_only;
 static FILE *preference_file;
 static int option_alert = 0;
+static int option_showhtml = SHOWHTML_OFF;
 
 static void print_with_time(time_t t, int redisplay_input, const char *format, ...) {
 	va_list ap;
@@ -104,6 +110,21 @@ usage:
 	else if(strcmp(argv[1], "on") == 0) option_alert = 1;
 	else goto usage;
 	write_preference("alert", option_alert ? "1" : "0");
+}
+
+static void command_showhtml(int fd, int argc, char **argv) {
+	if(argc != 2) {
+usage:
+		fprintf(stderr, "Usage: %s off|color|plain|raw\n", argv[0]);
+		return;
+	}
+	if(strcmp(argv[1], "off") == 0) option_showhtml = SHOWHTML_OFF;
+	else if(strcmp(argv[1], "color") == 0) option_showhtml = SHOWHTML_COLOR;
+	else if(strcmp(argv[1], "plain") == 0) option_showhtml = SHOWHTML_PLAIN;
+	else if(strcmp(argv[1], "raw") == 0) option_showhtml = SHOWHTML_RAW;
+	else goto usage;
+	char buffer[2] = { '0' + option_showhtml, 0 };
+	write_preference("showhtml", buffer);
 }
 
 static void command_msg(int fd, int argc, char **argv) {
@@ -271,6 +292,7 @@ static struct command {
 	{ "list", "", command_who },
 	{ "alert", "off|on", command_alert },
 	{ "bell", "off|on", command_alert },
+	{ "showhtml", "off|color|plain|raw", command_showhtml },
 	{ "msg", "<user> <message> [<message> ...]", command_msg },
 	{ "tell", "<user> <message> [<message> ...]", command_msg },
 	{ "motd", "", command_motd },
@@ -393,7 +415,19 @@ static void print_message(const struct local_message *msg) {
 	char *text = NULL;
 	switch(msg->msg_type) {
 		case SSHOUT_MSG_RICH:
-			text = strdup("[HTML]");
+			switch(option_showhtml) {
+				case SHOWHTML_OFF:
+					text = strdup("[HTML]");
+					break;
+				case SHOWHTML_COLOR:
+					text = strdup("");
+					break;
+				case SHOWHTML_PLAIN:
+					text = strdup("");
+					break;
+				case SHOWHTML_RAW:
+					break;
+			}
 			break;
 		case SSHOUT_MSG_IMAGE:
 			text = strdup("[Image]");
@@ -414,6 +448,49 @@ static void print_message(const struct local_message *msg) {
 		print_with_time(-1, 1, "%s to %s: %s", msg->msg_from, msg->msg_to, text);
 	}
 	free(text);
+	if(msg->msg_type == SSHOUT_MSG_RICH && (option_showhtml == SHOWHTML_COLOR || option_showhtml == SHOWHTML_PLAIN)) {
+		int pipe_fds[2];
+		if(pipe(pipe_fds) < 0) {
+			perror("pipe");
+			return;
+		}
+		pid_t pid = fork();
+		if(pid == -1) {
+			perror("fork");
+			close(pipe_fds[0]);
+			close(pipe_fds[1]);
+			return;
+		}
+		if(pid) {
+			int status;
+			close(pipe_fds[0]);
+			if(sync_write(pipe_fds[1], msg->msg, msg->msg_length) < 0) {
+				perror("write");
+			}
+			close(pipe_fds[1]);
+			while(waitpid(pid, &status, 0) < 0) {
+				if(errno == EINTR) continue;
+				perror("waitpid");
+				return;
+			}
+			if(option_showhtml == SHOWHTML_COLOR) fputs("\e[0m", stdout);
+			if(WIFSIGNALED(status)) {
+				fprintf(stderr, "child process terminated by signal %d\n", WTERMSIG(status));
+			}
+		} else {
+			close(pipe_fds[1]);
+			close(0);
+			if(dup2(pipe_fds[0], 0) == -1) {
+				perror("dup2");
+				_exit(1);
+			}
+			if(pipe_fds[0] != 0) close(pipe_fds[0]);
+			execlp("elinks", "elinks", "-dump", "-dump-color-mode",
+				option_showhtml == SHOWHTML_COLOR ? "1" : "0", "/dev/stdin", NULL);
+			perror("elinks");
+			_exit(1);
+		}
+	}
 }
 
 static char *command_generator(const char *text, int state) {
