@@ -29,6 +29,8 @@
 #include <time.h>
 #include <arpa/inet.h>
 
+#define API_VERSION 1
+
 #define hton64(a) (htons(1) == 1 ? (a) : ((uint64_t)htonl((a) & 0xFFFFFFFF) << 32) | htonl((a) >> 32))
 
 static const char *sshout_user_name;
@@ -384,13 +386,15 @@ static void client_api_do_stdin(int fd) {
 				exit(1);
 			}
 			api_version = ntohs(*(uint16_t *)(packet->data + 6));
-			if(api_version != 1) {
-				syslog(LOG_ERR, "SSHOUT_API_HELLO: handshake failed, unsupported API version %hu",
+			if(api_version < 1) {
+				syslog(LOG_ERR, "SSHOUT_API_HELLO: handshake failed, invalid API version %hu",
 					(unsigned short int)api_version);
 				close(fd);
 				exit(1);
 			}
-			send_api_pass(1);
+			syslog(LOG_ERR, "SSHOUT_API_HELLO: client API version %hu", api_version);
+			api_version = API_VERSION;
+			send_api_pass(api_version);
 			send_api_motd();
 			break;
 		case SSHOUT_API_GET_ONLINE_USER:
