@@ -240,6 +240,10 @@ static int adduser_command(int argc, char **argv) {
 		if(c == -1) break;
 		switch(c) {
 			case 'a':
+				if(strchr(optarg, '\n')) {
+					fputs("Key string shouldn't have new line\n", stderr);
+					return 1;
+				}
 				key = strdup(optarg);
 				if(!key) {
 					perror("strdup");
