@@ -101,15 +101,16 @@ static int get_length_and_type_string_length_of_key_in_base64(const char *key, s
 	return 0;
 }
 
+static unsigned int nlines;
+
 static int read_user_info(FILE *f, char **name, char **public_key, char **comment, enum key_types *key_type, size_t *line_len) {
-	int i = 0;
 	char line[4096];
 	while(1) {
-		i++;
+		nlines++;
 		int len = fgetline(f, line, sizeof line);
 		if(len == -2) {
 			int c;
-			fprintf(stderr, "Warning: line %u in file " USER_LIST_FILE " is too long, skipping\n", i);
+			fprintf(stderr, "Warning: line %u in file " USER_LIST_FILE " is too long, skipping\n", nlines);
 			while((c = fgetc(f)) != EOF && c != '\n');
 			continue;
 		}
@@ -120,41 +121,41 @@ static int read_user_info(FILE *f, char **name, char **public_key, char **commen
 		if(!*p) continue;
 		char *q1 = strchr(p, '"');
 		if(!q1) {
-			fprintf(stderr, "Warning: cannot find '\"' at line %u in file " USER_LIST_FILE "\n", i);
+			fprintf(stderr, "Warning: cannot find '\"' at line %u in file " USER_LIST_FILE "\n", nlines);
 			continue;
 		}
 		*q1 = 0;
 		if(q1 - p < 8 || strcmp(q1 - 8, "command=") || strchr(p, ' ')) {
-			fprintf(stderr, "Warning: syntax error in file " USER_LIST_FILE " line %u\n", i);
+			fprintf(stderr, "Warning: syntax error in file " USER_LIST_FILE " line %u\n", nlines);
 			continue;
 		}
 		q1++;
 		char *q2 = strchr(q1, '"');
 		if(!q2) {
-			fprintf(stderr, "Warning: unmatched '\"' in file " USER_LIST_FILE " line %u\n", i);
+			fprintf(stderr, "Warning: unmatched '\"' in file " USER_LIST_FILE " line %u\n", nlines);
 			continue;
 		}
 		char *space = strchr(q2 + 1, ' ');
 		if(!space) {
-			fprintf(stderr, "Warning: syntax error in file " USER_LIST_FILE " line %u\n", i);
+			fprintf(stderr, "Warning: syntax error in file " USER_LIST_FILE " line %u\n", nlines);
 			continue;
 		}
 		size_t user_name_len = q2 - q1;
 		if(!user_name_len) {
-			fprintf(stderr, "Warning: empty user name in file " USER_LIST_FILE " line %u\n", i);
+			fprintf(stderr, "Warning: empty user name in file " USER_LIST_FILE " line %u\n", nlines);
 			continue;
 		}
 		char *type_string = space + 1;
 		space = strchr(type_string, ' ');
 		if(!space) {
-			fprintf(stderr, "Warning: syntax error in file " USER_LIST_FILE " line %u\n", i);
+			fprintf(stderr, "Warning: syntax error in file " USER_LIST_FILE " line %u\n", nlines);
 			continue;
 		}
 		size_t type_len = space - type_string;
 		enum key_types key_type_1 = get_key_type(type_string, type_len);
 		if(key_type_1 == KEY_INVALID) {
 			*space = 0;
-			fprintf(stderr, "Warning: invalid key type '%s' in file " USER_LIST_FILE " line %u\n", type_string, i);
+			fprintf(stderr, "Warning: invalid key type '%s' in file " USER_LIST_FILE " line %u\n", type_string, nlines);
 			continue;
 		}
 		const char *base64 = space + 1;
@@ -165,23 +166,23 @@ static int read_user_info(FILE *f, char **name, char **public_key, char **commen
 		enum key_types key_type_2 = get_key_type(inner_key_type_string, inner_type_len);
 		if(key_type_2 == KEY_INVALID) {
 			inner_key_type_string[inner_type_len] = 0;
-			fprintf(stderr, "Warning: invalid key type '%s' from BASE64 in file " USER_LIST_FILE " line %u\n", inner_key_type_string, i);
+			fprintf(stderr, "Warning: invalid key type '%s' from BASE64 in file " USER_LIST_FILE " line %u\n", inner_key_type_string, nlines);
 			continue;
 		}
 		if(key_type_2 != key_type_1) {
-			fprintf(stderr, "Warning: key type didn't match in file " USER_LIST_FILE " line %u; key ignored\n", i);
+			fprintf(stderr, "Warning: key type didn't match in file " USER_LIST_FILE " line %u; key ignored\n", nlines);
 			continue;
 		}
 		*name = malloc(user_name_len + 1);
 		if(!*name) {
-			fprintf(stderr, "Error: allocate %zu bytes failed when processing file " USER_LIST_FILE " line %u\n", user_name_len + 1, i);
+			fprintf(stderr, "Error: allocate %zu bytes failed when processing file " USER_LIST_FILE " line %u\n", user_name_len + 1, nlines);
 			return -1;
 		}
 		memcpy(*name, q1, user_name_len);
 		(*name)[user_name_len] = 0;
 		*public_key = malloc(type_len + 1 + base64_len + 1);
 		if(!*public_key) {
-			fprintf(stderr, "Error: out of memory when processing file " USER_LIST_FILE " line %u\n", i);
+			fprintf(stderr, "Error: out of memory when processing file " USER_LIST_FILE " line %u\n", nlines);
 			return -1;
 		}
 		memcpy(*public_key, type_string, type_len + 1 + base64_len);
@@ -190,7 +191,7 @@ static int read_user_info(FILE *f, char **name, char **public_key, char **commen
 			if(base64[base64_len] == ' ') {
 				*comment = strdup(base64 + base64_len + 1);
 				if(!*comment) {
-					fprintf(stderr, "Error: out of memory when processing file " USER_LIST_FILE " line %u\n", i);
+					fprintf(stderr, "Error: out of memory when processing file " USER_LIST_FILE " line %u\n", nlines);
 					return -1;
 				}
 			} else *comment = NULL;
