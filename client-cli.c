@@ -442,13 +442,14 @@ static void print_message(const struct local_message *msg) {
 		memcpy(text, msg->msg, msg->msg_length);
 		text[msg->msg_length] = 0;
 	}
+	int need_parse_html = msg->msg_type == SSHOUT_MSG_RICH && (option_showhtml == SHOWHTML_COLOR || option_showhtml == SHOWHTML_PLAIN);
 	if(strcmp(msg->msg_to, GLOBAL_NAME) == 0) {
-		print_with_time(-1, 1, "%s: %s", msg->msg_from, text);
+		print_with_time(-1, !need_parse_html, "%s: %s", msg->msg_from, text);
 	} else {
-		print_with_time(-1, 1, "%s to %s: %s", msg->msg_from, msg->msg_to, text);
+		print_with_time(-1, !need_parse_html, "%s to %s: %s", msg->msg_from, msg->msg_to, text);
 	}
 	free(text);
-	if(msg->msg_type == SSHOUT_MSG_RICH && (option_showhtml == SHOWHTML_COLOR || option_showhtml == SHOWHTML_PLAIN)) {
+	if(need_parse_html) {
 		int pipe_fds[2];
 		if(pipe(pipe_fds) < 0) {
 			perror("pipe");
@@ -476,6 +477,10 @@ static void print_message(const struct local_message *msg) {
 			if(option_showhtml == SHOWHTML_COLOR) fputs("\e[0m", stdout);
 			if(WIFSIGNALED(status)) {
 				fprintf(stderr, "child process terminated by signal %d\n", WTERMSIG(status));
+			}
+			if(use_readline) {
+				rl_reset_line_state();
+				rl_redisplay();
 			}
 		} else {
 			close(pipe_fds[1]);
