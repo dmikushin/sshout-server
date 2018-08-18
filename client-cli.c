@@ -64,8 +64,20 @@ static void print_with_time(time_t t, int flags, const char *format, ...) {
 
 static void print_filtered(const char *text) {
 	while(*text) {
-		if(iscntrl(*text)) printf("\\x%hhx", *text);
-		else putchar(*text);
+		switch(*text) {
+			case '\r':
+				if(!text[1] || text[1] == '\n') break;
+			case '\x4':
+			case '\x7':
+			case '\x8':
+			case '\x1b':
+			case '\x7f':
+				printf("\\x%.2hhx", *text);
+				break;
+			default:
+				putchar(*text);
+				break;
+		}
 		text++;
 	}
 	putchar('\n');
