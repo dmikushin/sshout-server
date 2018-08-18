@@ -52,6 +52,12 @@ static void print_with_time(time_t t, int flags, const char *format, ...) {
 	if(t == -1) t = time(NULL);
 	localtime_r(&t, &tm);
 	if(!client_log_only) {
+		if(use_readline) {
+			int end = rl_end;
+			rl_end = 0;
+			rl_redisplay();
+			rl_end = end;
+		}
 		if(option_alert) putchar('\a');
 		putchar('\r');
 	}
@@ -62,7 +68,8 @@ static void print_with_time(time_t t, int flags, const char *format, ...) {
 	if(flags & PRINT_NEWLINE) {
 		putchar('\n');
 		if(use_readline && (flags & PRINT_REDISPLAY_INPUT)) {
-			rl_reset_line_state();
+			//rl_reset_line_state();
+			rl_on_new_line();
 			rl_redisplay();
 		}
 	}
@@ -88,7 +95,7 @@ static void print_filtered(const char *text) {
 	}
 	putchar('\n');
 	if(use_readline) {
-		rl_reset_line_state();
+		rl_on_new_line();
 		rl_redisplay();
 	}
 }
