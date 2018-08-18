@@ -12,6 +12,10 @@
  * more details.
  */
 
+#if defined __sun && defined __SVR4
+#define HAVE_GETPEERUCRED
+#endif
+
 #define _GNU_SOURCE
 #include "common.h"
 #include <sys/socket.h>
@@ -28,6 +32,9 @@
 #include <signal.h>
 #ifdef HAVE_UPDWTMPX
 #include <utmpx.h>
+#ifdef HAVE_GETPEERUCRED
+#include <ucred.h>
+#endif
 #endif
 
 static struct local_online_user online_users[FD_SETSIZE];
@@ -59,6 +66,23 @@ static void broadcast_user_state(const char *user_name, int on, const int *clien
 	free(packet);
 }
 
+static pid_t get_pid_from_unix_socket(int fd) {
+#ifdef SO_PEERCRED
+	struct ucred ucred;
+	socklen_t len = sizeof ucred;
+	if(getsockopt(fd, SOL_SOCKET, SO_PEERCRED, &ucred, &len) < 0) return -1;
+	return ucred.pid;
+#elif defined HAVE_GETPEERUCRED
+	ucred_t *ucred;
+	if(getpeerucred(fd, &ucred) < 0) return -1;
+	pid_t r = ucred_getpid(ucred);
+	ucred_free(ucred);
+	return r;
+#else
+	return -1;
+#endif
+}
+
 static int user_online(int id, const char *user_name, const char *host_name, int *index, const int *client_fds) {
 	int found_dup = 0;
 	unsigned int i = 0;
@@ -82,9 +106,10 @@ static int user_online(int id, const char *user_name, const char *host_name, int
 	if(access("wtmpx", W_OK) == 0) {
 		struct timeval tv;
 		if(gettimeofday(&tv, NULL) == 0) {
+			pid_t pid = get_pid_from_unix_socket(client_fds[id]);
 			struct utmpx utx = {
 				.ut_type = USER_PROCESS,
-				.ut_pid = id,
+				.ut_pid = pid == -1 ? id : pid,
 				.ut_tv.tv_sec = tv.tv_sec,
 				.ut_tv.tv_usec = tv.tv_usec
 			};
@@ -124,9 +149,10 @@ static void user_offline(int id, const int *client_fds) {
 	if(access("wtmpx", W_OK) == 0) {
 		struct timeval tv;
 		if(gettimeofday(&tv, NULL) == 0) {
+			pid_t pid = get_pid_from_unix_socket(client_fds[id]);
 			struct utmpx utx = {
 				.ut_type = DEAD_PROCESS,
-				.ut_pid = id,
+				.ut_pid = pid == -1 ? id : pid,
 				.ut_tv.tv_sec = tv.tv_sec,
 				.ut_tv.tv_usec = tv.tv_usec
 			};
@@ -396,13 +422,13 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 				free(packet);
 				continue;
 end_of_connection:
+				user_offline(i, client_fds);
 				close(cfd);
 				FD_CLR(cfd, &fdset);
 				have_client_fd_closed = 1;
 				client_fds[i] = -1;
 				free(buffers[i].buffer);
 				buffers[i].buffer = NULL;
-				user_offline(i, client_fds);
 				online_users_indexes[i] = -1;
 			}
 		}
