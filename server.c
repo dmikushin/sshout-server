@@ -73,7 +73,7 @@ static pid_t get_pid_from_unix_socket(int fd) {
 	if(getsockopt(fd, SOL_SOCKET, SO_PEERCRED, &ucred, &len) < 0) return -1;
 	return ucred.pid;
 #elif defined HAVE_GETPEERUCRED
-	ucred_t *ucred;
+	ucred_t *ucred = NULL;
 	if(getpeerucred(fd, &ucred) < 0) return -1;
 	pid_t r = ucred_getpid(ucred);
 	ucred_free(ucred);
