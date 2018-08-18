@@ -493,6 +493,7 @@ static void print_message(const struct local_message *msg) {
 		print_with_time(-1, 0, "%s to %s: ", msg->msg_from, msg->msg_to);
 	}
 	if(need_parse_html) {
+		putchar('\n');
 		int pipe_fds[2];
 		if(pipe(pipe_fds) < 0) {
 			perror("pipe");
