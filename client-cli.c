@@ -80,8 +80,10 @@ static void write_preference(const char *name, const char *value) {
 		if(len == 0 || *buffer == '#') continue;
 		if(strncmp(buffer, name_equal, name_len + 1) == 0) {
 			if(len == name_len + 1 + value_len) {
-				if(fseek(preference_file, -1 - value_len, SEEK_CUR) < 0) return;
+				int n = fseek(preference_file, -1, SEEK_CUR) == 0 && fgetc(preference_file) == '\n';
+				if(fseek(preference_file, -n - value_len, SEEK_CUR) < 0) return;
 				fputs(value, preference_file);
+				fflush(preference_file);
 				return;
 			} else {
 				if(fbackwardoverwrite(preference_file, len + 1) < 0) return;
@@ -90,8 +92,13 @@ static void write_preference(const char *name, const char *value) {
 			}
 		}
 	}
-	if(fseek(preference_file, -1, SEEK_CUR) == 0 && fgetc(preference_file) != '\n') fputc('\n', preference_file);
+	if(fseek(preference_file, -1, SEEK_CUR) == 0) {
+		int need_put_new_line = fgetc(preference_file) != '\n';
+		fflush(preference_file);
+		if(need_put_new_line) fputc('\n', preference_file);
+	}
 	fprintf(preference_file, "%s=%s\n", name, value);
+	fflush(preference_file);
 }
 
 static void command_who(int fd, int argc, char **argv) {
