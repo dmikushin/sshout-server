@@ -518,7 +518,10 @@ static void print_message(const struct local_message *msg) {
 				perror("waitpid");
 				return;
 			}
-			if(option_showhtml == SHOWHTML_COLOR) fputs("\e[0m", stdout);
+			if(option_showhtml == SHOWHTML_COLOR) {
+				fputs("\e[0m", stdout);
+				fflush(stdout);		// Make the cursor back normal immediately
+			}
 			if(WIFSIGNALED(status)) {
 				fprintf(stderr, "child process terminated by signal %d\n", WTERMSIG(status));
 			}
