@@ -310,7 +310,7 @@ static void client_api_do_local_packet(int fd) {
 }
 
 static int post_message_from_raw_api_data(int fd, uint8_t *p, uint32_t data_length) {
-	//syslog(LOG_ERR, "function: post_message_from_raw_api_data(%d, %p, %u)", fd, p, (unsigned int)data_length);
+	//syslog(LOG_DEBUG, "function: post_message_from_raw_api_data(%d, %p, %u)", fd, p, (unsigned int)data_length);
 	size_t receiver_len = *p++;
 	if(receiver_len > data_length - 6) return -1;
 	void *receiver_p = p;
@@ -392,7 +392,7 @@ static void client_api_do_stdin(int fd) {
 				close(fd);
 				exit(1);
 			}
-			syslog(LOG_ERR, "SSHOUT_API_HELLO: client API version %hu", api_version);
+			syslog(LOG_INFO, "SSHOUT_API_HELLO: client API version %hu", api_version);
 			api_version = API_VERSION;
 			send_api_pass(api_version);
 			send_api_motd();
