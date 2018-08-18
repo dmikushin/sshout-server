@@ -367,7 +367,7 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 					case 0:
 						break;
 					default:
-						syslog(LOG_INFO, "client %d fd %d unknown error\n", i, cfd);
+						syslog(LOG_WARNING, "client %d fd %d unknown error\n", i, cfd);
 						//abort();
 						goto end_of_connection;
 				}
@@ -377,7 +377,7 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 						break;
 					case SSHOUT_LOCAL_POST_MESSAGE:
 						if(online_users_indexes[i] == -1) {
-							syslog(LOG_INFO, "client %d fd %d posting message without login", i, cfd);
+							syslog(LOG_NOTICE, "client %d fd %d posting message without login", i, cfd);
 							break;
 						}
 						dispatch_message(online_users + online_users_indexes[i], (struct local_message *)packet->data, client_fds);
