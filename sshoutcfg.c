@@ -308,6 +308,10 @@ static int adduser_command(int argc, char **argv) {
 			fputs("Invalid key: key type didn't match\n", stderr);
 			return 1;
 		}
+		// 'space' is now point to the second space if exists
+		space = key + type_len + 1 + base64_len;
+		if(*space == ' ') *space = 0;
+		else space = NULL;
 	} else {
 		char buffer[32];
 		size_t base64_len, type_len;
@@ -401,6 +405,7 @@ static int adduser_command(int argc, char **argv) {
 		}
 	}
 
+	if(space) *space = ' ';
 	if(fprintf(f, "command=\"%s\",no-agent-forwarding,no-port-forwarding %s\n", user, key) < 0) {
 		perror("fprintf");
 		free(key);
