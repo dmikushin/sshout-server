@@ -280,7 +280,6 @@ static int adduser_command(int argc, char **argv) {
 		}
 	}	
 
-	size_t type_and_base64_len;
 	char *space = strchr(key, ' ');
 	if(space) {
 		size_t type_len = space - key;
@@ -305,7 +304,10 @@ static int adduser_command(int argc, char **argv) {
 			fputs("Invalid key: key type didn't match\n", stderr);
 			return 1;
 		}
-		type_and_base64_len = type_len + 1 + base64_len;
+		// 'space' is now point to the second space if exists
+		space = key + type_len + 1 + base64_len;
+		if(*space == ' ') *space = 0;
+		else space = NULL;
 	} else {
 		char buffer[32];
 		size_t base64_len, type_len;
@@ -328,7 +330,6 @@ static int adduser_command(int argc, char **argv) {
 		type_and_key_in_base64[type_len + 1 + base64_len] = 0;
 		free(key);
 		key = type_and_key_in_base64;
-		type_and_base64_len = type_len + 1 + base64_len;
 	}
 
 	struct stat st;
@@ -375,7 +376,7 @@ static int adduser_command(int argc, char **argv) {
 	{
 		char *user_name, *public_key;
 		while(read_user_info(f, &user_name, &public_key, NULL, NULL, NULL) == 0) {
-			if(strncmp(key, public_key, type_and_base64_len) == 0) {
+			if(strcmp(key, public_key) == 0) {
 				free(key);
 				fprintf(stderr, "This public key is already used by user %s.\n"
 					"Are you pasted wrong key?\n", user_name);
@@ -400,6 +401,7 @@ static int adduser_command(int argc, char **argv) {
 		}
 	}
 
+	if(space) *space = ' ';
 	if(fprintf(f, "command=\"%s\",no-agent-forwarding,no-port-forwarding %s\n", user, key) < 0) {
 		perror("fprintf");
 		free(key);
