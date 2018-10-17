@@ -66,6 +66,7 @@ static void broadcast_user_state(const char *user_name, int on, const int *clien
 	free(packet);
 }
 
+#ifdef HAVE_UPDWTMPX
 static pid_t get_pid_from_unix_socket(int fd) {
 #ifdef SO_PEERCRED
 	struct ucred ucred;
@@ -82,6 +83,7 @@ static pid_t get_pid_from_unix_socket(int fd) {
 	return -1;
 #endif
 }
+#endif
 
 static int user_online(int id, const char *user_name, const char *host_name, int *index, const int *client_fds) {
 	int found_dup = 0;
