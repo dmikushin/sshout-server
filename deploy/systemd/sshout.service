@@ -6,7 +6,7 @@ Documentation=https://sourceforge.net/projects/sshout/
 Type=simple
 User=sshout
 ExecStart=/usr/lib/sshout/sshoutd
-ExecStopPost=rm -f /var/lib/sshout/socket
+ExecStopPost=/bin/rm -f /var/lib/sshout/socket
 Restart=on-failure
 
 [Install]
