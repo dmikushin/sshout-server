@@ -372,6 +372,14 @@ static int adduser_command(int argc, char **argv) {
 		return 1;
 	}
 
+#ifndef __GLIBC__
+	if(fseek(f, 0, SEEK_SET) < 0) {
+		perror("fseek");
+		free(key);
+		return 1;
+	}
+#endif
+
 	int existing_count = 0;
 	{
 		char *user_name, *public_key;
