@@ -278,6 +278,7 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 		perror("fclose");
 		return 1;
 	}
+	signal(SIGPIPE, SIG_IGN);
 	int fd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if(fd == -1) {
 		perror("socket");
