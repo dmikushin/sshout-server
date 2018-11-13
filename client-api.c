@@ -29,7 +29,7 @@
 #include <time.h>
 #include <arpa/inet.h>
 
-#define API_VERSION 1
+#define CURRENT_API_VERSION 1
 
 #define hton64(a) (htons(1) == 1 ? (a) : ((uint64_t)htonl((a) & 0xFFFFFFFF) << 32) | htonl((a) >> 32))
 
@@ -393,7 +393,7 @@ static void client_api_do_stdin(int fd) {
 				exit(1);
 			}
 			syslog(LOG_INFO, "SSHOUT_API_HELLO: client API version %hu", api_version);
-			api_version = API_VERSION;
+			if(api_version > CURRENT_API_VERSION) api_version = CURRENT_API_VERSION;
 			send_api_pass(api_version);
 			send_api_motd();
 			break;
