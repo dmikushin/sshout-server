@@ -32,6 +32,7 @@ int is_valid_user_name(const char *name) {
 			case '\'':
 			case '*':
 			case '/':
+			case ':':
 			case '\\':
 			case 0x7f:
 				return 0;
