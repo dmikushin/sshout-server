@@ -354,11 +354,11 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 						goto end_of_connection;
 					case GET_PACKET_TOO_LARGE:
 						syslog(LOG_WARNING, "client %d fd %d packet too large (%u bytes)\n",
-							i, cfd, *(unsigned int *)packet);
+							i, cfd, (unsigned int)packet);
 						goto end_of_connection;
 					case GET_PACKET_OUT_OF_MEMORY:
 						syslog(LOG_WARNING, "client %d fd %d out of memory (allocating %u bytes)\n",
-							i, cfd, *(unsigned int *)packet);
+							i, cfd, (unsigned int)packet);
 						goto end_of_connection;
 					case GET_PACKET_INCOMPLETE:
 						syslog(LOG_INFO, "client %d fd %d incomplete packet received, read %zu bytes, total %zu bytes; will continue later\n",
