@@ -1,5 +1,5 @@
 ifeq ($(CC),cc)
-CC := $(shell gcc --version > /dev/null 2>&1 && echo gcc || echo cc)
+CC := $(shell gcc --version > /dev/null 2>&1 && gcc -v 2>&1 | grep -q ^gcc && echo gcc || echo cc)
 endif
 INSTALL ?= install
 
