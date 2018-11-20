@@ -393,7 +393,7 @@ static void client_api_do_stdin(int fd) {
 				close(fd);
 				exit(1);
 			}
-			syslog(LOG_INFO, "SSHOUT_API_HELLO: client API version %hu", api_version);
+			syslog(LOG_INFO, "SSHOUT_API_HELLO: client API version %hu", (unsigned short int)api_version);
 			if(api_version > CURRENT_API_VERSION) api_version = CURRENT_API_VERSION;
 			send_api_pass(api_version);
 			send_api_motd();
