@@ -311,14 +311,15 @@ static void client_api_do_local_packet(int fd) {
 
 static int post_message_from_raw_api_data(int fd, uint8_t *p, uint32_t data_length) {
 	//syslog(LOG_DEBUG, "function: post_message_from_raw_api_data(%d, %p, %u)", fd, p, (unsigned int)data_length);
+	if(1 > data_length) return -1;
 	size_t receiver_len = *p++;
-	if(receiver_len > data_length - 6) return -1;
+	if(1 + receiver_len + 1 + 4 > data_length) return -1;
 	void *receiver_p = p;
 	p += receiver_len;
 	enum local_msg_type t = *p++;
 	size_t text_len = ntohl(*(uint32_t *)p);
 	p += 4;
-	if(receiver_len + text_len > data_length - 6) return -1;
+	if(1 + receiver_len + 1 + 4 + text_len > data_length) return -1;
 	struct local_message *message = malloc(sizeof(struct local_message) + text_len);
 	if(!message) return -1;
 	if(receiver_len > USER_NAME_MAX_LENGTH - 1) receiver_len = USER_NAME_MAX_LENGTH - 1;
