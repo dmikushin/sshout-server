@@ -119,6 +119,7 @@ int client_get_local_socket_fd() {
 }
 
 int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
+	pid_t ppid = getppid();
 	int remote_mode = REMOTE_MODE_CLI;
 	const char *client_address = getenv("SSH_CLIENT");
 	if(!client_address) {
@@ -192,7 +193,7 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 	actions.init_io(user_name);
 	local_socket = fd;
 
-	while(1) {
+	while(getppid() == ppid) {
 		fd_set rfdset = fdset;
 		struct timeval current_timeout = timeout;
 		int n = select(max_fd + 1, &rfdset, NULL, NULL, &current_timeout);
@@ -210,4 +211,7 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 			if(FD_ISSET(STDIN_FILENO, &rfdset)) actions.do_stdin(fd);
 		}
 	}
+
+	fputs("Parent process changed, exiting\n", stderr);
+	return 0;
 }
