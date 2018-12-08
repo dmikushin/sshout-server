@@ -421,8 +421,8 @@ static void do_command(int fd, const char *command) {
 		return;
 	}
 	int argc = parse_tokens(buffer, &argv, 0);
-	if(argc < 0) {
-		print_with_time(-1, PRINT_NEWLINE, "do_command: out of memory");
+	if(argc < 1) {
+		if(argv < 0) print_with_time(-1, PRINT_NEWLINE, "do_command: out of memory");
 		free(argv);
 		free(buffer);
 		return;
