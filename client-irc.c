@@ -532,6 +532,10 @@ static void do_irc_line(int fd, const char *line, size_t len) {
 		exit(1);
 	}
 	space = memchr(line, ' ', len);
+	if(space && space + 1 == line + len) {
+		space = NULL;
+		len--;
+	}
 	size_t command_len = space ? space - line : len;
 	if(space) parse_irc_arg(space + 1, len - command_len - 1, &argc, &argv);
 	else memset(argv, 0, sizeof(struct fixed_length_string));
