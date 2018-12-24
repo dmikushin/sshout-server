@@ -300,7 +300,15 @@ static void client_api_do_local_packet(int fd) {
 			send_api_user_state((char *)packet->data, packet->type == SSHOUT_LOCAL_USER_ONLINE);
 			break;
 		case SSHOUT_LOCAL_USER_NOT_FOUND:
-			send_api_error(SSHOUT_API_ERROR_USER_NOT_FOUND, (char *)packet->data);
+			{
+				char *user_name = (char *)packet->data;
+				size_t user_name_len = strlen(user_name);
+				char msg[5 + user_name_len + 10 + 1];
+				memcpy(msg, "User ", 5);
+				memcpy(msg + 5, user_name, user_name_len);
+				memcpy(msg + 5 + user_name_len, " not found", 11);
+				send_api_error(SSHOUT_API_ERROR_USER_NOT_FOUND, msg);
+			}
 			break;
 		default:
 			syslog(LOG_WARNING, "Unknown local packet type %d", packet->type);
