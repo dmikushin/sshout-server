@@ -47,3 +47,5 @@ install:	all
 	$(INSTALL) -m 755 sshoutd "$(DESTDIR)$(LIBEXECDIR)/"
 	$(INSTALL) -m 755 sshoutcfg "$(DESTDIR)$(SBINDIR)/"
 	$(INSTALL) -m 644 sshoutcfg.8 "$(DESTDIR)$(MANDIR)/man8/"
+
+.PHONY:	build-info.h clean install
