@@ -20,6 +20,7 @@ int is_valid_user_name(const char *name) {
 	do {
 		switch(*name) {
 			case 0x4:
+			case '\a':
 			case '\b':
 			case '	':
 			case '\n':
