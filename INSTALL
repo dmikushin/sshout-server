@@ -27,7 +27,7 @@ This user account must be allowed to log in with SSH public key
 authentication.
 This program is currently assuming the AuthorizedKeysFile option in
 sshd_config(5) is left default, or contains '.ssh/authorized_keys'; otherwise
-the anthentication won't be work.
+the authentication won't work.
 Create a service so sshoutd can be started automatically; the service must be
 started under the sshout user, instead of root. For systemd based systems,
 you can use we provided systemd service file in deploy directory, by running:
