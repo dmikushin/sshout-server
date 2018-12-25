@@ -489,7 +489,7 @@ static void print_online_users(const struct local_online_users_info *info) {
 	int i = 0;
 	while(i < info->count) {
 		const struct local_online_user *u = info->user + i++;
-		printf("%c %3d %-16s %s\n", u->id == info->your_id ? '*' : ' ',
+		printf("%c %3d %-16s	%s\n", u->id == info->your_id ? '*' : ' ',
 			u->id, u->user_name, u->host_name);
 	}
 }
