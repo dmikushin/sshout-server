@@ -310,6 +310,46 @@ static void command_pasteimage(int fd, int argc, char **argv) {
 	}
 }
 
+static void command_listoptions(int fd, int argc, char **argv) {
+	if(argc > 1 && strcmp(argv[1], "-e") == 0) {
+		fputs("/alert ", stdout);
+		puts(option_alert ? "on" : "off");
+		fputs("/showhtml ", stdout);
+		switch(option_showhtml) {
+			case SHOWHTML_OFF:
+				puts("off");
+				break;
+			case SHOWHTML_COLOR:
+				puts("color");
+				break;
+			case SHOWHTML_PLAIN:
+				puts("plain");
+				break;
+			case SHOWHTML_RAW:
+				puts("raw");
+				break;
+		}
+	} else {
+		fputs("Message alert:          ", stdout);
+		puts(option_alert ? "on" : "off");
+		fputs("Showing HTML message:   ", stdout);
+		switch(option_showhtml) {
+			case SHOWHTML_OFF:
+				puts("off");
+				break;
+			case SHOWHTML_COLOR:
+				puts("colorized text");
+				break;
+			case SHOWHTML_PLAIN:
+				puts("plain text");
+				break;
+			case SHOWHTML_RAW:
+				puts("raw html document");
+				break;
+		}
+	}
+}
+
 static void command_version(int fd, int argc, char **argv) {
 	puts(SSHOUT_VERSION_STRING "\n"
 		"Command line interface frontend\n"
@@ -341,6 +381,7 @@ static struct command {
 	{ "tell", "<user> <message> [<message> ...]", command_msg },
 	{ "motd", "", command_motd },
 	{ "pasteimage", "<user>", command_pasteimage },
+	{ "listoptions", "[-e]", command_listoptions },
 	{ "version", "", command_version },
 	{ "quit", "", command_quit },
 	{ "help", "", command_help },
