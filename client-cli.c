@@ -1,5 +1,5 @@
 /* Secure Shout Host Oriented Unified Talk
- * Copyright 2015-2018 Rivoreo
+ * Copyright 2015-2019 Rivoreo
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -406,7 +406,7 @@ static void command_listoptions(int fd, int argc, char **argv) {
 static void command_version(int fd, int argc, char **argv) {
 	puts(SSHOUT_VERSION_STRING "\n"
 		"Command line interface frontend\n"
-		"Copyright 2015-2018 Rivoreo\n"
+		"Copyright 2015-2019 Rivoreo\n"
 		"This is free software; see the source for copying conditions.\n"
 		"There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n"
 		"PARTICULAR PURPOSE.\n"
@@ -816,6 +816,11 @@ static void client_cli_init_io(const char *user_name) {
 		sigaction(SIGWINCH, &act, NULL);
 		rl_catch_signals = 0;
 		rl_catch_sigwinch = 0;
+		char *editing_mode = getenv("RL_EDITING_MODE");
+		if(editing_mode) {
+			if(strcmp(editing_mode, "emacs") == 0) rl_editing_mode = 1;
+			else if(strcmp(editing_mode, "vi") == 0) rl_editing_mode = 0;
+		}
 	}
 	setvbuf(stdout, NULL, _IOLBF, 0);
 	setlocale(LC_TIME, "");
