@@ -44,9 +44,10 @@
 #define COLOR_ON 1
 #define COLOR_AUTO 2
 
-#define COLOR_CODE_RESET "\e[0m"
-#define COLOR_CODE_GREEN "\e[1;32m"
-#define COLOR_CODE_BLUE "\e[1;34m"
+#define CSI_SGR_RESET "\e[0m"
+#define CSI_SGR_BRIGHT "\e[1m"
+#define CSI_SGR_BRIGHT_GREEN "\e[1;32m"
+#define CSI_SGR_BRIGHT_BLUE "\e[1;34m"
 
 static const char *sshout_user_name;
 static int use_readline;
@@ -86,6 +87,7 @@ static void print_with_time(time_t t, int flags, const char *format, ...) {
 }
 
 static void print_filtered(const char *text) {
+	int use_color = -1;
 	while(*text) {
 		switch(*text) {
 			case '\r':
@@ -95,7 +97,10 @@ static void print_filtered(const char *text) {
 			case '\x8':
 			case '\x1b':
 			case '\x7f':
+				if(use_color == -1) use_color = (option_color == COLOR_AUTO && isatty(STDOUT_FILENO)) || option_color == COLOR_ON;
+				if(use_color) fputs(CSI_SGR_BRIGHT, stdout);
 				printf("\\x%.2hhx", *text);
+				if(use_color) fputs(CSI_SGR_RESET, stdout);
 				break;
 			default:
 				putchar(*text);
@@ -550,9 +555,9 @@ static void print_message(const struct local_message *msg) {
 	char *text = NULL;
 	int need_parse_html = 0;
 	if((option_color == COLOR_AUTO && isatty(STDOUT_FILENO)) || option_color == COLOR_ON) {
-		color_begin = strcmp(msg->msg_from, sshout_user_name) == 0 ? COLOR_CODE_GREEN : COLOR_CODE_BLUE;
-		color_end = COLOR_CODE_RESET;
-		color_green_begin = COLOR_CODE_GREEN;
+		color_begin = strcmp(msg->msg_from, sshout_user_name) == 0 ? CSI_SGR_BRIGHT_GREEN : CSI_SGR_BRIGHT_BLUE;
+		color_end = CSI_SGR_RESET;
+		color_green_begin = CSI_SGR_BRIGHT_GREEN;
 	} else {
 		color_begin = "";
 		color_end = "";
