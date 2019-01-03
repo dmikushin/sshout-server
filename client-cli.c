@@ -40,11 +40,21 @@
 #define SHOWHTML_PLAIN 2
 #define SHOWHTML_RAW 3
 
+#define COLOR_OFF 0
+#define COLOR_ON 1
+#define COLOR_AUTO 2
+
+#define COLOR_CODE_RESET "\e[0m"
+#define COLOR_CODE_GREEN "\e[1;32m"
+#define COLOR_CODE_BLUE "\e[1;34m"
+
+static const char *sshout_user_name;
 static int use_readline;
 static int client_log_only;
 static FILE *preference_file;
 static int option_alert = 0;
 static int option_showhtml = SHOWHTML_OFF;
+static int option_color = COLOR_AUTO;
 
 static void print_with_time(time_t t, int flags, const char *format, ...) {
 	va_list ap;
@@ -169,6 +179,20 @@ usage:
 	else goto usage;
 	char buffer[2] = { '0' + option_showhtml, 0 };
 	write_preference("showhtml", buffer);
+}
+
+static void command_color(int fd, int argc, char **argv) {
+	if(argc != 2) {
+usage:
+		fprintf(stderr, "Usage: %s off|on|auto\n", argv[0]);
+		return;
+	}
+	if(strcmp(argv[1], "off") == 0) option_color = COLOR_OFF;
+	else if(strcmp(argv[1], "on") == 0) option_color = COLOR_ON;
+	else if(strcmp(argv[1], "auto") == 0) option_color = COLOR_AUTO;
+	else goto usage;
+	char buffer[2] = { '0' + option_color, 0 };
+	write_preference("color", buffer);
 }
 
 static void command_msg(int fd, int argc, char **argv) {
@@ -329,6 +353,18 @@ static void command_listoptions(int fd, int argc, char **argv) {
 				puts("raw");
 				break;
 		}
+		fputs("/color ", stdout);
+		switch(option_color) {
+			case COLOR_OFF:
+				puts("off");
+				break;
+			case COLOR_ON:
+				puts("on");
+				break;
+			case COLOR_AUTO:
+				puts("auto");
+				break;
+		}
 	} else {
 		fputs("Message alert:          ", stdout);
 		puts(option_alert ? "on" : "off");
@@ -345,6 +381,18 @@ static void command_listoptions(int fd, int argc, char **argv) {
 				break;
 			case SHOWHTML_RAW:
 				puts("raw html document");
+				break;
+		}
+		fputs("Use colorized output:   ", stdout);
+		switch(option_color) {
+			case COLOR_OFF:
+				puts("off");
+				break;
+			case COLOR_ON:
+				puts("on");
+				break;
+			case COLOR_AUTO:
+				puts("automatic (if terminal)");
 				break;
 		}
 	}
@@ -377,6 +425,7 @@ static struct command {
 	{ "alert", "off|on", command_alert },
 	{ "bell", "off|on", command_alert },
 	{ "showhtml", "off|color|plain|raw", command_showhtml },
+	{ "color", "off|on|auto", command_color },
 	{ "msg", "<user> <message> [<message> ...]", command_msg },
 	{ "tell", "<user> <message> [<message> ...]", command_msg },
 	{ "motd", "", command_motd },
@@ -495,8 +544,20 @@ static void print_online_users(const struct local_online_users_info *info) {
 }
 
 static void print_message(const struct local_message *msg) {
+	const char *color_begin;
+	const char *color_end;
+	const char *color_green_begin;
 	char *text = NULL;
 	int need_parse_html = 0;
+	if((option_color == COLOR_AUTO && isatty(STDOUT_FILENO)) || option_color == COLOR_ON) {
+		color_begin = strcmp(msg->msg_from, sshout_user_name) == 0 ? COLOR_CODE_GREEN : COLOR_CODE_BLUE;
+		color_end = COLOR_CODE_RESET;
+		color_green_begin = COLOR_CODE_GREEN;
+	} else {
+		color_begin = "";
+		color_end = "";
+		color_green_begin = "";
+	}
 	switch(msg->msg_type) {
 		case SSHOUT_MSG_RICH:
 			switch(option_showhtml) {
@@ -536,9 +597,11 @@ static void print_message(const struct local_message *msg) {
 		text[msg->msg_length] = 0;
 	}
 	if(strcmp(msg->msg_to, GLOBAL_NAME) == 0) {
-		print_with_time(-1, 0, "%s: ", msg->msg_from);
+		print_with_time(-1, 0, "%s%s%s: ", color_begin, msg->msg_from, color_end);
 	} else {
-		print_with_time(-1, 0, "%s to %s: ", msg->msg_from, msg->msg_to);
+		print_with_time(-1, 0, "%s%s%s to %s%s%s: ",
+			color_begin, msg->msg_from, color_end,
+			color_green_begin, msg->msg_to, color_end);
 	}
 	if(need_parse_html) {
 		putchar('\n');
@@ -724,6 +787,9 @@ static void open_preference(const char *user_name) {
 		} else if(strncmp(buffer, "showhtml=", 9) == 0) {
 			if(len == 10) option_showhtml = buffer[9] - '0';
 			else if(fbackwardoverwrite(preference_file, len + 1) < 0) break;
+		} else if(strncmp(buffer, "color=", 6) == 0) {
+			if(len == 7) option_color = buffer[6] - '0';
+			else if(fbackwardoverwrite(preference_file, len + 1) < 0) break;
 		} else {
 			fprintf(stderr, "Unrecognized option '%s', removing\n", buffer);
 			if(fbackwardoverwrite(preference_file, len + 1) < 0) break;
@@ -748,6 +814,7 @@ static void client_cli_init_io(const char *user_name) {
 	}
 	setvbuf(stdout, NULL, _IOLBF, 0);
 	setlocale(LC_TIME, "");
+	sshout_user_name = user_name;
 	open_preference(user_name);
 	print_motd(1);
 }
