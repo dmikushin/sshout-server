@@ -549,19 +549,19 @@ static void print_online_users(const struct local_online_users_info *info) {
 }
 
 static void print_message(const struct local_message *msg) {
-	const char *color_begin;
+	const char *color_begin_from;
+	const char *color_begin_to;
 	const char *color_end;
-	const char *color_green_begin;
 	char *text = NULL;
 	int need_parse_html = 0;
 	if((option_color == COLOR_AUTO && isatty(STDOUT_FILENO)) || option_color == COLOR_ON) {
-		color_begin = strcmp(msg->msg_from, sshout_user_name) == 0 ? CSI_SGR_BRIGHT_GREEN : CSI_SGR_BRIGHT_BLUE;
+		color_begin_from = strcmp(msg->msg_from, sshout_user_name) == 0 ? CSI_SGR_BRIGHT_GREEN : CSI_SGR_BRIGHT_BLUE;
+		color_begin_to = strcmp(msg->msg_to, sshout_user_name) == 0 ? CSI_SGR_BRIGHT_GREEN : CSI_SGR_BRIGHT_BLUE;
 		color_end = CSI_SGR_RESET;
-		color_green_begin = CSI_SGR_BRIGHT_GREEN;
 	} else {
-		color_begin = "";
+		color_begin_from = "";
+		color_begin_to = "";
 		color_end = "";
-		color_green_begin = "";
 	}
 	switch(msg->msg_type) {
 		case SSHOUT_MSG_RICH:
@@ -602,11 +602,11 @@ static void print_message(const struct local_message *msg) {
 		text[msg->msg_length] = 0;
 	}
 	if(strcmp(msg->msg_to, GLOBAL_NAME) == 0) {
-		print_with_time(-1, 0, "%s%s%s: ", color_begin, msg->msg_from, color_end);
+		print_with_time(-1, 0, "%s%s%s: ", color_begin_from, msg->msg_from, color_end);
 	} else {
 		print_with_time(-1, 0, "%s%s%s to %s%s%s: ",
-			color_begin, msg->msg_from, color_end,
-			color_green_begin, msg->msg_to, color_end);
+			color_begin_from, msg->msg_from, color_end,
+			color_begin_to, msg->msg_to, color_end);
 	}
 	if(need_parse_html) {
 		putchar('\n');
