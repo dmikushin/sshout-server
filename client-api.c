@@ -327,6 +327,8 @@ static int post_message_from_raw_api_data(int fd, uint8_t *p, uint32_t data_leng
 	enum local_msg_type t = *p++;
 	size_t text_len = ntohl(*(uint32_t *)p);
 	p += 4;
+	if(sizeof(struct local_message) + text_len < text_len) return -1;
+	if(1 + receiver_len + 1 + 4 + text_len < text_len) return -1;
 	if(1 + receiver_len + 1 + 4 + text_len > data_length) return -1;
 	struct local_message *message = malloc(sizeof(struct local_message) + text_len);
 	if(!message) return -1;
