@@ -80,6 +80,14 @@ int client_send_request_get_online_users(int fd) {
 int client_post_message(int fd, const struct local_message *message) {
 	int r = 0;
 	size_t packet_len = sizeof(struct local_packet) + sizeof(struct local_message) + message->msg_length;
+	if(packet_len < message->msg_length) {
+#ifdef EOVERFLOW
+		errno = EOVERFLOW;
+#else
+		errno = EINVAL;
+#endif
+		return -1;
+	}
 	struct local_packet *packet = malloc(packet_len);
 	if(!packet) return -1;
 	packet->length = packet_len - sizeof packet->length;
