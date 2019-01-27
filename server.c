@@ -22,6 +22,7 @@
 #include <sys/un.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "syncrw.h"
 #include <syslog.h>
 #include <string.h>
 #include <stdlib.h>
@@ -190,11 +191,9 @@ static int send_online_users(int receiver_id, int receiver_fd) {
 		count--;
 		memcpy(info->user + count, online_users + i, sizeof(struct local_online_user));
 	}
-	while(write(receiver_fd, packet, packet_length) < 0) {
-		if(errno == EINTR) continue;
+	if(sync_write(receiver_fd, packet, packet_length) < 0) {
 		syslog_perror("send_online_users: write");
 		r = -1;
-		break;
 	}
 	free(packet);
 	return r;
@@ -221,12 +220,10 @@ static int dispatch_message(const struct local_online_user *sender, const struct
 			// Not the target user, but we also need to send the message back to sender
 			if(strcmp(online_users[i].user_name, sender->user_name)) continue;
 		} else found = 1;
-		while(write(client_fds[online_users[i].id], packet, packet_len) < 0) {
-			if(errno == EINTR) continue;
+		if(sync_write(client_fds[online_users[i].id], packet, packet_len) < 0) {
 			//syslog(LOG_WARNING, "i = %d, id = %d, fd = %d", i, online_users[i].id, client_fds[online_users[i].id]);
 			syslog_perror("dispatch_message: write");
 			r = -1;
-			break;
 		}
 	} while(++i < sizeof online_users / sizeof *online_users);
 	free(packet);

@@ -18,6 +18,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
+#include "syncrw.h"
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -93,10 +94,8 @@ int client_post_message(int fd, const struct local_message *message) {
 	packet->length = packet_len - sizeof packet->length;
 	packet->type = SSHOUT_LOCAL_POST_MESSAGE;
 	memcpy(packet->data, message, sizeof(struct local_message) + message->msg_length);
-	while(write(fd, packet, packet_len) < 0) {
-		if(errno == EINTR) continue;
+	if(sync_write(fd, packet, packet_len) < 0) {
 		r = -1;
-		break;
 	}
 	int e = errno;
 	free(packet);
