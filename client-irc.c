@@ -554,19 +554,9 @@ static void do_irc_line(int fd, const char *line, size_t len) {
 	syslog(LOG_INFO, "do_irc_line: %s: command not found", buffer);
 }
 
-static char *syslog_ident;
-
 static void client_irc_init(const char *user_name) {
 	setvbuf(stdout, NULL, _IOLBF, 0);
 	setlocale(LC_TIME, "");
-	size_t len = 8 + USER_NAME_MAX_LENGTH + 4 + 1;
-	syslog_ident = malloc(len);
-	if(!syslog_ident) {
-		perror("malloc");
-		exit(1);
-	}
-	snprintf(syslog_ident, len, "sshoutd:%s:irc", user_name);
-	openlog(syslog_ident, LOG_PID, LOG_DAEMON);
 	sshout_user_name = user_name;
 	syslog(LOG_INFO, "IRC server started");
 }

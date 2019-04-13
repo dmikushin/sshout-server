@@ -18,6 +18,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
+#include <syslog.h>
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -143,6 +144,14 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 			return 1;
 		}
 	}
+	size_t len = 8 + USER_NAME_MAX_LENGTH + 4 + 1;
+	char *syslog_ident = malloc(len);
+	if(!syslog_ident) {
+		perror("malloc");
+		exit(1);
+	}
+	snprintf(syslog_ident, len, "sshoutd:%s:%s", user_name, command ? : "cli");
+	openlog(syslog_ident, LOG_PID, LOG_DAEMON);
 	int fd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if(fd == -1) {
 		perror("socket");

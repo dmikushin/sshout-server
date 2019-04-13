@@ -232,17 +232,7 @@ static int send_api_motd() {
 
 static int api_version = 0;
 
-static char *syslog_ident;
-
 static void client_api_init_io(const char *user_name) {
-	size_t len = 8 + USER_NAME_MAX_LENGTH + 4 + 1;
-	syslog_ident = malloc(len);
-	if(!syslog_ident) {
-		perror("malloc");
-		exit(1);
-	}
-	snprintf(syslog_ident, len, "sshoutd:%s:api", user_name);
-	openlog(syslog_ident, LOG_PID, LOG_DAEMON);
 	sshout_user_name = user_name;
 	syslog(LOG_INFO, "API server started");
 }
