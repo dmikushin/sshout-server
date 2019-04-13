@@ -151,6 +151,7 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 			return 1;
 		}
 	}
+
 	size_t len = 8 + USER_NAME_MAX_LENGTH + 4 + 1;
 	char *syslog_ident = malloc(len);
 	if(!syslog_ident) {
@@ -159,6 +160,20 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 	}
 	snprintf(syslog_ident, len, "sshoutd:%s:%s", user_name, command ? : "cli");
 	openlog(syslog_ident, LOG_PID, LOG_DAEMON);
+
+	char *tz = getenv("TZ");
+	if(tz) {
+		if((tz[0] == ':' && tz[1] == '/') || tz[0] == '/') {
+			fputs("Ignoring absolute path name in TZ\n", stderr);
+			syslog(LOG_WARNING, "TZ contains absolute path name '%s', ignored", tz);
+			*tz = 0;
+		} else if(strstr(tz, "../")) {
+			fputs("Ignoring TZ\n", stderr);
+			syslog(LOG_WARNING, "TZ='%s', ignored", tz);
+			*tz = 0;
+		}
+	}
+
 	int fd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if(fd == -1) {
 		perror("socket");
