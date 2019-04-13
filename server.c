@@ -203,7 +203,7 @@ static int dispatch_message(const struct local_online_user *sender, const struct
 	int r = 0;
 	unsigned int i = 0;
 	int found = 0;
-	int is_broadcast = strcmp(msg->msg_to, GLOBAL_NAME) == 0;
+	int is_broadcast = strcmp(msg->msg_to, GLOBAL_NAME) == 0 || strcmp(msg->msg_to, "*") == 0;
 	size_t packet_len = sizeof(struct local_packet) + sizeof(struct local_message) + msg->msg_length;
 	struct local_packet *packet = malloc(packet_len);
 	if(!packet) {

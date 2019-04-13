@@ -35,6 +35,8 @@
 
 static const char *sshout_user_name;
 
+static int api_version = 0;
+
 static void send_api_pass(int version) {
 	uint8_t user_name_len = strlen(sshout_user_name);
 	uint32_t length = 1 + 6 + 2 + 1 + user_name_len;
@@ -83,6 +85,11 @@ static void send_api_error(int code, const char *message) {
 static void send_api_message(const struct local_message *local_message) {
 	uint8_t from_user_name_len = strnlen(local_message->msg_from, USER_NAME_MAX_LENGTH);
 	uint8_t to_user_name_len = strnlen(local_message->msg_to, USER_NAME_MAX_LENGTH);
+	const char *to_user_name = local_message->msg_to;
+	if(api_version < 2 && to_user_name_len == 1 && local_message->msg_to[0] == '*') {
+		to_user_name_len = sizeof GLOBAL_NAME - 1;
+		to_user_name = GLOBAL_NAME;
+	}
 	uint32_t length = 1 + 8 + 1 + from_user_name_len + 1 + to_user_name_len + 1 + 4 + local_message->msg_length;
 	struct sshout_api_packet *packet = malloc(4 + length);
 	if(!packet) {
@@ -99,7 +106,7 @@ static void send_api_message(const struct local_message *local_message) {
 	memcpy(p, local_message->msg_from, from_user_name_len);
 	p += from_user_name_len;
 	*p++ = to_user_name_len;
-	memcpy(p, local_message->msg_to, to_user_name_len);
+	memcpy(p, to_user_name, to_user_name_len);
 	p += to_user_name_len;
 	switch(local_message->msg_type) {
 		case SSHOUT_MSG_PLAIN:
@@ -223,8 +230,6 @@ static int send_api_motd() {
 	free(packet);
 	return 0;
 }
-
-static int api_version = 0;
 
 static void client_api_init_io(const char *user_name) {
 	sshout_user_name = user_name;

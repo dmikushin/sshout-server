@@ -601,7 +601,7 @@ static void print_message(const struct local_message *msg) {
 		memcpy(text, msg->msg, msg->msg_length);
 		text[msg->msg_length] = 0;
 	}
-	if(strcmp(msg->msg_to, GLOBAL_NAME) == 0) {
+	if(strcmp(msg->msg_to, GLOBAL_NAME) == 0 || strcmp(msg->msg_to, "*") == 0) {
 		print_with_time(-1, 0, "%s%s%s: ", color_begin_from, msg->msg_from, color_end);
 	} else {
 		print_with_time(-1, 0, "%s%s%s to %s%s%s: ",

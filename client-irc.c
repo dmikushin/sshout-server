@@ -181,7 +181,8 @@ static void send_irc_message(const struct local_message *msg) {
 		text[msg->msg_length] = 0;
 	}
 	printf(":%s PRIVMSG %s :%s\r\n", msg->msg_from,
-		strcmp(msg->msg_to, GLOBAL_NAME) == 0 ? irc_channel_name : msg->msg_to, text);
+		strcmp(msg->msg_to, GLOBAL_NAME) == 0 || strcmp(msg->msg_to, "*") == 0 ?
+			irc_channel_name : msg->msg_to, text);
 }
 
 static void send_irc_online_users(const struct local_online_users_info *info) {
