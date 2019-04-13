@@ -363,7 +363,7 @@ static int adduser_command(int argc, char **argv) {
 			fputs("Cannot continue\n", stderr);
 			return 1;
 		}
-	} else if(mkdir(".ssh", 0755) < 0) {
+	} else if(mkdir(".ssh", 0750) < 0) {
 		perror("mkdir: .ssh");
 		free(key);
 		return 1;

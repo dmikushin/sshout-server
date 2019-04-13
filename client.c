@@ -19,6 +19,7 @@
 #include <sys/un.h>
 #include <unistd.h>
 #include <syslog.h>
+#include "syncrw.h"
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -81,15 +82,21 @@ int client_send_request_get_online_users(int fd) {
 int client_post_message(int fd, const struct local_message *message) {
 	int r = 0;
 	size_t packet_len = sizeof(struct local_packet) + sizeof(struct local_message) + message->msg_length;
+	if(packet_len < message->msg_length) {
+#ifdef EOVERFLOW
+		errno = EOVERFLOW;
+#else
+		errno = EINVAL;
+#endif
+		return -1;
+	}
 	struct local_packet *packet = malloc(packet_len);
 	if(!packet) return -1;
 	packet->length = packet_len - sizeof packet->length;
 	packet->type = SSHOUT_LOCAL_POST_MESSAGE;
 	memcpy(packet->data, message, sizeof(struct local_message) + message->msg_length);
-	while(write(fd, packet, packet_len) < 0) {
-		if(errno == EINTR) continue;
+	if(sync_write(fd, packet, packet_len) < 0) {
 		r = -1;
-		break;
 	}
 	int e = errno;
 	free(packet);

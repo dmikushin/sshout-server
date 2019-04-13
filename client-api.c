@@ -73,8 +73,7 @@ static void send_api_error(int code, const char *message) {
 	*(uint32_t *)packet->data = htonl(code);
 	*(uint32_t *)(packet->data + 4) = htonl(message_length);
 	memcpy(packet->data + 8, message, message_length);
-	while(write(STDOUT_FILENO, packet, 4 + length) < 0) {
-		if(errno == EINTR) continue;
+	if(sync_write(STDOUT_FILENO, packet, 4 + length) < 0) {
 		syslog(LOG_ERR, "send_api_error: write: STDOUT_FILENO: errno %d", errno);
 		exit(1);
 	}
@@ -117,8 +116,6 @@ static void send_api_message(const struct local_message *local_message) {
 	*(uint32_t *)p = htonl(local_message->msg_length);
 	p += 4;
 	memcpy(p, local_message->msg, local_message->msg_length);
-	//while(write(STDOUT_FILENO, packet, 4 + length) < 0) {
-	//	if(errno == EINTR) continue;
 	if(sync_write(STDOUT_FILENO, packet, 4 + length) < 0) {
 		syslog(LOG_ERR, "send_api_message: write: STDOUT_FILENO: errno %d", errno);
 		exit(1);
@@ -164,8 +161,7 @@ static void send_api_online_users(const struct local_online_users_info *local_in
 		p += host_name_len;
 	}
 	packet->length = htonl(length);
-	while(write(STDOUT_FILENO, packet, 4 + length) < 0) {
-		if(errno == EINTR) continue;
+	if(sync_write(STDOUT_FILENO, packet, 4 + length) < 0) {
 		syslog(LOG_ERR, "send_api_online_users: write: STDOUT_FILENO: errno %d", errno);
 		exit(1);
 	}
@@ -185,8 +181,7 @@ static void send_api_user_state(const char *user, int online) {
 	packet->data[0] = (uint8_t)online;
 	packet->data[1] = user_name_len;
 	memcpy(packet->data + 2, user, user_name_len);
-	while(write(STDOUT_FILENO, packet, 4 + length) < 0) {
-		if(errno == EINTR) continue;
+	if(sync_write(STDOUT_FILENO, packet, 4 + length) < 0) {
 		syslog(LOG_ERR, "send_api_user_state: write: STDOUT_FILENO: errno %d", errno);
 		exit(1);
 	}
@@ -221,8 +216,7 @@ static int send_api_motd() {
 	packet->type = SSHOUT_API_MOTD;
 	*(uint32_t *)packet->data = htonl(s);
 	memcpy(packet->data + 4, buffer, s);
-	while(write(STDOUT_FILENO, packet, 4 + length) < 0) {
-		if(errno == EINTR) continue;
+	if(sync_write(STDOUT_FILENO, packet, 4 + length) < 0) {
 		syslog(LOG_ERR, "send_api_motd: write: STDOUT_FILENO: errno %d", errno);
 		exit(1);
 	}
@@ -317,6 +311,8 @@ static int post_message_from_raw_api_data(int fd, uint8_t *p, uint32_t data_leng
 	enum local_msg_type t = *p++;
 	size_t text_len = ntohl(*(uint32_t *)p);
 	p += 4;
+	if(sizeof(struct local_message) + text_len < text_len) return -1;
+	if(1 + receiver_len + 1 + 4 + text_len < text_len) return -1;
 	if(1 + receiver_len + 1 + 4 + text_len > data_length) return -1;
 	struct local_message *message = malloc(sizeof(struct local_message) + text_len);
 	if(!message) return -1;
