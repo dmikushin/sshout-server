@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SSHOUT 1.2.0\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/sshout/tickets/\n"
-"POT-Creation-Date: 2019-05-06 14:28+0800\n"
+"POT-Creation-Date: 2019-05-06 14:51+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,216 +20,80 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: sshoutcfg.c:408
-#, c-format
-msgid "%d key%s already exist for user %s\n"
+#: client-api.c:250 client-cli.c:850
+msgid "Server closed connection"
 msgstr ""
 
-#: sshoutcfg.c:356
-msgid "'.ssh' is global writable\n"
+#: client-api.c:258 client-irc.c:585
+msgid "Local packet short read"
 msgstr ""
 
-#: sshoutcfg.c:346
-msgid "'.ssh' is not a directory\n"
+#: client-api.c:262 client-irc.c:589
+msgid "Received local packet too large"
 msgstr ""
 
-#: sshoutcfg.c:352
-#, c-format
-msgid "'.ssh' is not owned by sshout (%u != %u)\n"
-msgstr ""
-
-#: sshoutcfg.c:216
-msgid "'.ssh/rc' exists, and it is a directory!\n"
-msgstr ""
-
-#: sshoutcfg.c:620
-#, c-format
-msgid ", Comment \"%s\""
-msgstr ""
-
-#: sshoutcfg.c:410
-#, c-format
-msgid "Are you sure you want to add this key for user %s? "
-msgstr ""
-
-#: sshoutcfg.c:366
-msgid "Cannot continue\n"
-msgstr ""
-
-#: sshoutcfg.c:614
-msgid "Cannot encode SHA-256 fingerprint"
-msgstr ""
-
-#: client-cli.c:781 client-cli.c:792
-msgid "Cannot load or save perferences in this session\n"
-msgstr ""
-
-#: client.c:209
-msgid "Cannot open /dev/null for read as fd 0\n"
-msgstr ""
-
-#: sshoutcfg.c:582
-msgid "Cannot start hash public key\n"
-msgstr ""
-
-#: client.c:160
-#, c-format
-msgid "Command '%s' is not recognized\n"
-msgstr ""
-
-#: sshoutcfg.c:787
-#, c-format
-msgid "Current effective UID %u doesn't equal to sshout user account\n"
-msgstr ""
-
-#: client-irc.c:359
-msgid "End of LIST"
-msgstr ""
-
-#: client-irc.c:163
-msgid "End of MOTD"
-msgstr ""
-
-#: client-irc.c:206
-msgid "End of NAMES"
-msgstr ""
-
-#: client-cli.c:455
-msgid "End of list\n"
-msgstr ""
-
-#: client-cli.c:550
-#, c-format
-msgid "Error: Unknown command '%s'"
-msgstr ""
-
-#: sshoutcfg.c:181
-#, c-format
-msgid ""
-"Error: allocate %zu bytes failed when processing file .ssh/authorized_keys "
-"line %u\n"
-msgstr ""
-
-#: sshoutcfg.c:756
-#, c-format
-msgid "Error: cannot find usage for command '%s'"
-msgstr ""
-
-#: client-cli.c:737
-msgid "Error: cannot format current date"
-msgstr ""
-
-#: client-irc.c:425
-msgid "Error: cannot format current date time"
-msgstr ""
-
-#: sshoutcfg.c:188 sshoutcfg.xgettextfrom.c:197
-#, c-format
-msgid ""
-"Error: out of memory when processing file .ssh/authorized_keys line %u\n"
-msgstr ""
-
-#: client-cli.c:715 client-cli.c:960 client-cli.c:978
-msgid "Exiting ..."
-msgstr ""
-
-#: client-cli.c:297
-msgid "Failed to receive image, out of memory\n"
-msgstr ""
-
-#: sshoutcfg.c:502 sshoutcfg.xgettextfrom.c:528
-msgid "Failed to remove user"
-msgstr ""
-
-#: sshoutcfg.c:740
-msgid "Following subcommands are available:\n"
-msgstr ""
-
-#: sshoutcfg.c:798
-#, c-format
-msgid "Home directory '%s' is not owned by sshout (expecting UID=%u, got %u)\n"
-msgstr ""
-
-#: sshoutcfg.c:514
-#, c-format
-msgid ""
-"If you want to remove only some of the user's keys, edit file '%s/ .ssh/"
-"authorized_keys' manually\n"
-msgstr ""
-
-#: client.c:181
-msgid "Ignoring TZ\n"
-msgstr ""
-
-#: client.c:177
-msgid "Ignoring absolute path name in TZ\n"
-msgstr ""
-
-#: client-cli.c:291
-msgid "Image too large\n"
-msgstr ""
-
-#: sshoutcfg.c:282
-#, c-format
-msgid "Input public key for %s: "
+#: client-api.c:266 client-cli.c:586 client-cli.c:603 client-cli.c:611
+#: client-cli.c:870 client-irc.c:593
+msgid "Out of memory"
 msgstr ""
 
 #: client-api.c:276 client-cli.c:879
 msgid "Internal error"
 msgstr ""
 
-#: sshoutcfg.c:595
-msgid "Invalid BASE64 encoding\n"
-msgstr ""
-
-#: sshoutcfg.c:553
+#: client-api.c:302 client-cli.c:898
 #, c-format
-msgid "Invalid hash algorithm '%s'\n"
+msgid "User %s not found"
 msgstr ""
 
-#: sshoutcfg.c:587 sshoutcfg.xgettextfrom.c:599
-#: sshoutcfg.c:604
-msgid "Invalid key\n"
+#: client-api.c:422
+msgid "No MOTD"
 msgstr ""
 
-#: sshoutcfg.c:296 sshoutcfg.xgettextfrom.c:307
-#: sshoutcfg.c:326
+#: client-cli.c:165
 #, c-format
-msgid "Invalid key type '%s'\n"
+msgid "Usage: %s off|on\n"
 msgstr ""
 
-#: sshoutcfg.c:92
-msgid "Invalid key: invalid BASE64 encoding\n"
-msgstr ""
-
-#: sshoutcfg.c:311
-msgid "Invalid key: key type didn't match\n"
-msgstr ""
-
-#: sshoutcfg.c:101
+#: client-cli.c:177
 #, c-format
-msgid "Invalid key: key type string length %u too long\n"
+msgid "Usage: %s off|color|plain|raw\n"
 msgstr ""
 
-#: sshoutcfg.c:96
-msgid "Invalid key: too short\n"
-msgstr ""
-
-#: client.c:148 sshoutcfg.c:273 sshoutcfg.xgettextfrom.c:451
+#: client-cli.c:192
 #, c-format
-msgid "Invalid user name '%s'\n"
+msgid "Usage: %s off|on|auto\n"
 msgstr ""
 
-#: sshoutcfg.c:248
-msgid "Key string shouldn't have new line\n"
+#: client-cli.c:205
+#, c-format
+msgid "Usage: %s <user> <message> [<message> ...]\n"
 msgstr ""
 
-#: client-irc.c:581
-msgid "Local packet read error"
+#: client-cli.c:236
+msgid "No MOTD available"
 msgstr ""
 
-#: client-api.c:258 client-irc.c:585
-msgid "Local packet short read"
+#: client-cli.c:249
+msgid "Message of the day:"
+msgstr ""
+
+#: client-cli.c:264
+#, c-format
+msgid "Usage: %s <user>\n"
+msgstr ""
+
+#: client-cli.c:291
+msgid "Image too large\n"
+msgstr ""
+
+#: client-cli.c:297
+msgid "Failed to receive image, out of memory\n"
+msgstr ""
+
+#: client-cli.c:317 client-cli.c:655
+#, c-format
+msgid "child process terminated by signal %d\n"
 msgstr ""
 
 #. / To transtators: try not to change the string length
@@ -237,54 +101,76 @@ msgstr ""
 msgid "Message alert:          "
 msgstr ""
 
-#: client-cli.c:249
-msgid "Message of the day:"
+#. / To transtators: try not to change the string length
+#: client-cli.c:378
+msgid "Showing HTML message:   "
 msgstr ""
 
-#: client-irc.c:368
-msgid "Missing message"
+#: client-cli.c:381 client-cli.c:397
+msgid "off"
 msgstr ""
 
-#: client-irc.c:227
-msgid "Missing nick name"
+#: client-cli.c:384
+msgid "colorized text"
 msgstr ""
 
-#: client-irc.c:364
-msgid "Missing recipient"
+#: client-cli.c:387
+msgid "plain text"
 msgstr ""
 
-#: client-irc.c:231
-msgid "Nick name didn't match the registered one"
+#: client-cli.c:390
+msgid "raw html document"
 msgstr ""
 
-#: client-api.c:422
-msgid "No MOTD"
+#. / To transtators: try not to change the string length
+#: client-cli.c:394
+msgid "Use colorized output:   "
 msgstr ""
 
-#: client-cli.c:236
-msgid "No MOTD available"
+#: client-cli.c:400
+msgid "on"
 msgstr ""
 
-#: client-irc.c:241 client-irc.c:274 client-irc.c:282 client-irc.c:312
-msgid "Not enough parameters"
+#: client-cli.c:403
+msgid "automatic (if terminal)"
 msgstr ""
 
-#: client-irc.c:334
-msgid "Only one channel #sshout is available"
+#: client-cli.c:450
+msgid "Supported commands:"
 msgstr ""
 
-#: sshoutcfg.c:412 sshoutcfg.xgettextfrom.c:496
-#: sshoutcfg.c:519
-msgid "Operation canceled\n"
+#: client-cli.c:455
+msgid "End of list\n"
 msgstr ""
 
-#: sshoutcfg.c:674
-msgid "Option '-d' cannot be used together with '-m'\n"
+#: client-cli.c:520 client-cli.c:531
+msgid "out of memory"
 msgstr ""
 
-#: client-api.c:266 client-cli.c:586 client-cli.c:603 client-cli.c:611
-#: client-cli.c:870 client-irc.c:593
-msgid "Out of memory"
+#: client-cli.c:550
+#, c-format
+msgid "Error: Unknown command '%s'"
+msgstr ""
+
+#: client-cli.c:601 client-irc.c:178
+msgid "[Image]"
+msgstr ""
+
+#: client-cli.c:715 client-cli.c:960 client-cli.c:978
+msgid "Exiting ..."
+msgstr ""
+
+#: client-cli.c:737
+msgid "Error: cannot format current date"
+msgstr ""
+
+#: client-cli.c:781 client-cli.c:792
+msgid "Cannot load or save perferences in this session\n"
+msgstr ""
+
+#: client-cli.c:812
+#, c-format
+msgid "Unrecognized option '%s', removing\n"
 msgstr ""
 
 #: client-cli.c:860
@@ -295,70 +181,17 @@ msgstr ""
 msgid "Packet too large"
 msgstr ""
 
-#: sshoutcfg.c:578
+#: client-cli.c:893
 #, c-format
-msgid "Public key \"%s\""
+msgid "User %s is %s"
 msgstr ""
 
-#: sshoutcfg.c:607
-#, c-format
-msgid "Public key fingerprint %s "
+#: client-cli.c:894
+msgid "online"
 msgstr ""
 
-#: sshoutcfg.c:285
-msgid "Public key too long\n"
-msgstr ""
-
-#: client-api.c:262 client-irc.c:589
-msgid "Received local packet too large"
-msgstr ""
-
-#: sshoutcfg.c:516
-#, c-format
-msgid "Remove all keys for user %s? "
-msgstr ""
-
-#: sshoutcfg.c:493
-#, c-format
-msgid "Remove user %s from SSHOUT user list? "
-msgstr ""
-
-#: sshoutcfg.c:538
-#, c-format
-msgid "Removed %zu keys for user %s\n"
-msgstr ""
-
-#: client-api.c:250 client-cli.c:850
-msgid "Server closed connection"
-msgstr ""
-
-#. / To transtators: try not to change the string length
-#: client-cli.c:378
-msgid "Showing HTML message:   "
-msgstr ""
-
-#: client-cli.c:450
-msgid "Supported commands:"
-msgstr ""
-
-#: client-irc.c:358
-msgid "There is only one"
-msgstr ""
-
-#: sshoutcfg.c:396
-#, c-format
-msgid ""
-"This public key is already used by user %s.\n"
-"Are you pasted wrong key?\n"
-msgstr ""
-
-#: sshoutcfg.c:705
-msgid "Type message below:\n"
-msgstr ""
-
-#: sshoutcfg.c:812
-#, c-format
-msgid "Unknown command '%s'\n"
+#: client-cli.c:894
+msgid "offline"
 msgstr ""
 
 #: client-cli.c:902
@@ -366,106 +199,121 @@ msgstr ""
 msgid "Unknown packet type %d"
 msgstr ""
 
-#: client-cli.c:812
-#, c-format
-msgid "Unrecognized option '%s', removing\n"
+#: client-irc.c:112
+msgid "Welcome to SSHOUT IRC frontend"
 msgstr ""
 
-#: sshoutcfg.c:751
-#, c-format
-msgid "Usage: %s %s\n"
+#: client-irc.c:163
+msgid "End of MOTD"
 msgstr ""
 
-#: client-cli.c:264
-#, c-format
-msgid "Usage: %s <user>\n"
+#: client-irc.c:206
+msgid "End of NAMES"
 msgstr ""
 
-#: client-cli.c:205
-#, c-format
-msgid "Usage: %s <user> <message> [<message> ...]\n"
+#: client-irc.c:227
+msgid "Missing nick name"
 msgstr ""
 
-#: client-cli.c:177
-#, c-format
-msgid "Usage: %s off|color|plain|raw\n"
+#: client-irc.c:231
+msgid "Nick name didn't match the registered one"
 msgstr ""
 
-#: client-cli.c:165
-#, c-format
-msgid "Usage: %s off|on\n"
+#: client-irc.c:241 client-irc.c:274 client-irc.c:282 client-irc.c:312
+msgid "Not enough parameters"
 msgstr ""
 
-#: client-cli.c:192
-#, c-format
-msgid "Usage: %s off|on|auto\n"
+#: client-irc.c:254
+msgid "You cannot register again"
 msgstr ""
 
-#. / To transtators: try not to change the string length
-#: client-cli.c:394
-msgid "Use colorized output:   "
+#: client-irc.c:277
+msgid "operator is not supported"
 msgstr ""
 
-#: sshoutcfg.c:513
-#, c-format
-msgid "User %s have %zu public keys registered in the user list\n"
+#: client-irc.c:292
+msgid "You cannot change mode for other users"
 msgstr ""
 
-#: client-cli.c:893
-#, c-format
-msgid "User %s is %s"
-msgstr ""
-
-#: client-api.c:302 client-cli.c:898
-#, c-format
-msgid "User %s not found"
-msgstr ""
-
-#: sshoutcfg.c:487
-#, c-format
-msgid "User %s not found\n"
+#: client-irc.c:334
+msgid "Only one channel #sshout is available"
 msgstr ""
 
 #: client-irc.c:357
 msgid "Users  Name"
 msgstr ""
 
-#: sshoutcfg.c:127
-#, c-format
-msgid "Warning: cannot find '\"' at line %u in file .ssh/authorized_keys\n"
+#: client-irc.c:358
+msgid "There is only one"
 msgstr ""
 
-#: sshoutcfg.c:564
-msgid "Warning: configuration error left unresolved\n"
+#: client-irc.c:359
+msgid "End of LIST"
 msgstr ""
 
-#: sshoutcfg.c:148
-#, c-format
-msgid "Warning: empty user name in file .ssh/authorized_keys line %u\n"
+#: client-irc.c:364
+msgid "Missing recipient"
 msgstr ""
 
-#: sshoutcfg.c:172
-#, c-format
-msgid ""
-"Warning: invalid key type '%s' from BASE64 in file .ssh/authorized_keys line "
-"%u\n"
+#: client-irc.c:368
+msgid "Missing message"
 msgstr ""
 
-#: sshoutcfg.c:161
-#, c-format
-msgid "Warning: invalid key type '%s' in file .ssh/authorized_keys line %u\n"
+#: client-irc.c:372
+msgid "You have not registered"
 msgstr ""
 
-#: sshoutcfg.c:176
+#: client-irc.c:425
+msgid "Error: cannot format current date time"
+msgstr ""
+
+#: client-irc.c:581
+msgid "Local packet read error"
+msgstr ""
+
+#: client.c:148 sshoutcfg.c:273 sshoutcfg.xgettextfrom.c:451
 #, c-format
-msgid ""
-"Warning: key type didn't match in file .ssh/authorized_keys line %u; key "
-"ignored\n"
+msgid "Invalid user name '%s'\n"
+msgstr ""
+
+#: client.c:160
+#, c-format
+msgid "Command '%s' is not recognized\n"
+msgstr ""
+
+#: client.c:177
+msgid "Ignoring absolute path name in TZ\n"
+msgstr ""
+
+#: client.c:181
+msgid "Ignoring TZ\n"
+msgstr ""
+
+#: client.c:209
+msgid "Cannot open /dev/null for read as fd 0\n"
+msgstr ""
+
+#: sshoutcfg.c:92
+msgid "Invalid key: invalid BASE64 encoding\n"
+msgstr ""
+
+#: sshoutcfg.c:96
+msgid "Invalid key: too short\n"
+msgstr ""
+
+#: sshoutcfg.c:101
+#, c-format
+msgid "Invalid key: key type string length %u too long\n"
 msgstr ""
 
 #: sshoutcfg.c:116
 #, c-format
 msgid "Warning: line %u in file .ssh/authorized_keys is too long, skipping\n"
+msgstr ""
+
+#: sshoutcfg.c:127
+#, c-format
+msgid "Warning: cannot find '\"' at line %u in file .ssh/authorized_keys\n"
 msgstr ""
 
 #: sshoutcfg.c:132 sshoutcfg.xgettextfrom.c:143
@@ -479,88 +327,240 @@ msgstr ""
 msgid "Warning: unmatched '\"' in file .ssh/authorized_keys line %u\n"
 msgstr ""
 
-#: client-irc.c:112
-msgid "Welcome to SSHOUT IRC frontend"
-msgstr ""
-
-#: client-irc.c:292
-msgid "You cannot change mode for other users"
-msgstr ""
-
-#: client-irc.c:254
-msgid "You cannot register again"
-msgstr ""
-
-#: client-irc.c:372
-msgid "You have not registered"
-msgstr ""
-
-#: client-cli.c:601 client-irc.c:178
-msgid "[Image]"
-msgstr ""
-
-#: client-cli.c:403
-msgid "automatic (if terminal)"
-msgstr ""
-
-#: client-cli.c:317 client-cli.c:655
+#: sshoutcfg.c:148
 #, c-format
-msgid "child process terminated by signal %d\n"
+msgid "Warning: empty user name in file .ssh/authorized_keys line %u\n"
 msgstr ""
 
-#: client-cli.c:384
-msgid "colorized text"
+#: sshoutcfg.c:161
+#, c-format
+msgid "Warning: invalid key type '%s' in file .ssh/authorized_keys line %u\n"
 msgstr ""
 
-#: sshoutcfg.c:362
-msgid "fixed\n"
+#: sshoutcfg.c:172
+#, c-format
+msgid ""
+"Warning: invalid key type '%s' from BASE64 in file .ssh/authorized_keys line "
+"%u\n"
 msgstr ""
 
-#: client-cli.c:381 client-cli.c:397
-msgid "off"
+#: sshoutcfg.c:176
+#, c-format
+msgid ""
+"Warning: key type didn't match in file .ssh/authorized_keys line %u; key "
+"ignored\n"
 msgstr ""
 
-#: client-cli.c:894
-msgid "offline"
+#: sshoutcfg.c:181
+#, c-format
+msgid ""
+"Error: allocate %zu bytes failed when processing file .ssh/authorized_keys "
+"line %u\n"
 msgstr ""
 
-#: client-cli.c:400
-msgid "on"
+#: sshoutcfg.c:188 sshoutcfg.xgettextfrom.c:197
+#, c-format
+msgid ""
+"Error: out of memory when processing file .ssh/authorized_keys line %u\n"
 msgstr ""
 
-#: client-cli.c:894
-msgid "online"
-msgstr ""
-
-#: client-irc.c:277
-msgid "operator is not supported"
-msgstr ""
-
-#: client-cli.c:520 client-cli.c:531
-msgid "out of memory"
-msgstr ""
-
-#: client-cli.c:387
-msgid "plain text"
-msgstr ""
-
-#: client-cli.c:390
-msgid "raw html document"
+#: sshoutcfg.c:216
+msgid "'.ssh/rc' exists, and it is a directory!\n"
 msgstr ""
 
 #: sshoutcfg.c:219
 msgid "sshout shouldn't have a SSH RC file '.ssh/rc'; removing\n"
 msgstr ""
 
-#: sshoutcfg.c:771
-msgid "sshout user account have UID 0\n"
+#: sshoutcfg.c:248
+msgid "Key string shouldn't have new line\n"
+msgstr ""
+
+#: sshoutcfg.c:282
+#, c-format
+msgid "Input public key for %s: "
+msgstr ""
+
+#: sshoutcfg.c:285
+msgid "Public key too long\n"
+msgstr ""
+
+#: sshoutcfg.c:296 sshoutcfg.xgettextfrom.c:307
+#: sshoutcfg.c:326
+#, c-format
+msgid "Invalid key type '%s'\n"
+msgstr ""
+
+#: sshoutcfg.c:311
+msgid "Invalid key: key type didn't match\n"
+msgstr ""
+
+#: sshoutcfg.c:346
+msgid "'.ssh' is not a directory\n"
+msgstr ""
+
+#: sshoutcfg.c:352
+#, c-format
+msgid "'.ssh' is not owned by sshout (%u != %u)\n"
+msgstr ""
+
+#: sshoutcfg.c:356
+msgid "'.ssh' is global writable\n"
+msgstr ""
+
+#: sshoutcfg.c:362
+msgid "fixed\n"
+msgstr ""
+
+#: sshoutcfg.c:366
+msgid "Cannot continue\n"
+msgstr ""
+
+#: sshoutcfg.c:396
+#, c-format
+msgid ""
+"This public key is already used by user %s.\n"
+"Are you pasted wrong key?\n"
+msgstr ""
+
+#: sshoutcfg.c:408
+#, c-format
+msgid "%d key%s already exist for user %s\n"
+msgstr ""
+
+#: sshoutcfg.c:410
+#, c-format
+msgid "Are you sure you want to add this key for user %s? "
+msgstr ""
+
+#: sshoutcfg.c:412 sshoutcfg.xgettextfrom.c:496
+#: sshoutcfg.c:519
+msgid "Operation canceled\n"
+msgstr ""
+
+#: sshoutcfg.c:487
+#, c-format
+msgid "User %s not found\n"
+msgstr ""
+
+#: sshoutcfg.c:493
+#, c-format
+msgid "Remove user %s from SSHOUT user list? "
+msgstr ""
+
+#: sshoutcfg.c:502 sshoutcfg.xgettextfrom.c:528
+msgid "Failed to remove user"
+msgstr ""
+
+#: sshoutcfg.c:513
+#, c-format
+msgid "User %s have %zu public keys registered in the user list\n"
+msgstr ""
+
+#: sshoutcfg.c:514
+#, c-format
+msgid ""
+"If you want to remove only some of the user's keys, edit file '%s/ .ssh/"
+"authorized_keys' manually\n"
+msgstr ""
+
+#: sshoutcfg.c:516
+#, c-format
+msgid "Remove all keys for user %s? "
+msgstr ""
+
+#: sshoutcfg.c:529
+#, c-format
+msgid "when removing key %u from user list\n"
+msgstr ""
+
+#: sshoutcfg.c:538
+#, c-format
+msgid "Removed %zu keys for user %s\n"
+msgstr ""
+
+#: sshoutcfg.c:553
+#, c-format
+msgid "Invalid hash algorithm '%s'\n"
+msgstr ""
+
+#: sshoutcfg.c:564
+msgid "Warning: configuration error left unresolved\n"
+msgstr ""
+
+#: sshoutcfg.c:578
+#, c-format
+msgid "Public key \"%s\""
+msgstr ""
+
+#: sshoutcfg.c:582
+msgid "Cannot start hash public key\n"
+msgstr ""
+
+#: sshoutcfg.c:587 sshoutcfg.xgettextfrom.c:599
+#: sshoutcfg.c:604
+msgid "Invalid key\n"
+msgstr ""
+
+#: sshoutcfg.c:595
+msgid "Invalid BASE64 encoding\n"
+msgstr ""
+
+#: sshoutcfg.c:607
+#, c-format
+msgid "Public key fingerprint %s "
+msgstr ""
+
+#: sshoutcfg.c:614
+msgid "Cannot encode SHA-256 fingerprint"
+msgstr ""
+
+#: sshoutcfg.c:620
+#, c-format
+msgid ", Comment \"%s\""
+msgstr ""
+
+#: sshoutcfg.c:674
+msgid "Option '-d' cannot be used together with '-m'\n"
+msgstr ""
+
+#: sshoutcfg.c:705
+msgid "Type message below:\n"
+msgstr ""
+
+#: sshoutcfg.c:740
+msgid "Following subcommands are available:\n"
+msgstr ""
+
+#: sshoutcfg.c:751
+#, c-format
+msgid "Usage: %s %s\n"
+msgstr ""
+
+#: sshoutcfg.c:756
+#, c-format
+msgid "Error: cannot find usage for command '%s'"
 msgstr ""
 
 #: sshoutcfg.c:767
 msgid "sshout user account not exist\n"
 msgstr ""
 
-#: sshoutcfg.c:529
+#: sshoutcfg.c:771
+msgid "sshout user account have UID 0\n"
+msgstr ""
+
+#: sshoutcfg.c:787
 #, c-format
-msgid "when removing key %u from user list\n"
+msgid "Current effective UID %u doesn't equal to sshout user account\n"
+msgstr ""
+
+#: sshoutcfg.c:798
+#, c-format
+msgid "Home directory '%s' is not owned by sshout (expecting UID=%u, got %u)\n"
+msgstr ""
+
+#: sshoutcfg.c:812
+#, c-format
+msgid "Unknown command '%s'\n"
 msgstr ""
