@@ -329,39 +329,39 @@ msgstr "警告：在文件 .ssh/authorized_keys 第 %u 行中找不到匹配的�
 #: sshoutcfg.c:148
 #, c-format
 msgid "Warning: empty user name in file .ssh/authorized_keys line %u\n"
-msgstr "警告：文件 .ssh/authorized_keys %u 行中的用户名是空的\n"
+msgstr "警告：文件 .ssh/authorized_keys 第 %u 行中的用户名是空的\n"
 
 #: sshoutcfg.c:161
 #, c-format
 msgid "Warning: invalid key type '%s' in file .ssh/authorized_keys line %u\n"
-msgstr "警告：文件 .ssh/authorized_keys %2$u 行中的密钥类型“%1$s”是无效或不可识别的\n"
+msgstr "警告：文件 .ssh/authorized_keys 第 %2$u 行中的密钥类型“%1$s”是无效或不可识别的\n"
 
 #: sshoutcfg.c:172
 #, c-format
 msgid ""
 "Warning: invalid key type '%s' from BASE64 in file .ssh/authorized_keys line "
 "%u\n"
-msgstr "警告：文件 .ssh/authorized_keys %2$u 行中的 BASE64 编码中的密钥类型“%1$s”是无效或不可识别的\n"
+msgstr "警告：文件 .ssh/authorized_keys 第 %2$u 行中的 BASE64 编码中的密钥类型“%1$s”是无效或不可识别的\n"
 
 #: sshoutcfg.c:176
 #, c-format
 msgid ""
 "Warning: key type didn't match in file .ssh/authorized_keys line %u; key "
 "ignored\n"
-msgstr "警告：已忽略文件 .ssh/authorized_keys 中的 %u 行，因为其中的密钥类型是不匹配的\n"
+msgstr "警告：已忽略文件 .ssh/authorized_keys 中的第 %u 行，因为其中的密钥类型是不匹配的\n"
 
 #: sshoutcfg.c:181
 #, c-format
 msgid ""
 "Error: allocate %zu bytes failed when processing file .ssh/authorized_keys "
 "line %u\n"
-msgstr "错误：处理文件 .ssh/authorized_keys %2$u 行时无法分配 %1$zu 字节\n"
+msgstr "错误：处理文件 .ssh/authorized_keys 第 %2$u 行时无法分配 %1$zu 字节\n"
 
 #: sshoutcfg.c:188 sshoutcfg.c:197
 #, c-format
 msgid ""
 "Error: out of memory when processing file .ssh/authorized_keys line %u\n"
-msgstr "错误：处理文件 .ssh/authorized_keys %u 行时内存不足\n"
+msgstr "错误：处理文件 .ssh/authorized_keys 第 %u 行时内存不足\n"
 
 #: sshoutcfg.c:216
 msgid "'.ssh/rc' exists, and it is a directory!\n"
