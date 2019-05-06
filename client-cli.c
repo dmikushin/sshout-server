@@ -517,7 +517,7 @@ static void do_command(int fd, const char *command) {
 #ifndef NO_NLS
 		print_with_time(-1, PRINT_NEWLINE, "do_command: out of memory");
 #else
-		print_with_time(-1, PRINT_NEWLINE, "do_command: %s", _("out of memory"));
+		print_with_time(-1, PRINT_NEWLINE, "do_command: %s", _("Out of memory"));
 #endif
 		free(argv);
 		return;
@@ -528,7 +528,7 @@ static void do_command(int fd, const char *command) {
 #ifndef NO_NLS
 			print_with_time(-1, PRINT_NEWLINE, "do_command: out of memory");
 #else
-			print_with_time(-1, PRINT_NEWLINE, "do_command: %s", _("out of memory"));
+			print_with_time(-1, PRINT_NEWLINE, "do_command: %s", _("Out of memory"));
 #endif
 		}
 		free(argv);

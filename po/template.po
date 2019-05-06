@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SSHOUT 1.2.0\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/sshout/tickets/\n"
-"POT-Creation-Date: 2019-05-06 14:51+0800\n"
+"POT-Creation-Date: 2019-05-06 15:10+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -32,8 +32,8 @@ msgstr ""
 msgid "Received local packet too large"
 msgstr ""
 
-#: client-api.c:266 client-cli.c:586 client-cli.c:603 client-cli.c:611
-#: client-cli.c:870 client-irc.c:593
+#: client-api.c:266 client-cli.c:520 client-cli.c:531 client-cli.c:586
+#: client-cli.c:603 client-cli.c:611 client-cli.c:870 client-irc.c:593
 msgid "Out of memory"
 msgstr ""
 
@@ -141,10 +141,6 @@ msgstr ""
 
 #: client-cli.c:455
 msgid "End of list\n"
-msgstr ""
-
-#: client-cli.c:520 client-cli.c:531
-msgid "out of memory"
 msgstr ""
 
 #: client-cli.c:550
