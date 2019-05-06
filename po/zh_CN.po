@@ -145,7 +145,7 @@ msgstr "列表结束\n"
 #: client-cli.c:550
 #, c-format
 msgid "Error: Unknown command '%s'"
-msgstr "错误：未知命令 '%s'"
+msgstr "错误：未知命令“%s”"
 
 #: client-cli.c:601 client-irc.c:178
 msgid "[Image]"
@@ -166,7 +166,7 @@ msgstr "无法为本次会话加载或保存偏好设置\n"
 #: client-cli.c:812
 #, c-format
 msgid "Unrecognized option '%s', removing\n"
-msgstr "移除未被识别的选项 '%s'\n"
+msgstr "移除未被识别的选项“%s”\n"
 
 #: client-cli.c:860
 msgid "Packet short read"
@@ -273,12 +273,12 @@ msgstr "本地封包读取错误"
 #: client.c:148 sshoutcfg.c:273 sshoutcfg.c:451
 #, c-format
 msgid "Invalid user name '%s'\n"
-msgstr "无效的用户名 '%s'\n"
+msgstr "无效的用户名“%s”\n"
 
 #: client.c:160
 #, c-format
 msgid "Command '%s' is not recognized\n"
-msgstr "不可识别的命令 '%s'\n"
+msgstr "不可识别的命令“%s”\n"
 
 #: client.c:177
 msgid "Ignoring absolute path name in TZ\n"
@@ -313,7 +313,7 @@ msgstr "警告：文件 .ssh/authorized_keys 第 %u 行太长，已跳过\n"
 #: sshoutcfg.c:127
 #, c-format
 msgid "Warning: cannot find '\"' at line %u in file .ssh/authorized_keys\n"
-msgstr "警告：在文件 .ssh/authorized_keys 第 %u 行中找不到 '\"' 字符\n"
+msgstr "警告：在文件 .ssh/authorized_keys 第 %u 行中找不到“\"”字符\n"
 
 #: sshoutcfg.c:132 sshoutcfg.c:143
 #: sshoutcfg.c:154
@@ -324,7 +324,7 @@ msgstr "警告：文件 .ssh/authorized_keys 第 %u 行有格式错误\n"
 #: sshoutcfg.c:138
 #, c-format
 msgid "Warning: unmatched '\"' in file .ssh/authorized_keys line %u\n"
-msgstr "警告：在文件 .ssh/authorized_keys 第 %u 行中找不到匹配的 '\"' 字符\n"
+msgstr "警告：在文件 .ssh/authorized_keys 第 %u 行中找不到匹配的“\"”字符\n"
 
 #: sshoutcfg.c:148
 #, c-format
@@ -334,14 +334,14 @@ msgstr "警告：文件 .ssh/authorized_keys %u 行中的用户名是空的\n"
 #: sshoutcfg.c:161
 #, c-format
 msgid "Warning: invalid key type '%s' in file .ssh/authorized_keys line %u\n"
-msgstr "警告：文件 .ssh/authorized_keys %2$u 行中的密钥类型 '%1$s' 是无效或不可识别的\n"
+msgstr "警告：文件 .ssh/authorized_keys %2$u 行中的密钥类型“%1$s”是无效或不可识别的\n"
 
 #: sshoutcfg.c:172
 #, c-format
 msgid ""
 "Warning: invalid key type '%s' from BASE64 in file .ssh/authorized_keys line "
 "%u\n"
-msgstr "警告：文件 .ssh/authorized_keys %2$u 行中的 BASE64 编码中的密钥类型 '%1$s' 是无效或不可识别的\n"
+msgstr "警告：文件 .ssh/authorized_keys %2$u 行中的 BASE64 编码中的密钥类型“%1$s”是无效或不可识别的\n"
 
 #: sshoutcfg.c:176
 #, c-format
@@ -365,11 +365,11 @@ msgstr "错误：处理文件 .ssh/authorized_keys %u 行时内存不足\n"
 
 #: sshoutcfg.c:216
 msgid "'.ssh/rc' exists, and it is a directory!\n"
-msgstr "存在 '.ssh/rc'，并且这竟然是个目录！\n"
+msgstr "存在，并且这竟然是个目录！\n"
 
 #: sshoutcfg.c:219
 msgid "sshout shouldn't have a SSH RC file '.ssh/rc'; removing\n"
-msgstr "sshout 不应有 SSH RC 文件 '.ssh/rc'，已移除\n"
+msgstr "sshout 不应有 SSH RC 文件“.ssh/rc”，已移除\n"
 
 #: sshoutcfg.c:248
 msgid "Key string shouldn't have new line\n"
@@ -388,7 +388,7 @@ msgstr "公钥太长\n"
 #: sshoutcfg.c:326
 #, c-format
 msgid "Invalid key type '%s'\n"
-msgstr "无效的密钥类型 '%s'\n"
+msgstr "无效的密钥类型“%s”\n"
 
 #: sshoutcfg.c:311
 msgid "Invalid key: key type didn't match\n"
@@ -396,16 +396,16 @@ msgstr "无效的密钥：密钥类型不匹配\n"
 
 #: sshoutcfg.c:346
 msgid "'.ssh' is not a directory\n"
-msgstr "'.ssh' 不是个目录\n"
+msgstr "“.ssh”不是个目录\n"
 
 #: sshoutcfg.c:352
 #, c-format
 msgid "'.ssh' is not owned by sshout (%u != %u)\n"
-msgstr "'.ssh' 并不是 sshout 所有的 （%u != %u）\n"
+msgstr "“.ssh”并不是 sshout 所有的 （%u != %u）\n"
 
 #: sshoutcfg.c:356
 msgid "'.ssh' is global writable\n"
-msgstr "'.ssh' 全球可写\n"
+msgstr "“.ssh”全球可写\n"
 
 #: sshoutcfg.c:362
 msgid "fixed\n"
@@ -461,7 +461,7 @@ msgstr "用户 %s 有 %zu 个公钥注册在用户列表中\n"
 msgid ""
 "If you want to remove only some of the user's keys, edit file '%s/.ssh/"
 "authorized_keys' manually\n"
-msgstr "如果您只想要移除部分公钥，请手动编辑文件 '%s/.ssh/authorized_keys'\n"
+msgstr "如果您只想要移除部分公钥，请手动编辑文件“%s/.ssh/authorized_keys”\n"
 
 #: sshoutcfg.c:516
 #, c-format
@@ -481,7 +481,7 @@ msgstr "移除了用户 %2$s 的 %1$zu 个公钥\n"
 #: sshoutcfg.c:553
 #, c-format
 msgid "Invalid hash algorithm '%s'\n"
-msgstr "无效的散列算法 '%s'\n"
+msgstr "无效的散列算法“%s”\n"
 
 #: sshoutcfg.c:564
 msgid "Warning: configuration error left unresolved\n"
@@ -526,7 +526,7 @@ msgstr ", 注释 \"%s\""
 
 #: sshoutcfg.c:674
 msgid "Option '-d' cannot be used together with '-m'\n"
-msgstr "选项 '-d' 不能与 '-m' 同时使用\n"
+msgstr "选项“-d”不能与“-m”同时使用\n"
 
 #: sshoutcfg.c:705
 msgid "Type message below:\n"
@@ -544,7 +544,7 @@ msgstr "用法： %s %s\n"
 #: sshoutcfg.c:756
 #, c-format
 msgid "Error: cannot find usage for command '%s'"
-msgstr "错误：找不到命令 '%s' 的用法"
+msgstr "错误：找不到命令“%s”的用法"
 
 #: sshoutcfg.c:767
 msgid "sshout user account not exist\n"
@@ -562,9 +562,9 @@ msgstr "当前的有效 UID %u 不匹配 sshout 用户帐户\n"
 #: sshoutcfg.c:798
 #, c-format
 msgid "Home directory '%s' is not owned by sshout (expecting UID=%u, got %u)\n"
-msgstr "家目录 '%s' 不是被 sshout 所拥有的（期待的 UID %u，但实际上是 %u）\n"
+msgstr "家目录“%s”不是被 sshout 所拥有的（期待的 UID %u，但实际上是 %u）\n"
 
 #: sshoutcfg.c:812
 #, c-format
 msgid "Unknown command '%s'\n"
-msgstr "未知命令 '%s'\n"
+msgstr "未知命令“%s”\n"
