@@ -98,12 +98,12 @@ msgstr "子进程被信号 %d 终止\n"
 #. / To transtators: try not to change the string length
 #: client-cli.c:375
 msgid "Message alert:          "
-msgstr "消息响铃：                "
+msgstr "消息响铃：              "
 
 #. / To transtators: try not to change the string length
 #: client-cli.c:378
 msgid "Showing HTML message:   "
-msgstr "显示 HTML 消息：          "
+msgstr "显示 HTML 消息：        "
 
 #: client-cli.c:381 client-cli.c:397
 msgid "off"
@@ -124,7 +124,7 @@ msgstr "原始 HTML 文档"
 #. / To transtators: try not to change the string length
 #: client-cli.c:394
 msgid "Use colorized output:   "
-msgstr "使用色彩输出：             "
+msgstr "使用色彩输出：          "
 
 #: client-cli.c:400
 msgid "on"
