@@ -372,7 +372,7 @@ static void command_listoptions(int fd, int argc, char **argv) {
 	} else {
 		/// To transtators: try not to change the string length
 		fputs(_("Message alert:          "), stdout);
-		puts(option_alert ? "on" : "off");
+		puts(option_alert ? _("on") : _("off"));
 		/// To transtators: try not to change the string length
 		fputs(_("Showing HTML message:   "), stdout);
 		switch(option_showhtml) {
