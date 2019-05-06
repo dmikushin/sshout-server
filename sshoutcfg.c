@@ -511,7 +511,7 @@ static int removeuser_command(int argc, char **argv) {
 	} else {
 		if(!force) {
 			fprintf(stderr, _("User %s have %zu public keys registered in the user list\n"), user, line_count);
-			fprintf(stderr, _("If you want to remove only some of the user's keys, edit file '%s/ " USER_LIST_FILE "' manually\n"),
+			fprintf(stderr, _("If you want to remove only some of the user's keys, edit file '%s/" USER_LIST_FILE "' manually\n"),
 				getenv("HOME"));
 			fprintf(stderr, _("Remove all keys for user %s? "), user);
 			if(!ask_confirm()) {

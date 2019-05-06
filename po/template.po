@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SSHOUT 1.2.0\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/sshout/tickets/\n"
-"POT-Creation-Date: 2019-05-06 15:59+0800\n"
+"POT-Creation-Date: 2019-05-06 16:37+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -460,7 +460,7 @@ msgstr ""
 #: sshoutcfg.c:514
 #, c-format
 msgid ""
-"If you want to remove only some of the user's keys, edit file '%s/ .ssh/"
+"If you want to remove only some of the user's keys, edit file '%s/.ssh/"
 "authorized_keys' manually\n"
 msgstr ""
 
