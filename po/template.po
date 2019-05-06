@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SSHOUT 1.2.0\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/sshout/tickets/\n"
-"POT-Creation-Date: 2019-05-06 15:10+0800\n"
+"POT-Creation-Date: 2019-05-06 15:59+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -233,6 +233,10 @@ msgstr ""
 
 #: client-irc.c:334
 msgid "Only one channel #sshout is available"
+msgstr ""
+
+#: client-irc.c:357
+msgid "Channel"
 msgstr ""
 
 #: client-irc.c:357

@@ -354,7 +354,7 @@ static void irc_command_list(int fd, int argc, struct fixed_length_string *argv)
 		if(argv->len != 7 || memcmp(argv->p, "#sshout", argv->len)) return;
 #endif
 	}
-	send_irc_reply(IRC_RPL_LISTSTART, "Channel", _("Users  Name"), NULL);
+	send_irc_reply(IRC_RPL_LISTSTART, _("Channel"), _("Users  Name"), NULL);
 	send_irc_reply(IRC_RPL_LIST, "#sshout", "?", _("There is only one"), NULL);
 	send_irc_reply(IRC_RPL_LISTEND, _("End of LIST"), NULL);
 }
