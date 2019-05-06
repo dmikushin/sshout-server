@@ -271,7 +271,7 @@ msgstr ""
 msgid "Local packet read error"
 msgstr ""
 
-#: client.c:148 sshoutcfg.c:273 sshoutcfg.xgettextfrom.c:451
+#: client.c:148 sshoutcfg.c:273 sshoutcfg.c:451
 #, c-format
 msgid "Invalid user name '%s'\n"
 msgstr ""
@@ -316,7 +316,7 @@ msgstr ""
 msgid "Warning: cannot find '\"' at line %u in file .ssh/authorized_keys\n"
 msgstr ""
 
-#: sshoutcfg.c:132 sshoutcfg.xgettextfrom.c:143
+#: sshoutcfg.c:132 sshoutcfg.c:143
 #: sshoutcfg.c:154
 #, c-format
 msgid "Warning: syntax error in file .ssh/authorized_keys line %u\n"
@@ -358,7 +358,7 @@ msgid ""
 "line %u\n"
 msgstr ""
 
-#: sshoutcfg.c:188 sshoutcfg.xgettextfrom.c:197
+#: sshoutcfg.c:188 sshoutcfg.c:197
 #, c-format
 msgid ""
 "Error: out of memory when processing file .ssh/authorized_keys line %u\n"
@@ -385,7 +385,7 @@ msgstr ""
 msgid "Public key too long\n"
 msgstr ""
 
-#: sshoutcfg.c:296 sshoutcfg.xgettextfrom.c:307
+#: sshoutcfg.c:296 sshoutcfg.c:307
 #: sshoutcfg.c:326
 #, c-format
 msgid "Invalid key type '%s'\n"
@@ -433,7 +433,7 @@ msgstr ""
 msgid "Are you sure you want to add this key for user %s? "
 msgstr ""
 
-#: sshoutcfg.c:412 sshoutcfg.xgettextfrom.c:496
+#: sshoutcfg.c:412 sshoutcfg.c:496
 #: sshoutcfg.c:519
 msgid "Operation canceled\n"
 msgstr ""
@@ -448,7 +448,7 @@ msgstr ""
 msgid "Remove user %s from SSHOUT user list? "
 msgstr ""
 
-#: sshoutcfg.c:502 sshoutcfg.xgettextfrom.c:528
+#: sshoutcfg.c:502 sshoutcfg.c:528
 msgid "Failed to remove user"
 msgstr ""
 
@@ -497,7 +497,7 @@ msgstr ""
 msgid "Cannot start hash public key\n"
 msgstr ""
 
-#: sshoutcfg.c:587 sshoutcfg.xgettextfrom.c:599
+#: sshoutcfg.c:587 sshoutcfg.c:599
 #: sshoutcfg.c:604
 msgid "Invalid key\n"
 msgstr ""
