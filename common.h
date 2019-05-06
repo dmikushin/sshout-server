@@ -23,6 +23,13 @@
 #include <stdint.h>
 #include <sys/types.h>
 
+#ifdef NO_NLS
+#define _(S) (S)
+#else
+#define _(S) gettext(S)
+#include <libintl.h>
+#endif
+
 // Local packets are used in UNIX domain sockets
 
 #define LOCAL_PACKET_MAX_LENGTH (2 * 1024 * 1024)

@@ -162,7 +162,7 @@ static void command_who(int fd, int argc, char **argv) {
 static void command_alert(int fd, int argc, char **argv) {
 	if(argc != 2) {
 usage:
-		fprintf(stderr, "Usage: %s off|on\n", argv[0]);
+		fprintf(stderr, _("Usage: %s off|on\n"), argv[0]);
 		return;
 	}
 	if(strcmp(argv[1], "off") == 0) option_alert = 0;
@@ -174,7 +174,7 @@ usage:
 static void command_showhtml(int fd, int argc, char **argv) {
 	if(argc != 2) {
 usage:
-		fprintf(stderr, "Usage: %s off|color|plain|raw\n", argv[0]);
+		fprintf(stderr, _("Usage: %s off|color|plain|raw\n"), argv[0]);
 		return;
 	}
 	if(strcmp(argv[1], "off") == 0) option_showhtml = SHOWHTML_OFF;
@@ -189,7 +189,7 @@ usage:
 static void command_color(int fd, int argc, char **argv) {
 	if(argc != 2) {
 usage:
-		fprintf(stderr, "Usage: %s off|on|auto\n", argv[0]);
+		fprintf(stderr, _("Usage: %s off|on|auto\n"), argv[0]);
 		return;
 	}
 	if(strcmp(argv[1], "off") == 0) option_color = COLOR_OFF;
@@ -202,7 +202,7 @@ usage:
 
 static void command_msg(int fd, int argc, char **argv) {
 	if(argc < 3) {
-		fprintf(stderr, "Usage: %s <user> <message> [<message> ...]\n", argv[0]);
+		fprintf(stderr, _("Usage: %s <user> <message> [<message> ...]\n"), argv[0]);
 		return;
 	}
 	const char *user = argv[1];
@@ -233,7 +233,7 @@ static void print_motd(int missing_ok) {
 	int fd = open(SSHOUT_MOTD_FILE, O_RDONLY);
 	if(fd == -1) {
 		if(errno == ENOENT) {
-			if(!missing_ok) print_with_time(-1, PRINT_NEWLINE, "No MOTD available");
+			if(!missing_ok) print_with_time(-1, PRINT_NEWLINE, _("No MOTD available"));
 			return;
 		}
 		perror(SSHOUT_MOTD_FILE);
@@ -246,7 +246,7 @@ static void print_motd(int missing_ok) {
 	}
 	if(!s) return;
 	int have_new_line = buffer[s - 1] == '\n';
-	print_with_time(-1, PRINT_NEWLINE, "Message of the day:");
+	print_with_time(-1, PRINT_NEWLINE, _("Message of the day:"));
 	s = sync_write(STDOUT_FILENO, buffer, s);
 	if(s < 0) {
 		perror("write: stdout");
@@ -261,7 +261,7 @@ static void command_motd(int fd, int argc, char **argv) {
 
 static void command_pasteimage(int fd, int argc, char **argv) {
 	if(argc < 2) {
-		fprintf(stderr, "Usage: %s <user>\n", argv[0]);
+		fprintf(stderr, _("Usage: %s <user>\n"), argv[0]);
 		return;
 	}
 	int pipe_fds[2];
@@ -288,13 +288,13 @@ static void command_pasteimage(int fd, int argc, char **argv) {
 			//local_msg_len += 256 * 1024;
 			local_msg_len = sizeof(struct local_message) + data_len + 256 * 1024;
 			if(local_msg_len > 1024 * 1024) {
-				fputs("Image too large\n", stderr);
+				fputs(_("Image too large\n"), stderr);
 				kill(pid, SIGKILL);
 				break;
 			}
 			struct local_message *new_buffer = realloc(buffer, local_msg_len);
 			if(!new_buffer) {
-				fputs("Failed to receive image, out of memory\n", stderr);
+				fputs(_("Failed to receive image, out of memory\n"), stderr);
 				kill(pid, SIGKILL);
 				break;
 			}
@@ -314,7 +314,7 @@ static void command_pasteimage(int fd, int argc, char **argv) {
 			return;
 		}
 		if(WIFSIGNALED(status)) {
-			fprintf(stderr, "child process terminated by signal %d\n", WTERMSIG(status));
+			fprintf(stderr, _("child process terminated by signal %d\n"), WTERMSIG(status));
 		}
 		if(status == 0) {
 			size_t receiver_len = strlen(argv[1]);
@@ -371,33 +371,36 @@ static void command_listoptions(int fd, int argc, char **argv) {
 				break;
 		}
 	} else {
-		fputs("Message alert:          ", stdout);
+		/// To transtators: try not to change the string length
+		fputs(_("Message alert:          "), stdout);
 		puts(option_alert ? "on" : "off");
-		fputs("Showing HTML message:   ", stdout);
+		/// To transtators: try not to change the string length
+		fputs(_("Showing HTML message:   "), stdout);
 		switch(option_showhtml) {
 			case SHOWHTML_OFF:
-				puts("off");
+				puts(_("off"));
 				break;
 			case SHOWHTML_COLOR:
-				puts("colorized text");
+				puts(_("colorized text"));
 				break;
 			case SHOWHTML_PLAIN:
-				puts("plain text");
+				puts(_("plain text"));
 				break;
 			case SHOWHTML_RAW:
-				puts("raw html document");
+				puts(_("raw html document"));
 				break;
 		}
-		fputs("Use colorized output:   ", stdout);
+		/// To transtators: try not to change the string length
+		fputs(_("Use colorized output:   "), stdout);
 		switch(option_color) {
 			case COLOR_OFF:
-				puts("off");
+				puts(_("off"));
 				break;
 			case COLOR_ON:
-				puts("on");
+				puts(_("on"));
 				break;
 			case COLOR_AUTO:
-				puts("automatic (if terminal)");
+				puts(_("automatic (if terminal)"));
 				break;
 		}
 	}
@@ -444,12 +447,12 @@ static struct command {
 
 static void command_help(int fd, int argc, char **argv) {
 	struct command *c = command_list;
-	puts("Supported commands:");
+	puts(_("Supported commands:"));
 	while(c->name) {
 		printf("/%s %s\n", c->name, c->usage);
 		c++;
 	}
-	puts("End of list\n");
+	puts(_("End of list\n"));
 }
 
 static int parse_tokens(char *string, char ***tokens, int length) {
@@ -511,13 +514,23 @@ static void do_command(int fd, const char *command) {
 	char **argv = malloc(sizeof(char *));
 	char *buffer;
 	if(!argv || !(buffer = strdup(command))) {
+#ifndef NO_NLS
 		print_with_time(-1, PRINT_NEWLINE, "do_command: out of memory");
+#else
+		print_with_time(-1, PRINT_NEWLINE, "do_command: %s", _("out of memory"));
+#endif
 		free(argv);
 		return;
 	}
 	int argc = parse_tokens(buffer, &argv, 0);
 	if(argc < 1) {
-		if(argv < 0) print_with_time(-1, PRINT_NEWLINE, "do_command: out of memory");
+		if(argv < 0) {
+#ifndef NO_NLS
+			print_with_time(-1, PRINT_NEWLINE, "do_command: out of memory");
+#else
+			print_with_time(-1, PRINT_NEWLINE, "do_command: %s", _("out of memory"));
+#endif
+		}
 		free(argv);
 		free(buffer);
 		return;
@@ -534,7 +547,7 @@ static void do_command(int fd, const char *command) {
 		}
 		c++;
 	}
-	print_with_time(-1, PRINT_NEWLINE, "Error: Unknown command '%s'", argv[0]);
+	print_with_time(-1, PRINT_NEWLINE, _("Error: Unknown command '%s'"), argv[0]);
 	free(argv);
 	free(buffer);
 }
@@ -570,7 +583,7 @@ static void print_message(const struct local_message *msg) {
 					text = strdup("[HTML]");
 					if(!text) {
 						print_with_time(-1, PRINT_NEWLINE | PRINT_REDISPLAY_INPUT,
-							"Out of memory");
+							_("Out of memory"));
 						return;
 					}
 					break;
@@ -585,9 +598,9 @@ static void print_message(const struct local_message *msg) {
 			}
 			break;
 		case SSHOUT_MSG_IMAGE:
-			text = strdup("[Image]");
+			text = strdup(_("[Image]"));
 			if(!text) {
-				print_with_time(-1, PRINT_NEWLINE | PRINT_REDISPLAY_INPUT, "Out of memory");
+				print_with_time(-1, PRINT_NEWLINE | PRINT_REDISPLAY_INPUT, _("Out of memory"));
 				return;
 			}
 			break;
@@ -595,7 +608,7 @@ static void print_message(const struct local_message *msg) {
 	if(!need_parse_html && !text) {
 		text = malloc(msg->msg_length + 1);
 		if(!text) {
-			print_with_time(-1, PRINT_NEWLINE | PRINT_REDISPLAY_INPUT, "Out of memory");
+			print_with_time(-1, PRINT_NEWLINE | PRINT_REDISPLAY_INPUT, _("Out of memory"));
 			return;
 		}
 		memcpy(text, msg->msg, msg->msg_length);
@@ -639,7 +652,7 @@ static void print_message(const struct local_message *msg) {
 				fflush(stdout);		// Make the cursor back normal immediately
 			}
 			if(WIFSIGNALED(status)) {
-				fprintf(stderr, "child process terminated by signal %d\n", WTERMSIG(status));
+				fprintf(stderr, _("child process terminated by signal %d\n"), WTERMSIG(status));
 			}
 			if(use_readline) {
 				rl_reset_line_state();
@@ -699,7 +712,7 @@ static void do_input_line(int, const char *);
 
 static void do_input_line_from_readline(char *line) {
 	if(!line) {
-		print_with_time(-1, PRINT_NEWLINE, "Exiting ...");
+		print_with_time(-1, PRINT_NEWLINE, _("Exiting ..."));
 		if(use_readline) rl_callback_handler_remove();
 		exit(0);
 	}
@@ -721,7 +734,7 @@ static void client_cli_do_tick() {
 		char buffer[512];
 		size_t date_str_len = strftime(buffer, sizeof buffer, "%x", tm);
 		if(date_str_len) print_with_time(t, PRINT_NEWLINE | PRINT_REDISPLAY_INPUT, "[%s]", buffer);
-		else print_with_time(t, PRINT_NEWLINE | PRINT_REDISPLAY_INPUT, "Error: cannot format current date");
+		else print_with_time(t, PRINT_NEWLINE | PRINT_REDISPLAY_INPUT, _("Error: cannot format current date"));
 		last_day = tm->tm_yday;
 	}
 }
@@ -765,7 +778,7 @@ static void open_preference(const char *user_name) {
 	struct stat st;
 	if(stat(SSHOUT_USERS_PREFERENCES_DIR, &st) < 0 && (errno != ENOENT || mkdir(SSHOUT_USERS_PREFERENCES_DIR, 0750) < 0)) {
 		perror(SSHOUT_USERS_PREFERENCES_DIR);
-		fputs("Cannot load or save perferences in this session\n", stderr);
+		fputs(_("Cannot load or save perferences in this session\n"), stderr);
 		return;
 	}
 	size_t user_name_len = strlen(user_name) + 1;
@@ -776,7 +789,7 @@ static void open_preference(const char *user_name) {
 	int fd = open(file_name, O_RDWR | O_CREAT, 0640);
 	if(fd == -1 || !(preference_file = fdopen(fd, "r+"))) {
 		perror(file_name);
-		fputs("Cannot load or save perferences in this session\n", stderr);
+		fputs(_("Cannot load or save perferences in this session\n"), stderr);
 		if(fd != -1) close(fd);
 		return;
 	}
@@ -796,7 +809,7 @@ static void open_preference(const char *user_name) {
 			if(len == 7) option_color = buffer[6] - '0';
 			else if(fbackwardoverwrite(preference_file, len + 1) < 0) break;
 		} else {
-			fprintf(stderr, "Unrecognized option '%s', removing\n", buffer);
+			fprintf(stderr, _("Unrecognized option '%s', removing\n"), buffer);
 			if(fbackwardoverwrite(preference_file, len + 1) < 0) break;
 		}
 	}
@@ -834,7 +847,7 @@ static void client_cli_do_local_packet(int fd) {
 	struct local_packet *packet;
 	switch(get_local_packet(fd, &packet, &buffer)) {
 		case GET_PACKET_EOF:
-			print_with_time(-1, PRINT_NEWLINE, "Server closed connection");
+			print_with_time(-1, PRINT_NEWLINE, _("Server closed connection"));
 			close(fd);
 			if(use_readline) rl_callback_handler_remove();
 			exit(0);
@@ -844,17 +857,17 @@ static void client_cli_do_local_packet(int fd) {
 			if(use_readline) rl_callback_handler_remove();
 			exit(1);
 		case GET_PACKET_SHORT_READ:
-			print_with_time(-1, PRINT_NEWLINE, "Packet short read");
+			print_with_time(-1, PRINT_NEWLINE, _("Packet short read"));
 			close(fd);
 			if(use_readline) rl_callback_handler_remove();
 			exit(1);
 		case GET_PACKET_TOO_LARGE:
-			print_with_time(-1, PRINT_NEWLINE, "Packet too large");
+			print_with_time(-1, PRINT_NEWLINE, _("Packet too large"));
 			close(fd);
 			if(use_readline) rl_callback_handler_remove();
 			exit(1);
 		case GET_PACKET_OUT_OF_MEMORY:
-			print_with_time(-1, PRINT_NEWLINE, "Out of memory");
+			print_with_time(-1, PRINT_NEWLINE, _("Out of memory"));
 			close(fd);
 			if(use_readline) rl_callback_handler_remove();
 			exit(1);
@@ -863,7 +876,7 @@ static void client_cli_do_local_packet(int fd) {
 		case 0:
 			break;
 		default:
-			print_with_time(-1, PRINT_NEWLINE, "Internal error");
+			print_with_time(-1, PRINT_NEWLINE, _("Internal error"));
 			if(use_readline) rl_callback_handler_remove();
 			abort();
 	}
@@ -877,16 +890,16 @@ static void client_cli_do_local_packet(int fd) {
 		case SSHOUT_LOCAL_USER_ONLINE:
 		case SSHOUT_LOCAL_USER_OFFLINE:
 			print_with_time(-1, PRINT_NEWLINE | PRINT_REDISPLAY_INPUT,
-				"User %s is %s", (char *)packet->data,
-				packet->type == SSHOUT_LOCAL_USER_ONLINE ? "online" : "offline");
+				_("User %s is %s"), (char *)packet->data,
+				packet->type == SSHOUT_LOCAL_USER_ONLINE ? _("online") : _("offline"));
 			break;
 		case SSHOUT_LOCAL_USER_NOT_FOUND:
 			print_with_time(-1, PRINT_NEWLINE | PRINT_REDISPLAY_INPUT,
-				"User %s not found",  (char *)packet->data);
+				_("User %s not found"),  (char *)packet->data);
 			break;
 		default:
 			print_with_time(-1, PRINT_NEWLINE | PRINT_REDISPLAY_INPUT,
-				"Unknown packet type %d", packet->type);
+				_("Unknown packet type %d"), packet->type);
 			break;
 	}
 	free(packet);
@@ -944,7 +957,7 @@ static void client_cli_do_stdin(int fd) {
 				exit(1);
 			}
 			if(!s) {
-				print_with_time(-1, PRINT_NEWLINE, "Exiting ...");
+				print_with_time(-1, PRINT_NEWLINE, _("Exiting ..."));
 				exit(0);
 			}
 			char *bs = buffer;
@@ -962,7 +975,7 @@ static void client_cli_do_stdin(int fd) {
 				exit(1);
 			}
 			if(!s) {
-				print_with_time(-1, PRINT_NEWLINE, "Exiting ...");
+				print_with_time(-1, PRINT_NEWLINE, _("Exiting ..."));
 				exit(0);
 			}
 			char *br = mem3chr(input_buffer + ss, 0, '\r', '\n', s);

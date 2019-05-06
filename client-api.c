@@ -1,5 +1,5 @@
 /* Secure Shout Host Oriented Unified Talk
- * Copyright 2015-2018 Rivoreo
+ * Copyright 2015-2019 Rivoreo
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -247,7 +247,7 @@ static void client_api_do_local_packet(int fd) {
 	int e = get_local_packet(fd, &packet, &buffer);
 	switch(e) {
 		case GET_PACKET_EOF:
-			send_api_error(SSHOUT_API_ERROR_SERVER_CLOSED, "Server closed connection");
+			send_api_error(SSHOUT_API_ERROR_SERVER_CLOSED, _("Server closed connection"));
 			close(fd);
 			exit(0);
 		case GET_PACKET_ERROR:
@@ -255,15 +255,15 @@ static void client_api_do_local_packet(int fd) {
 			close(fd);
 			exit(1);
 		case GET_PACKET_SHORT_READ:
-			send_api_error(SSHOUT_API_ERROR_LOCAL_PACKET_CORRUPT, "Local packet short read");
+			send_api_error(SSHOUT_API_ERROR_LOCAL_PACKET_CORRUPT, _("Local packet short read"));
 			close(fd);
 			exit(1);
 		case GET_PACKET_TOO_LARGE:
-			send_api_error(SSHOUT_API_ERROR_LOCAL_PACKET_TOO_LARGE, "Received local packet too large");
+			send_api_error(SSHOUT_API_ERROR_LOCAL_PACKET_TOO_LARGE, _("Received local packet too large"));
 			close(fd);
 			exit(1);
 		case GET_PACKET_OUT_OF_MEMORY:
-			send_api_error(SSHOUT_API_ERROR_OUT_OF_MEMORY, "Out of memory");
+			send_api_error(SSHOUT_API_ERROR_OUT_OF_MEMORY, _("Out of memory"));
 			close(fd);
 			exit(1);
 		case GET_PACKET_INCOMPLETE:
@@ -273,7 +273,7 @@ static void client_api_do_local_packet(int fd) {
 		case 0:
 			break;
 		default:
-			send_api_error(SSHOUT_API_ERROR_INTERNAL_ERROR, "Internal error");
+			send_api_error(SSHOUT_API_ERROR_INTERNAL_ERROR, _("Internal error"));
 			syslog(LOG_ERR, "Unknown error %d from get_local_packet", e);
 			abort();
 	}
@@ -291,11 +291,16 @@ static void client_api_do_local_packet(int fd) {
 		case SSHOUT_LOCAL_USER_NOT_FOUND:
 			{
 				char *user_name = (char *)packet->data;
+#ifdef NO_NLS
 				size_t user_name_len = strlen(user_name);
 				char msg[5 + user_name_len + 10 + 1];
 				memcpy(msg, "User ", 5);
 				memcpy(msg + 5, user_name, user_name_len);
 				memcpy(msg + 5 + user_name_len, " not found", 11);
+#else
+				char msg[256];
+				snprintf(msg, sizeof msg, _("User %s not found"), user_name);
+#endif
 				send_api_error(SSHOUT_API_ERROR_USER_NOT_FOUND, msg);
 			}
 			break;
@@ -414,7 +419,7 @@ static void client_api_do_stdin(int fd) {
 			errno = ENOENT;
 			if(send_api_motd() < 0) {
 				send_api_error(SSHOUT_API_ERROR_MOTD_NOT_AVAILABLE,
-					errno == ENOENT ? "No MOTD" : strerror(errno));
+					errno == ENOENT ? _("No MOTD") : strerror(errno));
 			}
 			break;
 		default:

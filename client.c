@@ -1,5 +1,5 @@
-/*
- * Copyright 2015-2018 Rivoreo
+/* Secure Shout Host Oriented Unified Talk
+ * Copyright 2015-2019 Rivoreo
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -26,6 +26,9 @@
 #include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
+#ifndef NO_NLS
+#include <locale.h>
+#endif
 
 #define MAX(A,B) ((A)>(B)?(A):(B))
 #define REMOTE_MODE_CLI 1
@@ -129,13 +132,20 @@ int client_get_local_socket_fd() {
 int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 	pid_t ppid = getppid();
 	int remote_mode = REMOTE_MODE_CLI;
+
 	const char *client_address = getenv("SSH_CLIENT");
 	if(!client_address) {
 		fputs("client mode can only be used in a SSH session\n", stderr);
 		return 1;
 	}
+
+#ifndef NO_NLS
+	setlocale(LC_MESSAGES, "");
+	textdomain("sshout");
+#endif
+
 	if(!is_valid_user_name(user_name)) {
-		fprintf(stderr, "Invalid user name '%s'\n", user_name);
+		fprintf(stderr, _("Invalid user name '%s'\n"), user_name);
 		return 1;
 	}
 	const char *command = getenv("SSH_ORIGINAL_COMMAND");
@@ -147,7 +157,7 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 		else if(strcmp(command, "irc") == 0) remote_mode = REMOTE_MODE_IRC;
 #endif
 		else {
-			fprintf(stderr, "Command '%s' is not recognized\n", command);
+			fprintf(stderr, _("Command '%s' is not recognized\n"), command);
 			return 1;
 		}
 	}
@@ -164,11 +174,11 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 	char *tz = getenv("TZ");
 	if(tz) {
 		if((tz[0] == ':' && tz[1] == '/') || tz[0] == '/') {
-			fputs("Ignoring absolute path name in TZ\n", stderr);
+			fputs(_("Ignoring absolute path name in TZ\n"), stderr);
 			syslog(LOG_WARNING, "TZ contains absolute path name '%s', ignored", tz);
 			*tz = 0;
 		} else if(strstr(tz, "../")) {
-			fputs("Ignoring TZ\n", stderr);
+			fputs(_("Ignoring TZ\n"), stderr);
 			syslog(LOG_WARNING, "TZ='%s', ignored", tz);
 			*tz = 0;
 		}
@@ -196,7 +206,7 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 		max_fd = fd;
 		close(STDIN_FILENO);
 		if(open("/dev/null", O_RDONLY) != 0) {
-			fputs("Cannot open /dev/null for read as fd 0\n", stderr);
+			fputs(_("Cannot open /dev/null for read as fd 0\n"), stderr);
 			return 1;
 		}
 	} else {
@@ -243,6 +253,6 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 		}
 	}
 
-	fputs("Parent process changed, exiting\n", stderr);
+	//fputs(_("Parent process changed, exiting\n"), stderr);
 	return 0;
 }

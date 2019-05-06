@@ -1,5 +1,5 @@
 /* Secure Shout Host Oriented Unified Talk
- * Copyright 2015-2018 Rivoreo
+ * Copyright 2015-2019 Rivoreo
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -27,6 +27,9 @@
 #include <sys/stat.h>
 #include <arpa/inet.h>
 #include <mhash.h>
+#ifndef NO_NLS
+#include <locale.h>
+#endif
 
 static void print_usage(const char *);
 
@@ -86,16 +89,16 @@ static int get_length_and_type_string_length_of_key_in_base64(const char *key, s
 #endif
 	int blob_len = base64_decode(key, *base64_len, buffer, buffer_size);
 	if(blob_len == -1) {
-		fputs("Invalid key: invalid BASE64 encoding\n", stderr);
+		fputs(_("Invalid key: invalid BASE64 encoding\n"), stderr);
 		return -1;
 	}
 	if(blob_len < 4) {
-		fputs("Invalid key: too short\n", stderr);
+		fputs(_("Invalid key: too short\n"), stderr);
 		return -1;
 	}
 	*type_len = ntohl(*(uint32_t *)buffer);
 	if(*type_len > (size_t)blob_len - 4) {
-		fprintf(stderr, "Invalid key: key type string length %u too long\n", (unsigned int)*type_len);
+		fprintf(stderr, _("Invalid key: key type string length %u too long\n"), (unsigned int)*type_len);
 		return -1;
 	}
 	return 0;
@@ -110,7 +113,7 @@ static int read_user_info(FILE *f, char **name, char **public_key, char **commen
 		int len = fgetline(f, line, sizeof line);
 		if(len == -2) {
 			int c;
-			fprintf(stderr, "Warning: line %u in file " USER_LIST_FILE " is too long, skipping\n", nlines);
+			fprintf(stderr, _("Warning: line %u in file " USER_LIST_FILE " is too long, skipping\n"), nlines);
 			while((c = fgetc(f)) != EOF && c != '\n');
 			continue;
 		}
@@ -121,41 +124,41 @@ static int read_user_info(FILE *f, char **name, char **public_key, char **commen
 		if(!*p) continue;
 		char *q1 = strchr(p, '"');
 		if(!q1) {
-			fprintf(stderr, "Warning: cannot find '\"' at line %u in file " USER_LIST_FILE "\n", nlines);
+			fprintf(stderr, _("Warning: cannot find '\"' at line %u in file " USER_LIST_FILE "\n"), nlines);
 			continue;
 		}
 		*q1 = 0;
 		if(q1 - p < 8 || strcmp(q1 - 8, "command=") || strchr(p, ' ')) {
-			fprintf(stderr, "Warning: syntax error in file " USER_LIST_FILE " line %u\n", nlines);
+			fprintf(stderr, _("Warning: syntax error in file " USER_LIST_FILE " line %u\n"), nlines);
 			continue;
 		}
 		q1++;
 		char *q2 = strchr(q1, '"');
 		if(!q2) {
-			fprintf(stderr, "Warning: unmatched '\"' in file " USER_LIST_FILE " line %u\n", nlines);
+			fprintf(stderr, _("Warning: unmatched '\"' in file " USER_LIST_FILE " line %u\n"), nlines);
 			continue;
 		}
 		char *space = strchr(q2 + 1, ' ');
 		if(!space) {
-			fprintf(stderr, "Warning: syntax error in file " USER_LIST_FILE " line %u\n", nlines);
+			fprintf(stderr, _("Warning: syntax error in file " USER_LIST_FILE " line %u\n"), nlines);
 			continue;
 		}
 		size_t user_name_len = q2 - q1;
 		if(!user_name_len) {
-			fprintf(stderr, "Warning: empty user name in file " USER_LIST_FILE " line %u\n", nlines);
+			fprintf(stderr, _("Warning: empty user name in file " USER_LIST_FILE " line %u\n"), nlines);
 			continue;
 		}
 		char *type_string = space + 1;
 		space = strchr(type_string, ' ');
 		if(!space) {
-			fprintf(stderr, "Warning: syntax error in file " USER_LIST_FILE " line %u\n", nlines);
+			fprintf(stderr, _("Warning: syntax error in file " USER_LIST_FILE " line %u\n"), nlines);
 			continue;
 		}
 		size_t type_len = space - type_string;
 		enum key_types key_type_1 = get_key_type(type_string, type_len);
 		if(key_type_1 == KEY_INVALID) {
 			*space = 0;
-			fprintf(stderr, "Warning: invalid key type '%s' in file " USER_LIST_FILE " line %u\n", type_string, nlines);
+			fprintf(stderr, _("Warning: invalid key type '%s' in file " USER_LIST_FILE " line %u\n"), type_string, nlines);
 			continue;
 		}
 		const char *base64 = space + 1;
@@ -166,23 +169,23 @@ static int read_user_info(FILE *f, char **name, char **public_key, char **commen
 		enum key_types key_type_2 = get_key_type(inner_key_type_string, inner_type_len);
 		if(key_type_2 == KEY_INVALID) {
 			inner_key_type_string[inner_type_len] = 0;
-			fprintf(stderr, "Warning: invalid key type '%s' from BASE64 in file " USER_LIST_FILE " line %u\n", inner_key_type_string, nlines);
+			fprintf(stderr, _("Warning: invalid key type '%s' from BASE64 in file " USER_LIST_FILE " line %u\n"), inner_key_type_string, nlines);
 			continue;
 		}
 		if(key_type_2 != key_type_1) {
-			fprintf(stderr, "Warning: key type didn't match in file " USER_LIST_FILE " line %u; key ignored\n", nlines);
+			fprintf(stderr, _("Warning: key type didn't match in file " USER_LIST_FILE " line %u; key ignored\n"), nlines);
 			continue;
 		}
 		*name = malloc(user_name_len + 1);
 		if(!*name) {
-			fprintf(stderr, "Error: allocate %zu bytes failed when processing file " USER_LIST_FILE " line %u\n", user_name_len + 1, nlines);
+			fprintf(stderr, _("Error: allocate %zu bytes failed when processing file " USER_LIST_FILE " line %u\n"), user_name_len + 1, nlines);
 			return -1;
 		}
 		memcpy(*name, q1, user_name_len);
 		(*name)[user_name_len] = 0;
 		*public_key = malloc(type_len + 1 + base64_len + 1);
 		if(!*public_key) {
-			fprintf(stderr, "Error: out of memory when processing file " USER_LIST_FILE " line %u\n", nlines);
+			fprintf(stderr, _("Error: out of memory when processing file " USER_LIST_FILE " line %u\n"), nlines);
 			return -1;
 		}
 		memcpy(*public_key, type_string, type_len + 1 + base64_len);
@@ -191,7 +194,7 @@ static int read_user_info(FILE *f, char **name, char **public_key, char **commen
 			if(base64[base64_len] == ' ') {
 				*comment = strdup(base64 + base64_len + 1);
 				if(!*comment) {
-					fprintf(stderr, "Error: out of memory when processing file " USER_LIST_FILE " line %u\n", nlines);
+					fprintf(stderr, _("Error: out of memory when processing file " USER_LIST_FILE " line %u\n"), nlines);
 					return -1;
 				}
 			} else *comment = NULL;
@@ -210,10 +213,10 @@ static int remove_ssh_rc_file() {
 		return -1;
 	}
 	if(S_ISDIR(st.st_mode)) {
-		fputs("'.ssh/rc' exists, and it is a directory!\n", stderr);
+		fputs(_("'.ssh/rc' exists, and it is a directory!\n"), stderr);
 		return -1;
 	}
-	fputs("sshout shouldn't have a SSH RC file '.ssh/rc'; removing\n", stderr);
+	fputs(_("sshout shouldn't have a SSH RC file '.ssh/rc'; removing\n"), stderr);
 	if(unlink(".ssh/rc") < 0) {
 		perror("unlink: .ssh/rc");
 		return -1;
@@ -242,7 +245,7 @@ static int adduser_command(int argc, char **argv) {
 		switch(c) {
 			case 'a':
 				if(strchr(optarg, '\n')) {
-					fputs("Key string shouldn't have new line\n", stderr);
+					fputs(_("Key string shouldn't have new line\n"), stderr);
 					return 1;
 				}
 				key = strdup(optarg);
@@ -267,7 +270,7 @@ static int adduser_command(int argc, char **argv) {
 	}
 	const char *user = argv[optind];
 	if(!is_valid_user_name(user)) {
-		fprintf(stderr, "Invalid user name '%s'\n", user);
+		fprintf(stderr, _("Invalid user name '%s'\n"), user);
 		return 1;
 	}
 	if(!key) {
@@ -276,10 +279,10 @@ static int adduser_command(int argc, char **argv) {
 			perror("malloc");
 			return 1;
 		}
-		fprintf(stderr, "Input public key for %s: ", user);
+		fprintf(stderr, _("Input public key for %s: "), user);
 		if(fgetline(stdin, key, 4096) == -2) {
 			free(key);
-			fputs("Public key too long\n", stderr);
+			fputs(_("Public key too long\n"), stderr);
 			return 1;
 		}
 	}	
@@ -290,7 +293,7 @@ static int adduser_command(int argc, char **argv) {
 		enum key_types key_type = get_key_type(key, type_len);
 		if(key_type == KEY_INVALID) {
 			*space = 0;
-			fprintf(stderr, "Invalid key type '%s'\n", key);
+			fprintf(stderr, _("Invalid key type '%s'\n"), key);
 			return 1;
 		}
 		const char *base64 = space + 1;
@@ -301,11 +304,11 @@ static int adduser_command(int argc, char **argv) {
 		enum key_types inner_key_type = get_key_type(inner_key_type_string, inner_type_len);
 		if(inner_key_type == KEY_INVALID) {
 			inner_key_type_string[inner_type_len] = 0;
-			fprintf(stderr, "Invalid key type '%s'\n", inner_key_type_string);
+			fprintf(stderr, _("Invalid key type '%s'\n"), inner_key_type_string);
 			return 1;
 		}
 		if(inner_key_type != key_type) {
-			fputs("Invalid key: key type didn't match\n", stderr);
+			fputs(_("Invalid key: key type didn't match\n"), stderr);
 			return 1;
 		}
 		// 'space' is now point to the second space if exists
@@ -320,7 +323,7 @@ static int adduser_command(int argc, char **argv) {
 		enum key_types key_type = get_key_type(key_type_string, type_len);
 		if(key_type == KEY_INVALID) {
 			key_type_string[type_len] = 0;
-			fprintf(stderr, "Invalid key type '%s'\n", key_type_string);
+			fprintf(stderr, _("Invalid key type '%s'\n"), key_type_string);
 			return 1;
 		}
 		char *type_and_key_in_base64 = malloc(type_len + 1 + base64_len + 1);
@@ -340,27 +343,27 @@ static int adduser_command(int argc, char **argv) {
 	if(stat(".ssh", &st) == 0) {
 		if(!S_ISDIR(st.st_mode)) {
 			free(key);
-			fputs("'.ssh' is not a directory\n", stderr);
+			fputs(_("'.ssh' is not a directory\n"), stderr);
 			return 1;
 		}
 		uid_t myuid = getuid();
 		if(st.st_uid != myuid) {
 			free(key);
-			fprintf(stderr, "'.ssh' is not owned by sshout (%u != %u)\n", st.st_uid, myuid);
+			fprintf(stderr, _("'.ssh' is not owned by sshout (%u != %u)\n"), st.st_uid, myuid);
 			return 1;
 		}
 		if(st.st_mode & S_IWOTH) {
-			fputs("'.ssh' is global writable\n", stderr);
+			fputs(_("'.ssh' is global writable\n"), stderr);
 			if(chmod(".ssh", st.st_mode & ~(S_IWOTH)) < 0) {
 				perror("chmod: .ssh");
 				free(key);
 				return 1;
 			}
-			fputs("fixed\n", stderr);
+			fputs(_("fixed\n"), stderr);
 		}
 		if(remove_ssh_rc_file() < 0) {
 			free(key);
-			fputs("Cannot continue\n", stderr);
+			fputs(_("Cannot continue\n"), stderr);
 			return 1;
 		}
 	} else if(mkdir(".ssh", 0750) < 0) {
@@ -390,8 +393,8 @@ static int adduser_command(int argc, char **argv) {
 		while(read_user_info(f, &user_name, &public_key, NULL, NULL, NULL) == 0) {
 			if(strcmp(key, public_key) == 0) {
 				free(key);
-				fprintf(stderr, "This public key is already used by user %s.\n"
-					"Are you pasted wrong key?\n", user_name);
+				fprintf(stderr, _("This public key is already used by user %s.\n"
+					"Are you pasted wrong key?\n"), user_name);
 				free(user_name);
 				free(public_key);
 				return 1;
@@ -402,11 +405,11 @@ static int adduser_command(int argc, char **argv) {
 		}
 	}
 	if(existing_count) {
-		fprintf(stderr, "%d key%s already exist for user %s\n", existing_count, existing_count > 1 ? "s" : "", user);
+		fprintf(stderr, _("%d key%s already exist for user %s\n"), existing_count, existing_count > 1 ? "s" : "", user);
 		if(!force) {
-			fprintf(stderr, "Are you sure you want to add this key for user %s? ", user);
+			fprintf(stderr, _("Are you sure you want to add this key for user %s? "), user);
 			if(!ask_confirm()) {
-				fputs("Operation canceled\n", stderr);
+				fputs(_("Operation canceled\n"), stderr);
 				free(key);
 				return 1;
 			}
@@ -445,7 +448,7 @@ static int removeuser_command(int argc, char **argv) {
 	}
 	const char *user = argv[optind];
 	if(!is_valid_user_name(user)) {
-		fprintf(stderr, "Invalid user name '%s'\n", user);
+		fprintf(stderr, _("Invalid user name '%s'\n"), user);
 		return 1;
 	}
 
@@ -481,22 +484,22 @@ static int removeuser_command(int argc, char **argv) {
 
 	if(!line_count) {
 		fclose(f);
-		fprintf(stderr, "User %s not found\n", user);
+		fprintf(stderr, _("User %s not found\n"), user);
 		return 1;
 	}
 
 	if(line_count == 1) {
 		if(!force) {
-			fprintf(stderr, "Remove user %s from SSHOUT user list? ", user);
+			fprintf(stderr, _("Remove user %s from SSHOUT user list? "), user);
 			if(!ask_confirm()) {
 				fclose(f);
-				fputs("Operation canceled\n", stderr);
+				fputs(_("Operation canceled\n"), stderr);
 				return 1;
 			}
 		}
 		if(fseek(f, match_lines->end_offset, SEEK_SET) < 0 ||
 		fbackwardoverwrite(f, match_lines->length + 1) < 0) {
-			perror("Failed to remove user");
+			perror(_("Failed to remove user"));
 			fclose(f);
 			return 1;
 		}
@@ -507,13 +510,13 @@ static int removeuser_command(int argc, char **argv) {
 		return 0;
 	} else {
 		if(!force) {
-			fprintf(stderr, "User %s have %zu public keys registered in the user list\n", user, line_count);
-			fprintf(stderr, "If you want to remove only some of the user's keys, edit file '%s/ " USER_LIST_FILE "' manually\n",
+			fprintf(stderr, _("User %s have %zu public keys registered in the user list\n"), user, line_count);
+			fprintf(stderr, _("If you want to remove only some of the user's keys, edit file '%s/ " USER_LIST_FILE "' manually\n"),
 				getenv("HOME"));
-			fprintf(stderr, "Remove all keys for user %s? ", user);
+			fprintf(stderr, _("Remove all keys for user %s? "), user);
 			if(!ask_confirm()) {
 				fclose(f);
-				fputs("Operation canceled\n", stderr);
+				fputs(_("Operation canceled\n"), stderr);
 				return 1;
 			}
 		}
@@ -522,8 +525,8 @@ static int removeuser_command(int argc, char **argv) {
 			i--;
 			if(fseek(f, match_lines[i].end_offset, SEEK_SET) < 0 ||
 			fbackwardoverwrite(f, match_lines[i].length + 1) < 0) {
-				perror("Failed to remove user");
-				fprintf(stderr, "when removing key %u from user list\n", i);
+				perror(_("Failed to remove user"));
+				fprintf(stderr, _("when removing key %u from user list\n"), i);
 				fclose(f);
 				return 1;
 			}
@@ -532,7 +535,7 @@ static int removeuser_command(int argc, char **argv) {
 			perror("fclose");
 			return 1;
 		}
-		fprintf(stderr, "Removed %zu keys for user %s\n", line_count, user);
+		fprintf(stderr, _("Removed %zu keys for user %s\n"), line_count, user);
 		return 0;
 	}
 }
@@ -547,7 +550,7 @@ static int listuser_command(int argc, char **argv) {
 				if(strcmp(optarg, "md5") == 0) hash_type = MHASH_MD5;
 				else if(strcmp(optarg, "sha256") == 0) hash_type = MHASH_SHA256;
 				else {
-					fprintf(stderr, "Invalid hash algorithm '%s'\n", optarg);
+					fprintf(stderr, _("Invalid hash algorithm '%s'\n"), optarg);
 					return -1;
 				}
 				break;
@@ -558,7 +561,7 @@ static int listuser_command(int argc, char **argv) {
 	}
 
 	if(remove_ssh_rc_file() < 0) {
-		fputs("Warning: configuration error left unresolved\n", stderr);
+		fputs(_("Warning: configuration error left unresolved\n"), stderr);
 	}
 
 	FILE *f = fopen(USER_LIST_FILE, "r");
@@ -572,16 +575,16 @@ static int listuser_command(int argc, char **argv) {
 		//printf("User \"%s\", Public key \"%s\"", user_name, public_key);
 		printf("User \"%s\", ", user_name);
 		if((int)hash_type == -1) {
-			printf("Public key \"%s\"", public_key);
+			printf(_("Public key \"%s\""), public_key);
 		} else {
 			MHASH h = mhash_init(hash_type);
 			if(h == MHASH_FAILED) {
-				fputs("Cannot start hash public key\n", stderr);
+				fputs(_("Cannot start hash public key\n"), stderr);
 				return 1;
 			}
 			char *space = strchr(public_key, ' ');
 			if(!space) {
-				fputs("Invalid key\n", stderr);
+				fputs(_("Invalid key\n"), stderr);
 				return 1;
 			}
 			char *base64 = space + 1;
@@ -589,32 +592,32 @@ static int listuser_command(int argc, char **argv) {
 			char buffer[len];
 			len = base64_decode(base64, len, buffer, sizeof buffer);
 			if(len < 0) {
-				fputs("Invalid BASE64 encoding\n", stderr);
+				fputs(_("Invalid BASE64 encoding\n"), stderr);
 				return 1;
 			}
 			if(len < 8) {
-				fputs("Invalid key\n", stderr);
+				fputs(_("Invalid key\n"), stderr);
 				return 1;
 			}
 			size_t type_len = ntohl(*(uint32_t *)buffer);
 			if(type_len > len - 4) {
-				fputs("Invalid key\n", stderr);
+				fputs(_("Invalid key\n"), stderr);
 				return 1;
 			}
-			printf("Public key fingerprint %s ", key_type_to_string(get_key_type(buffer + 4, type_len)));
+			printf(_("Public key fingerprint %s "), key_type_to_string(get_key_type(buffer + 4, type_len)));
 			mhash(h, buffer, len);
 			unsigned char *hash = mhash_end(h);
 			unsigned int i = 0, hash_len = mhash_get_block_size(hash_type);
 			if(hash_type == MHASH_SHA256) {
 				char buffer[44];
 				len = base64_encode(hash, hash_len, buffer, sizeof buffer, 0);
-				fputs(len < 0 ? "Cannot encode SHA-256 fingerprint" : buffer, stdout);
+				fputs(len < 0 ? _("Cannot encode SHA-256 fingerprint") : buffer, stdout);
 			} else while(i < hash_len) {
 				if(i) putchar(':');
 				printf("%.2hhx", hash[i++]);
 			}
 		}
-		if(comment) printf(", Comment \"%s\"", comment);
+		if(comment) printf(_(", Comment \"%s\""), comment);
 		putchar('\n');
 		free(user_name);
 		free(public_key);
@@ -668,7 +671,7 @@ static int setmotd_command(int argc, char **argv) {
 	}
 	if(need_del) {
 		if(message) {
-			fputs("Option '-d' cannot be used together with '-m'\n", stderr);
+			fputs(_("Option '-d' cannot be used together with '-m'\n"), stderr);
 			return -1;
 		}
 		if(unlink(SSHOUT_MOTD_FILE) < 0) {
@@ -699,7 +702,7 @@ static int setmotd_command(int argc, char **argv) {
 		return 0;
 	} else {
 		char buffer[4096];
-		if(isatty(STDIN_FILENO)) fputs("Type message below:\n", stderr);
+		if(isatty(STDIN_FILENO)) fputs(_("Type message below:\n"), stderr);
 		while(1) {
 			int s = read(STDIN_FILENO, buffer, sizeof buffer);
 			if(s < 0) {
@@ -734,7 +737,7 @@ static struct subcommand {
 
 static void print_commands() {
 	struct subcommand *c = commands;
-	fputs("Following subcommands are available:\n", stderr);
+	fputs(_("Following subcommands are available:\n"), stderr);
 	while(c->name) {
 		fprintf(stderr, "	%s %s\n", c->name, c->usage);
 		c++;
@@ -745,22 +748,27 @@ static void print_usage(const char *name) {
 	struct subcommand *c = commands;
 	while(c->name) {
 		if(strcmp(c->name, name) == 0) {
-			fprintf(stderr, "Usage: %s %s\n", name, c->usage);
+			fprintf(stderr, _("Usage: %s %s\n"), name, c->usage);
 			return;
 		}
 		c++;
 	}
-	fprintf(stderr, "Error: cannot find usage for command '%s'", name);
+	fprintf(stderr, _("Error: cannot find usage for command '%s'"), name);
 }
 
 int main(int argc, char **argv) {
+#ifndef NO_NLS
+	setlocale(LC_MESSAGES, "");
+	textdomain("sshout");
+#endif
+
 	struct passwd *pw = getpwnam("sshout");
 	if(!pw) {
-		fputs("sshout user account not exist\n", stderr);
+		fputs(_("sshout user account not exist\n"), stderr);
 		return 1;
 	}
 	if(pw->pw_uid == 0) {
-		fputs("sshout user account have UID 0\n", stderr);
+		fputs(_("sshout user account have UID 0\n"), stderr);
 		return 1;
 	}
 
@@ -776,7 +784,7 @@ int main(int argc, char **argv) {
 			return 1;
 		}
 	} else if(myeuid != pw->pw_uid) {
-		fprintf(stderr, "Current effective UID %u doesn't equal to sshout user account\n", myeuid);
+		fprintf(stderr, _("Current effective UID %u doesn't equal to sshout user account\n"), myeuid);
 		return 1;
 	}
 
@@ -787,7 +795,7 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 	if(st.st_uid != pw->pw_uid) {
-		fprintf(stderr, "Home directory '%s' is not owned by sshout (expecting UID=%u, got %u)\n", home, pw->pw_uid, st.st_uid);
+		fprintf(stderr, _("Home directory '%s' is not owned by sshout (expecting UID=%u, got %u)\n"), home, pw->pw_uid, st.st_uid);
 		return 1;
 	}
 	setenv("HOME", home, 1);
@@ -801,7 +809,7 @@ int main(int argc, char **argv) {
 		if(strcmp(argv[1], c->name) == 0) return c->func(argc - 1, argv + 1);
 		c++;
 	}
-	fprintf(stderr, "Unknown command '%s'\n", argv[1]);
+	fprintf(stderr, _("Unknown command '%s'\n"), argv[1]);
 	print_commands();
 	return -1;
 }

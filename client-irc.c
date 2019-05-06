@@ -1,5 +1,5 @@
-/*
- * Copyright 2015-2018 Rivoreo
+/* Secure Shout Host Oriented Unified Talk
+ * Copyright 2015-2019 Rivoreo
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -109,7 +109,7 @@ static void send_irc_reply(const char *command, ...) {
 }
 
 static void send_irc_welcome() {
-	send_irc_reply(IRC_RPL_WELCOME, "Welcome to SSHOUT IRC frontend", NULL);
+	send_irc_reply(IRC_RPL_WELCOME, _("Welcome to SSHOUT IRC frontend"), NULL);
 }
 
 static void send_irc_myinfo() {
@@ -157,7 +157,14 @@ static void send_irc_motd() {
 	//sync_write(STDOUT_FILENO, IRC_RPL_ENDOFMOTD " :End of MOTD\r\n", 18);
 	sync_write(STDOUT_FILENO, IRC_RPL_ENDOFMOTD " ", 4);
 	sync_write(STDOUT_FILENO, sshout_user_name, user_name_len);
+#ifdef NO_NLS
 	sync_write(STDOUT_FILENO, " :End of MOTD\r\n", 15);
+#else
+	const char *s_end_of_motd = _("End of MOTD");
+	sync_write(STDOUT_FILENO, " :", 2);
+	sync_write(STDOUT_FILENO, s_end_of_motd, strlen(s_end_of_motd));
+	sync_write(STDOUT_FILENO, "\r\n", 2);
+#endif
 }
 
 static void send_irc_message(const struct local_message *msg) {
@@ -168,7 +175,7 @@ static void send_irc_message(const struct local_message *msg) {
 			text = strdup("[HTML]");
 			break;
 		case SSHOUT_MSG_IMAGE:
-			text = strdup("[Image]");
+			text = strdup(_("[Image]"));
 			break;
 	}
 	if(!text) {
@@ -196,7 +203,7 @@ static void send_irc_online_users(const struct local_online_users_info *info) {
 		putchar(' ');
 	}
 	fputs("\r\n", stdout);
-	send_irc_reply(IRC_RPL_ENDOFNAMES, "#sshout", "End of NAMES", NULL);
+	send_irc_reply(IRC_RPL_ENDOFNAMES, "#sshout", _("End of NAMES"), NULL);
 }
 
 static void send_irc_user_join(const char *user_name) {
@@ -217,11 +224,11 @@ static void send_irc_user_quit(const char *user_name) {
 static void irc_command_nick(int fd, int argc, struct fixed_length_string *argv) {
 	syslog(LOG_DEBUG, "function: irc_command_nick(%d, %d, %p)", fd, argc, argv);
 	if(argc < 1) {
-		send_irc_reply(IRC_ERR_NONICKNAMEGIVEN, "Missing nick name", NULL);
+		send_irc_reply(IRC_ERR_NONICKNAMEGIVEN, _("Missing nick name"), NULL);
 		return;
 	}
 	if(argv->len != strlen(sshout_user_name) || memcmp(argv->p, sshout_user_name, argv->len)) {
-		send_irc_reply(IRC_ERR_RESTRICTED, "Nick name didn't match the registered one", NULL);
+		send_irc_reply(IRC_ERR_RESTRICTED, _("Nick name didn't match the registered one"), NULL);
 		return;
 	}
 	is_irc_nick_name_set = 1;
@@ -231,7 +238,7 @@ static void irc_command_nick(int fd, int argc, struct fixed_length_string *argv)
 static void irc_command_user(int fd, int argc, struct fixed_length_string *argv) {
 	syslog(LOG_DEBUG, "function: irc_command_user(%d, %d, %p)", fd, argc, argv);
 	if(argc < 4) {
-		send_irc_reply(IRC_ERR_NEEDMOREPARAMS, "USER", "Not enough parameters", NULL);
+		send_irc_reply(IRC_ERR_NEEDMOREPARAMS, "USER", _("Not enough parameters"), NULL);
 		return;
 	}
 
@@ -244,7 +251,7 @@ static void irc_command_user(int fd, int argc, struct fixed_length_string *argv)
 	}
 */
 	if(is_irc_registered) {
-		send_irc_reply(IRC_ERR_ALREADYREGISTRED, "You cannot register again", NULL);
+		send_irc_reply(IRC_ERR_ALREADYREGISTRED, _("You cannot register again"), NULL);
 		return;
 	}
 	size_t user_name_len = argv[0].len > 9 ? 9 : argv[0].len;
@@ -264,15 +271,15 @@ static void irc_command_user(int fd, int argc, struct fixed_length_string *argv)
 
 static void irc_command_oper(int fd, int argc, struct fixed_length_string *argv) {
 	if(argc < 2) {
-		send_irc_reply(IRC_ERR_NEEDMOREPARAMS, "OPER", "Not enough parameters", NULL);
+		send_irc_reply(IRC_ERR_NEEDMOREPARAMS, "OPER", _("Not enough parameters"), NULL);
 		return;
 	}
-	send_irc_reply(IRC_ERR_NOOPERHOST, "operator is not supported", NULL);
+	send_irc_reply(IRC_ERR_NOOPERHOST, _("operator is not supported"), NULL);
 }
 
 static void irc_command_mode(int fd, int argc, struct fixed_length_string *argv) {
 	if(argc < 1) {
-		send_irc_reply(IRC_ERR_NEEDMOREPARAMS, "MODE", "Not enough parameters", NULL);
+		send_irc_reply(IRC_ERR_NEEDMOREPARAMS, "MODE", _("Not enough parameters"), NULL);
 		return;
 	}
 	//if(is_irc_joined) return;
@@ -282,7 +289,7 @@ static void irc_command_mode(int fd, int argc, struct fixed_length_string *argv)
 		return;
 	}
 	if(argv->len != strlen(sshout_user_name) || memcmp(argv->p, sshout_user_name, argv->len)) {
-		send_irc_reply(IRC_ERR_USERSDONTMATCH, "You cannot change mode for other users", NULL);
+		send_irc_reply(IRC_ERR_USERSDONTMATCH, _("You cannot change mode for other users"), NULL);
 		return;
 	}
 }
@@ -302,7 +309,7 @@ static void irc_command_quit(int fd, int argc, struct fixed_length_string *argv)
 
 static void irc_command_join(int fd, int argc, struct fixed_length_string *argv) {
 	if(argc < 1) {
-		send_irc_reply(IRC_ERR_NEEDMOREPARAMS, "JOIN", "Not enough parameters", NULL);
+		send_irc_reply(IRC_ERR_NEEDMOREPARAMS, "JOIN", _("Not enough parameters"), NULL);
 		return;
 	}
 	if(argv->len == 1 && argv->p[0] == '0') {
@@ -324,7 +331,7 @@ static void irc_command_join(int fd, int argc, struct fixed_length_string *argv)
 		char channel[argv->len + 1];
 		memcpy(channel, argv->p, argv->len);
 		channel[argv->len] = 0;
-		send_irc_reply(IRC_ERR_NOSUCHCHANNEL, channel, "Only one channel #sshout is available", NULL);
+		send_irc_reply(IRC_ERR_NOSUCHCHANNEL, channel, _("Only one channel #sshout is available"), NULL);
 		return;
 	}
 	//is_irc_joined = 1;
@@ -347,22 +354,22 @@ static void irc_command_list(int fd, int argc, struct fixed_length_string *argv)
 		if(argv->len != 7 || memcmp(argv->p, "#sshout", argv->len)) return;
 #endif
 	}
-	send_irc_reply(IRC_RPL_LISTSTART, "Channel", "Users  Name", NULL);
-	send_irc_reply(IRC_RPL_LIST, "#sshout", "?", "There is only one", NULL);
-	send_irc_reply(IRC_RPL_LISTEND, "End of LIST", NULL);
+	send_irc_reply(IRC_RPL_LISTSTART, "Channel", _("Users  Name"), NULL);
+	send_irc_reply(IRC_RPL_LIST, "#sshout", "?", _("There is only one"), NULL);
+	send_irc_reply(IRC_RPL_LISTEND, _("End of LIST"), NULL);
 }
 
 static void irc_command_privmsg(int fd, int argc, struct fixed_length_string *argv) {
 	if(argc < 1) {
-		send_irc_reply(IRC_ERR_NORECIPIENT, "Missing recipient", NULL);
+		send_irc_reply(IRC_ERR_NORECIPIENT, _("Missing recipient"), NULL);
 		return;
 	}
 	if(argc < 2) {
-		send_irc_reply(IRC_ERR_NOTEXTTOSEND, "Missing message", NULL);
+		send_irc_reply(IRC_ERR_NOTEXTTOSEND, _("Missing message"), NULL);
 		return;
 	}
 	if(!is_irc_registered) {
-		send_irc_reply(IRC_ERR_NOTREGISTERED, "PRIVMSG", "You have not registered", NULL);
+		send_irc_reply(IRC_ERR_NOTREGISTERED, "PRIVMSG", _("You have not registered"), NULL);
 		return;
 	}
 	struct local_message *message = malloc(sizeof(struct local_message) + argv[1].len);
@@ -415,7 +422,7 @@ static void irc_command_time(int fd, int argc, struct fixed_length_string *argv)
 	char buffer[512];
 	size_t date_str_len = strftime(buffer, sizeof buffer, "%x %T %Z", tm);
 	if(date_str_len) send_irc_reply(IRC_RPL_TIME, SERVER_NAME, buffer, NULL);
-	else send_irc_reply(IRC_ERR_UNKNOWNERROR, "Error: cannot format current date time");
+	else send_irc_reply(IRC_ERR_UNKNOWNERROR, _("Error: cannot format current date time"));
 }
 
 static void irc_command_ping(int fd, int argc, struct fixed_length_string *argv) {
@@ -571,19 +578,19 @@ static void client_irc_do_local_packet(int fd) {
 			close(fd);
 			exit(0);
 		case GET_PACKET_ERROR:
-			send_irc_reply(IRC_ERR_UNKNOWNERROR, "Local packet read error", strerror(errno), NULL);
+			send_irc_reply(IRC_ERR_UNKNOWNERROR, _("Local packet read error"), strerror(errno), NULL);
 			close(fd);
 			exit(1);
 		case GET_PACKET_SHORT_READ:
-			send_irc_reply(IRC_ERR_UNKNOWNERROR, "Local packet short read", NULL);
+			send_irc_reply(IRC_ERR_UNKNOWNERROR, _("Local packet short read"), NULL);
 			close(fd);
 			exit(1);
 		case GET_PACKET_TOO_LARGE:
-			send_irc_reply(IRC_ERR_UNKNOWNERROR, "Received local packet too large", NULL);
+			send_irc_reply(IRC_ERR_UNKNOWNERROR, _("Received local packet too large"), NULL);
 			close(fd);
 			exit(1);
 		case GET_PACKET_OUT_OF_MEMORY:
-			send_irc_reply(IRC_ERR_UNKNOWNERROR, "Out of memory", NULL);
+			send_irc_reply(IRC_ERR_UNKNOWNERROR, _("Out of memory"), NULL);
 			close(fd);
 			exit(1);
 		case GET_PACKET_INCOMPLETE:
@@ -593,7 +600,7 @@ static void client_irc_do_local_packet(int fd) {
 		case 0:
 			break;
 		default:
-			send_irc_reply(IRC_ERR_UNKNOWNERROR, "Internal error", NULL);
+			send_irc_reply(IRC_ERR_UNKNOWNERROR, ("Internal error"), NULL);
 			syslog(LOG_ERR, "Unknown error %d from get_local_packet", e);
 			abort();
 	}
