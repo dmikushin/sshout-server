@@ -28,7 +28,6 @@
 #include <time.h>
 #include <errno.h>
 #include <signal.h>
-#include <locale.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
 
@@ -836,7 +835,6 @@ static void client_cli_init_io(const char *user_name) {
 		}
 	}
 	setvbuf(stdout, NULL, _IOLBF, 0);
-	setlocale(LC_TIME, "");
 	sshout_user_name = user_name;
 	open_preference(user_name);
 	print_motd(1);

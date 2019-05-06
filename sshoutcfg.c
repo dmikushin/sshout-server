@@ -758,7 +758,7 @@ static void print_usage(const char *name) {
 
 int main(int argc, char **argv) {
 #ifndef NO_NLS
-	setlocale(LC_MESSAGES, "");
+	setlocale(LC_ALL, "");
 	textdomain("sshout");
 #endif
 

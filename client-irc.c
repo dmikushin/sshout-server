@@ -26,7 +26,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
-#include <locale.h>
 #include <ctype.h>
 #include <time.h>
 
@@ -407,7 +406,7 @@ static void irc_command_version(int fd, int argc, struct fixed_length_string *ar
 	char buffer[506];
 	snprintf(buffer, sizeof buffer, SSHOUT_VERSION_STRING "\n"
 		"IRC frontend\n"
-		"Copyright 2015-2018 Rivoreo\n"
+		"Copyright 2015-2019 Rivoreo\n"
 		"This is free software; see the source for copying conditions.\n"
 		"There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n"
 		"PARTICULAR PURPOSE.\n"
@@ -564,7 +563,6 @@ static void do_irc_line(int fd, const char *line, size_t len) {
 
 static void client_irc_init(const char *user_name) {
 	setvbuf(stdout, NULL, _IOLBF, 0);
-	setlocale(LC_TIME, "");
 	sshout_user_name = user_name;
 	syslog(LOG_INFO, "IRC server started");
 }
