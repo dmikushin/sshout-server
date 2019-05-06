@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SSHOUT 1.2.0\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/sshout/tickets/\n"
-"POT-Creation-Date: 2019-05-06 16:37+0800\n"
+"POT-Creation-Date: 2019-05-06 16:51+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -486,6 +486,11 @@ msgstr ""
 
 #: sshoutcfg.c:564
 msgid "Warning: configuration error left unresolved\n"
+msgstr ""
+
+#: sshoutcfg.c:576
+#, c-format
+msgid "User \"%s\", "
 msgstr ""
 
 #: sshoutcfg.c:578

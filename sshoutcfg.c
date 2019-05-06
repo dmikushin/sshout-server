@@ -573,7 +573,7 @@ static int listuser_command(int argc, char **argv) {
 	char *user_name, *public_key, *comment;
 	while(read_user_info(f, &user_name, &public_key, &comment, NULL, NULL) == 0) {
 		//printf("User \"%s\", Public key \"%s\"", user_name, public_key);
-		printf("User \"%s\", ", user_name);
+		printf(_("User \"%s\", "), user_name);
 		if((int)hash_type == -1) {
 			printf(_("Public key \"%s\""), public_key);
 		} else {
