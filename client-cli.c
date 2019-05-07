@@ -406,6 +406,7 @@ static void command_listoptions(int fd, int argc, char **argv) {
 }
 
 static void command_version(int fd, int argc, char **argv) {
+#if 0
 	puts(SSHOUT_VERSION_STRING "\n"
 		"Command line interface frontend\n"
 		"Copyright 2015-2019 Rivoreo\n"
@@ -413,6 +414,13 @@ static void command_version(int fd, int argc, char **argv) {
 		"There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n"
 		"PARTICULAR PURPOSE.\n"
 		"Project page: https://sourceforge.net/projects/sshout/");
+#else
+	puts(SSHOUT_VERSION_STRING);
+	puts(_("Command line interface frontend"));
+	puts(SSHOUT_COPYRIGHT_LINE);
+	puts(SSHOUT_LICENSE_INFORMATION);
+	printf(_("Project page: %s\n"), "https://sourceforge.net/projects/sshout/");
+#endif
 }
 
 static void command_quit(int fd, int argc, char **argv) {

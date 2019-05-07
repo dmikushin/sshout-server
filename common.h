@@ -1,4 +1,9 @@
 #define SSHOUT_VERSION "1.2.0"
+#define SSHOUT_COPYRIGHT_LINE _("Copyright 2015-2019 Rivoreo")
+#define SSHOUT_LICENSE_INFORMATION \
+	_("This is free software; see the source for copying conditions.\n" \
+	"There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n" \
+	"PARTICULAR PURPOSE.")
 #include "build-info.h"
 #if !defined BUILD_DATE && defined __DATE__ && defined __TIME__
 #define BUILD_DATE __DATE__ " " __TIME__

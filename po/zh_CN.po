@@ -3,9 +3,7 @@
 # This file is distributed under the terms of the GNU General Public License
 # as published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
-
 # WHR <msl0000023508@gmail.com>, 2019.
-
 #, fuzzy
 msgid ""
 msgstr ""
@@ -19,28 +17,28 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: client-api.c:250 client-cli.c:850
+#: client-api.c:250 client-cli.c:856
 msgid "Server closed connection"
 msgstr "服务端关闭了连接"
 
-#: client-api.c:258 client-irc.c:585
+#: client-api.c:258 client-irc.c:588
 msgid "Local packet short read"
 msgstr "读本地封包时中断"
 
-#: client-api.c:262 client-irc.c:589
+#: client-api.c:262 client-irc.c:592
 msgid "Received local packet too large"
 msgstr "收到的本地封包太大"
 
-#: client-api.c:266 client-cli.c:586 client-cli.c:603 client-cli.c:611
-#: client-cli.c:870 client-irc.c:593
+#: client-api.c:266 client-cli.c:527 client-cli.c:538 client-cli.c:593
+#: client-cli.c:610 client-cli.c:618 client-cli.c:876 client-irc.c:596
 msgid "Out of memory"
 msgstr "内存不足"
 
-#: client-api.c:276 client-cli.c:879
+#: client-api.c:276 client-cli.c:885
 msgid "Internal error"
 msgstr "内部错误"
 
-#: client-api.c:302 client-cli.c:898
+#: client-api.c:302 client-cli.c:904
 #, c-format
 msgid "User %s not found"
 msgstr "找不到用户 %s"
@@ -49,224 +47,241 @@ msgstr "找不到用户 %s"
 msgid "No MOTD"
 msgstr "无 MOTD"
 
-#: client-cli.c:165
+#: client-cli.c:164
 #, c-format
 msgid "Usage: %s off|on\n"
 msgstr "用法： %s off|on\n"
 
-#: client-cli.c:177
+#: client-cli.c:176
 #, c-format
 msgid "Usage: %s off|color|plain|raw\n"
 msgstr "用法： %s off|color|plain|raw\n"
 
-#: client-cli.c:192
+#: client-cli.c:191
 #, c-format
 msgid "Usage: %s off|on|auto\n"
 msgstr "用法： %s off|on|auto\n"
 
-#: client-cli.c:205
+#: client-cli.c:204
 #, c-format
 msgid "Usage: %s <user> <message> [<message> ...]\n"
 msgstr "用法： %s <用户> <消息> [<消息> ...]\n"
 
-#: client-cli.c:236
+#: client-cli.c:235
 msgid "No MOTD available"
 msgstr "没有 MOTD 可用"
 
-#: client-cli.c:249
+#: client-cli.c:248
 msgid "Message of the day:"
 msgstr "今日消息："
 
-#: client-cli.c:264
+#: client-cli.c:263
 #, c-format
 msgid "Usage: %s <user>\n"
 msgstr "用法： %s <用户>\n"
 
-#: client-cli.c:291
+#: client-cli.c:290
 msgid "Image too large\n"
 msgstr "图片太大\n"
 
-#: client-cli.c:297
+#: client-cli.c:296
 msgid "Failed to receive image, out of memory\n"
 msgstr "无法接收图片，内存不足\n"
 
-#: client-cli.c:317 client-cli.c:655
+#: client-cli.c:316 client-cli.c:662
 #, c-format
 msgid "child process terminated by signal %d\n"
 msgstr "子进程被信号 %d 终止\n"
 
 #. / To transtators: try not to change the string length
-#: client-cli.c:375
+#: client-cli.c:374
 msgid "Message alert:          "
 msgstr "消息响铃：              "
 
-#. / To transtators: try not to change the string length
-#: client-cli.c:378
-msgid "Showing HTML message:   "
-msgstr "显示 HTML 消息：        "
+#: client-cli.c:375 client-cli.c:399
+msgid "on"
+msgstr "开"
 
-#: client-cli.c:381 client-cli.c:397
+#: client-cli.c:375 client-cli.c:380 client-cli.c:396
 msgid "off"
 msgstr "关"
 
-#: client-cli.c:384
+#. / To transtators: try not to change the string length
+#: client-cli.c:377
+msgid "Showing HTML message:   "
+msgstr "显示 HTML 消息：        "
+
+#: client-cli.c:383
 msgid "colorized text"
 msgstr "带颜色的文本"
 
-#: client-cli.c:387
+#: client-cli.c:386
 msgid "plain text"
 msgstr "纯文本"
 
-#: client-cli.c:390
+#: client-cli.c:389
 msgid "raw html document"
 msgstr "原始 HTML 文档"
 
 #. / To transtators: try not to change the string length
-#: client-cli.c:394
+#: client-cli.c:393
 msgid "Use colorized output:   "
 msgstr "使用色彩输出：          "
 
-#: client-cli.c:400
-msgid "on"
-msgstr "开"
-
-#: client-cli.c:403
+#: client-cli.c:402
 msgid "automatic (if terminal)"
 msgstr "自动（基于终端）"
 
-#: client-cli.c:450
+#: client-cli.c:419
+msgid "Command line interface frontend"
+msgstr "命令行界面前端"
+
+#: client-cli.c:422
+#, c-format
+msgid "Project page: %s\n"
+msgstr "工程页面：%s\n"
+
+#: client-cli.c:457
 msgid "Supported commands:"
 msgstr "支持的命令有："
 
-#: client-cli.c:455
+#: client-cli.c:462
 msgid "End of list\n"
 msgstr "列表结束\n"
 
-#: client-cli.c:550
+#: client-cli.c:557
 #, c-format
 msgid "Error: Unknown command '%s'"
 msgstr "错误：未知命令“%s”"
 
-#: client-cli.c:601 client-irc.c:178
+#: client-cli.c:608 client-irc.c:177
 msgid "[Image]"
 msgstr "[图片]"
 
-#: client-cli.c:715 client-cli.c:960 client-cli.c:978
+#: client-cli.c:722 client-cli.c:966 client-cli.c:984
 msgid "Exiting ..."
 msgstr "退出 ..."
 
-#: client-cli.c:737
+#: client-cli.c:744
 msgid "Error: cannot format current date"
 msgstr "错误：无法格式化当前时间"
 
-#: client-cli.c:781 client-cli.c:792
+#: client-cli.c:788 client-cli.c:799
 msgid "Cannot load or save perferences in this session\n"
 msgstr "无法为本次会话加载或保存偏好设置\n"
 
-#: client-cli.c:812
+#: client-cli.c:819
 #, c-format
 msgid "Unrecognized option '%s', removing\n"
 msgstr "移除未被识别的选项“%s”\n"
 
-#: client-cli.c:860
+#: client-cli.c:866
 msgid "Packet short read"
 msgstr "读数据包时中断"
 
-#: client-cli.c:865
+#: client-cli.c:871
 msgid "Packet too large"
 msgstr "数据包太大"
 
-#: client-cli.c:893
+#: client-cli.c:899
 #, c-format
 msgid "User %s is %s"
 msgstr "用户 %s %s了"
 
-#: client-cli.c:894
+#: client-cli.c:900
 msgid "online"
 msgstr "上线"
 
-#: client-cli.c:894
+#: client-cli.c:900
 msgid "offline"
 msgstr "离线"
 
-#: client-cli.c:902
+#: client-cli.c:908
 #, c-format
 msgid "Unknown packet type %d"
 msgstr "未知的包类型 %d"
 
-#: client-irc.c:112
+#: client-irc.c:111
 msgid "Welcome to SSHOUT IRC frontend"
 msgstr "欢迎使用 SSHOUT IRC 前端"
 
-#: client-irc.c:163
+#: client-irc.c:162
 msgid "End of MOTD"
 msgstr "MOTD 结束"
 
-#: client-irc.c:206
+#: client-irc.c:205
 msgid "End of NAMES"
 msgstr "名称结束"
 
-#: client-irc.c:227
+#: client-irc.c:226
 msgid "Missing nick name"
 msgstr "缺失昵称"
 
-#: client-irc.c:231
+#: client-irc.c:230
 msgid "Nick name didn't match the registered one"
 msgstr "昵称与已注册的用户名不匹配"
 
-#: client-irc.c:241 client-irc.c:274 client-irc.c:282 client-irc.c:312
+#: client-irc.c:240 client-irc.c:273 client-irc.c:281 client-irc.c:311
 msgid "Not enough parameters"
 msgstr "参数数量不足"
 
-#: client-irc.c:254
+#: client-irc.c:253
 msgid "You cannot register again"
 msgstr "你不能再次注册"
 
-#: client-irc.c:277
+#: client-irc.c:276
 msgid "operator is not supported"
 msgstr "operator 并不受支持"
 
-#: client-irc.c:292
+#: client-irc.c:291
 msgid "You cannot change mode for other users"
 msgstr "你不能更改其他用户的模式"
 
-#: client-irc.c:334
+#: client-irc.c:333
 msgid "Only one channel #sshout is available"
 msgstr "只有一个频道 #sshout 可用"
 
-#: client-irc.c:357
+#: client-irc.c:356
 msgid "Channel"
 msgstr "频道"
 
-#: client-irc.c:357
+#: client-irc.c:356
 msgid "Users  Name"
 msgstr "用户数 名称"
 
-#: client-irc.c:358
+#: client-irc.c:357
 msgid "There is only one"
 msgstr "这里只有一个"
 
-#: client-irc.c:359
+#: client-irc.c:358
 msgid "End of LIST"
 msgstr "列表结束"
 
-#: client-irc.c:364
+#: client-irc.c:363
 msgid "Missing recipient"
 msgstr "缺失收信人"
 
-#: client-irc.c:368
+#: client-irc.c:367
 msgid "Missing message"
 msgstr "缺失消息"
 
-#: client-irc.c:372
+#: client-irc.c:371
 msgid "You have not registered"
 msgstr "你还没有注册"
 
-#: client-irc.c:425
+#: client-irc.c:415
+msgid "IRC frontend"
+msgstr "IRC 前端"
+
+#: client-irc.c:417
+msgid "Project page: "
+msgstr "工程页面："
+
+#: client-irc.c:429
 msgid "Error: cannot format current date time"
 msgstr "错误：无法格式化当前时间"
 
-#: client-irc.c:581
+#: client-irc.c:584
 msgid "Local packet read error"
 msgstr "本地封包读取错误"
 
@@ -292,6 +307,19 @@ msgstr "忽略 TZ\n"
 msgid "Cannot open /dev/null for read as fd 0\n"
 msgstr "无法以 fd 0 读打开 /dev/null\n"
 
+#: common.h:2
+msgid "Copyright 2015-2019 Rivoreo"
+msgstr "版权所有 2015-2019 Rivoreo"
+
+#: common.h:4
+msgid ""
+"This is free software; see the source for copying conditions.\n"
+"There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n"
+"PARTICULAR PURPOSE."
+msgstr ""
+"此程序为自由软件，您可任意更改并重分发它。要了解分发条款，请查看源代码。\n"
+"本程序不提供任何担保，即便是针对适销或特定用途的适用性。"
+
 #: sshoutcfg.c:92
 msgid "Invalid key: invalid BASE64 encoding\n"
 msgstr "无效的密钥：无效的 BASE64 编码\n"
@@ -315,8 +343,7 @@ msgstr "警告：文件 .ssh/authorized_keys 第 %u 行太长，已跳过\n"
 msgid "Warning: cannot find '\"' at line %u in file .ssh/authorized_keys\n"
 msgstr "警告：在文件 .ssh/authorized_keys 第 %u 行中找不到“\"”字符\n"
 
-#: sshoutcfg.c:132 sshoutcfg.c:143
-#: sshoutcfg.c:154
+#: sshoutcfg.c:132 sshoutcfg.c:143 sshoutcfg.c:154
 #, c-format
 msgid "Warning: syntax error in file .ssh/authorized_keys line %u\n"
 msgstr "警告：文件 .ssh/authorized_keys 第 %u 行有格式错误\n"
@@ -334,21 +361,27 @@ msgstr "警告：文件 .ssh/authorized_keys 第 %u 行中的用户名是空的\
 #: sshoutcfg.c:161
 #, c-format
 msgid "Warning: invalid key type '%s' in file .ssh/authorized_keys line %u\n"
-msgstr "警告：文件 .ssh/authorized_keys 第 %2$u 行中的密钥类型“%1$s”是无效或不可识别的\n"
+msgstr ""
+"警告：文件 .ssh/authorized_keys 第 %2$u 行中的密钥类型“%1$s”是无效或不可识别"
+"的\n"
 
 #: sshoutcfg.c:172
 #, c-format
 msgid ""
 "Warning: invalid key type '%s' from BASE64 in file .ssh/authorized_keys line "
 "%u\n"
-msgstr "警告：文件 .ssh/authorized_keys 第 %2$u 行中的 BASE64 编码中的密钥类型“%1$s”是无效或不可识别的\n"
+msgstr ""
+"警告：文件 .ssh/authorized_keys 第 %2$u 行中的 BASE64 编码中的密钥类"
+"型“%1$s”是无效或不可识别的\n"
 
 #: sshoutcfg.c:176
 #, c-format
 msgid ""
 "Warning: key type didn't match in file .ssh/authorized_keys line %u; key "
 "ignored\n"
-msgstr "警告：已忽略文件 .ssh/authorized_keys 中的第 %u 行，因为其中的密钥类型是不匹配的\n"
+msgstr ""
+"警告：已忽略文件 .ssh/authorized_keys 中的第 %u 行，因为其中的密钥类型是不匹"
+"配的\n"
 
 #: sshoutcfg.c:181
 #, c-format
@@ -384,8 +417,7 @@ msgstr "输入 %s 的公钥："
 msgid "Public key too long\n"
 msgstr "公钥太长\n"
 
-#: sshoutcfg.c:296 sshoutcfg.c:307
-#: sshoutcfg.c:326
+#: sshoutcfg.c:296 sshoutcfg.c:307 sshoutcfg.c:326
 #, c-format
 msgid "Invalid key type '%s'\n"
 msgstr "无效的密钥类型“%s”\n"
@@ -432,8 +464,7 @@ msgstr "用户 %3$s 已有 %1$d 个公钥\n"
 msgid "Are you sure you want to add this key for user %s? "
 msgstr "确定要为用户 %s 添加这个公钥？"
 
-#: sshoutcfg.c:412 sshoutcfg.c:496
-#: sshoutcfg.c:519
+#: sshoutcfg.c:412 sshoutcfg.c:496 sshoutcfg.c:519
 msgid "Operation canceled\n"
 msgstr "操作已取消\n"
 
@@ -501,8 +532,7 @@ msgstr "公钥 \"%s\""
 msgid "Cannot start hash public key\n"
 msgstr "无法开始计算公钥的散列值\n"
 
-#: sshoutcfg.c:587 sshoutcfg.c:599
-#: sshoutcfg.c:604
+#: sshoutcfg.c:587 sshoutcfg.c:599 sshoutcfg.c:604
 msgid "Invalid key\n"
 msgstr "无效密钥\n"
 

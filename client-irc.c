@@ -404,13 +404,18 @@ static void irc_command_motd(int fd, int argc, struct fixed_length_string *argv)
 static void irc_command_version(int fd, int argc, struct fixed_length_string *argv) {
 	if(argc > 0) return;
 	char buffer[506];
+#ifdef NO_NLS
 	snprintf(buffer, sizeof buffer, SSHOUT_VERSION_STRING "\n"
 		"IRC frontend\n"
-		"Copyright 2015-2019 Rivoreo\n"
-		"This is free software; see the source for copying conditions.\n"
-		"There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n"
-		"PARTICULAR PURPOSE.\n"
+		SSHOUT_COPYRIGHT_LINE "\n"
+		SSHOUT_LICENSE_INFORMATION "\n"
 		"Project page: https://sourceforge.net/projects/sshout/");
+#else
+	snprintf(buffer, sizeof buffer, SSHOUT_VERSION_STRING "\n"
+		"%s\n%s\n%s\n%s%s", _("IRC frontend"),
+		SSHOUT_COPYRIGHT_LINE, SSHOUT_LICENSE_INFORMATION,
+		_("Project page: "), " https://sourceforge.net/projects/sshout/");
+#endif
 	send_irc_reply(IRC_RPL_VERSION, buffer, NULL);
 }
 

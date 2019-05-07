@@ -20,28 +20,28 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: client-api.c:250 client-cli.c:850
+#: client-api.c:250 client-cli.c:856
 msgid "Server closed connection"
 msgstr ""
 
-#: client-api.c:258 client-irc.c:585
+#: client-api.c:258 client-irc.c:588
 msgid "Local packet short read"
 msgstr ""
 
-#: client-api.c:262 client-irc.c:589
+#: client-api.c:262 client-irc.c:592
 msgid "Received local packet too large"
 msgstr ""
 
-#: client-api.c:266 client-cli.c:520 client-cli.c:531 client-cli.c:586
-#: client-cli.c:603 client-cli.c:611 client-cli.c:870 client-irc.c:593
+#: client-api.c:266 client-cli.c:527 client-cli.c:538 client-cli.c:593
+#: client-cli.c:610 client-cli.c:618 client-cli.c:876 client-irc.c:596
 msgid "Out of memory"
 msgstr ""
 
-#: client-api.c:276 client-cli.c:879
+#: client-api.c:276 client-cli.c:885
 msgid "Internal error"
 msgstr ""
 
-#: client-api.c:302 client-cli.c:898
+#: client-api.c:302 client-cli.c:904
 #, c-format
 msgid "User %s not found"
 msgstr ""
@@ -50,224 +50,241 @@ msgstr ""
 msgid "No MOTD"
 msgstr ""
 
-#: client-cli.c:165
+#: client-cli.c:164
 #, c-format
 msgid "Usage: %s off|on\n"
 msgstr ""
 
-#: client-cli.c:177
+#: client-cli.c:176
 #, c-format
 msgid "Usage: %s off|color|plain|raw\n"
 msgstr ""
 
-#: client-cli.c:192
+#: client-cli.c:191
 #, c-format
 msgid "Usage: %s off|on|auto\n"
 msgstr ""
 
-#: client-cli.c:205
+#: client-cli.c:204
 #, c-format
 msgid "Usage: %s <user> <message> [<message> ...]\n"
 msgstr ""
 
-#: client-cli.c:236
+#: client-cli.c:235
 msgid "No MOTD available"
 msgstr ""
 
-#: client-cli.c:249
+#: client-cli.c:248
 msgid "Message of the day:"
 msgstr ""
 
-#: client-cli.c:264
+#: client-cli.c:263
 #, c-format
 msgid "Usage: %s <user>\n"
 msgstr ""
 
-#: client-cli.c:291
+#: client-cli.c:290
 msgid "Image too large\n"
 msgstr ""
 
-#: client-cli.c:297
+#: client-cli.c:296
 msgid "Failed to receive image, out of memory\n"
 msgstr ""
 
-#: client-cli.c:317 client-cli.c:655
+#: client-cli.c:316 client-cli.c:662
 #, c-format
 msgid "child process terminated by signal %d\n"
 msgstr ""
 
 #. / To transtators: try not to change the string length
-#: client-cli.c:375
+#: client-cli.c:374
 msgid "Message alert:          "
 msgstr ""
 
-#. / To transtators: try not to change the string length
-#: client-cli.c:378
-msgid "Showing HTML message:   "
+#: client-cli.c:375 client-cli.c:399
+msgid "on"
 msgstr ""
 
-#: client-cli.c:381 client-cli.c:397
+#: client-cli.c:375 client-cli.c:380 client-cli.c:396
 msgid "off"
 msgstr ""
 
-#: client-cli.c:384
+#. / To transtators: try not to change the string length
+#: client-cli.c:377
+msgid "Showing HTML message:   "
+msgstr ""
+
+#: client-cli.c:383
 msgid "colorized text"
 msgstr ""
 
-#: client-cli.c:387
+#: client-cli.c:386
 msgid "plain text"
 msgstr ""
 
-#: client-cli.c:390
+#: client-cli.c:389
 msgid "raw html document"
 msgstr ""
 
 #. / To transtators: try not to change the string length
-#: client-cli.c:394
+#: client-cli.c:393
 msgid "Use colorized output:   "
 msgstr ""
 
-#: client-cli.c:400
-msgid "on"
-msgstr ""
-
-#: client-cli.c:403
+#: client-cli.c:402
 msgid "automatic (if terminal)"
 msgstr ""
 
-#: client-cli.c:450
+#: client-cli.c:419
+msgid "Command line interface frontend"
+msgstr ""
+
+#: client-cli.c:422
+#, c-format
+msgid "Project page: %s\n"
+msgstr ""
+
+#: client-cli.c:457
 msgid "Supported commands:"
 msgstr ""
 
-#: client-cli.c:455
+#: client-cli.c:462
 msgid "End of list\n"
 msgstr ""
 
-#: client-cli.c:550
+#: client-cli.c:557
 #, c-format
 msgid "Error: Unknown command '%s'"
 msgstr ""
 
-#: client-cli.c:601 client-irc.c:178
+#: client-cli.c:608 client-irc.c:177
 msgid "[Image]"
 msgstr ""
 
-#: client-cli.c:715 client-cli.c:960 client-cli.c:978
+#: client-cli.c:722 client-cli.c:966 client-cli.c:984
 msgid "Exiting ..."
 msgstr ""
 
-#: client-cli.c:737
+#: client-cli.c:744
 msgid "Error: cannot format current date"
 msgstr ""
 
-#: client-cli.c:781 client-cli.c:792
+#: client-cli.c:788 client-cli.c:799
 msgid "Cannot load or save perferences in this session\n"
 msgstr ""
 
-#: client-cli.c:812
+#: client-cli.c:819
 #, c-format
 msgid "Unrecognized option '%s', removing\n"
 msgstr ""
 
-#: client-cli.c:860
+#: client-cli.c:866
 msgid "Packet short read"
 msgstr ""
 
-#: client-cli.c:865
+#: client-cli.c:871
 msgid "Packet too large"
 msgstr ""
 
-#: client-cli.c:893
+#: client-cli.c:899
 #, c-format
 msgid "User %s is %s"
 msgstr ""
 
-#: client-cli.c:894
+#: client-cli.c:900
 msgid "online"
 msgstr ""
 
-#: client-cli.c:894
+#: client-cli.c:900
 msgid "offline"
 msgstr ""
 
-#: client-cli.c:902
+#: client-cli.c:908
 #, c-format
 msgid "Unknown packet type %d"
 msgstr ""
 
-#: client-irc.c:112
+#: client-irc.c:111
 msgid "Welcome to SSHOUT IRC frontend"
 msgstr ""
 
-#: client-irc.c:163
+#: client-irc.c:162
 msgid "End of MOTD"
 msgstr ""
 
-#: client-irc.c:206
+#: client-irc.c:205
 msgid "End of NAMES"
 msgstr ""
 
-#: client-irc.c:227
+#: client-irc.c:226
 msgid "Missing nick name"
 msgstr ""
 
-#: client-irc.c:231
+#: client-irc.c:230
 msgid "Nick name didn't match the registered one"
 msgstr ""
 
-#: client-irc.c:241 client-irc.c:274 client-irc.c:282 client-irc.c:312
+#: client-irc.c:240 client-irc.c:273 client-irc.c:281 client-irc.c:311
 msgid "Not enough parameters"
 msgstr ""
 
-#: client-irc.c:254
+#: client-irc.c:253
 msgid "You cannot register again"
 msgstr ""
 
-#: client-irc.c:277
+#: client-irc.c:276
 msgid "operator is not supported"
 msgstr ""
 
-#: client-irc.c:292
+#: client-irc.c:291
 msgid "You cannot change mode for other users"
 msgstr ""
 
-#: client-irc.c:334
+#: client-irc.c:333
 msgid "Only one channel #sshout is available"
 msgstr ""
 
-#: client-irc.c:357
+#: client-irc.c:356
 msgid "Channel"
 msgstr ""
 
-#: client-irc.c:357
+#: client-irc.c:356
 msgid "Users  Name"
 msgstr ""
 
-#: client-irc.c:358
+#: client-irc.c:357
 msgid "There is only one"
 msgstr ""
 
-#: client-irc.c:359
+#: client-irc.c:358
 msgid "End of LIST"
 msgstr ""
 
-#: client-irc.c:364
+#: client-irc.c:363
 msgid "Missing recipient"
 msgstr ""
 
-#: client-irc.c:368
+#: client-irc.c:367
 msgid "Missing message"
 msgstr ""
 
-#: client-irc.c:372
+#: client-irc.c:371
 msgid "You have not registered"
 msgstr ""
 
-#: client-irc.c:425
+#: client-irc.c:415
+msgid "IRC frontend"
+msgstr ""
+
+#: client-irc.c:417
+msgid "Project page: "
+msgstr ""
+
+#: client-irc.c:429
 msgid "Error: cannot format current date time"
 msgstr ""
 
-#: client-irc.c:581
+#: client-irc.c:584
 msgid "Local packet read error"
 msgstr ""
 
@@ -291,6 +308,17 @@ msgstr ""
 
 #: client.c:209
 msgid "Cannot open /dev/null for read as fd 0\n"
+msgstr ""
+
+#: common.h:2
+msgid "Copyright 2015-2019 Rivoreo"
+msgstr ""
+
+#: common.h:4
+msgid ""
+"This is free software; see the source for copying conditions.\n"
+"There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n"
+"PARTICULAR PURPOSE."
 msgstr ""
 
 #: sshoutcfg.c:92
