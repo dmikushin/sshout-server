@@ -9,15 +9,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SSHOUT 1.2.0\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/sshout/tickets/\n"
-"POT-Creation-Date: 2019-05-06 16:51+0800\n"
-"PO-Revision-Date: 2019-05-06 14:40+0800\n"
+"POT-Creation-Date: 2019-05-07 12:42+0800\n"
+"PO-Revision-Date: 2019-05-07 12:46+0800\n"
 "Last-Translator: WHR <msl0000023508@gmail.com>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: client-api.c:250 client-cli.c:856
+#: client-api.c:250 client-cli.c:846
 msgid "Server closed connection"
 msgstr "服务端关闭了连接"
 
@@ -29,16 +29,16 @@ msgstr "读本地封包时中断"
 msgid "Received local packet too large"
 msgstr "收到的本地封包太大"
 
-#: client-api.c:266 client-cli.c:527 client-cli.c:538 client-cli.c:593
-#: client-cli.c:610 client-cli.c:618 client-cli.c:876 client-irc.c:596
+#: client-api.c:266 client-cli.c:517 client-cli.c:528 client-cli.c:583
+#: client-cli.c:600 client-cli.c:608 client-cli.c:866 client-irc.c:596
 msgid "Out of memory"
 msgstr "内存不足"
 
-#: client-api.c:276 client-cli.c:885
+#: client-api.c:276 client-cli.c:875
 msgid "Internal error"
 msgstr "内部错误"
 
-#: client-api.c:302 client-cli.c:904
+#: client-api.c:302 client-cli.c:894
 #, c-format
 msgid "User %s not found"
 msgstr "找不到用户 %s"
@@ -88,7 +88,7 @@ msgstr "图片太大\n"
 msgid "Failed to receive image, out of memory\n"
 msgstr "无法接收图片，内存不足\n"
 
-#: client-cli.c:316 client-cli.c:662
+#: client-cli.c:316 client-cli.c:652
 #, c-format
 msgid "child process terminated by signal %d\n"
 msgstr "子进程被信号 %d 终止\n"
@@ -132,71 +132,70 @@ msgstr "使用色彩输出：          "
 msgid "automatic (if terminal)"
 msgstr "自动（基于终端）"
 
-#: client-cli.c:419
+#: client-cli.c:410
 msgid "Command line interface frontend"
 msgstr "命令行界面前端"
 
-#: client-cli.c:422
-#, c-format
-msgid "Project page: %s\n"
-msgstr "工程页面：%s\n"
+#: client-cli.c:413 client-irc.c:417
+msgid "Project page: "
+msgstr "工程页面："
 
-#: client-cli.c:457
+#: client-cli.c:447
 msgid "Supported commands:"
 msgstr "支持的命令有："
 
-#: client-cli.c:462
+#: client-cli.c:452
 msgid "End of list\n"
 msgstr "列表结束\n"
 
-#: client-cli.c:557
+#: client-cli.c:547
 #, c-format
 msgid "Error: Unknown command '%s'"
 msgstr "错误：未知命令“%s”"
 
-#: client-cli.c:608 client-irc.c:177
+#: client-cli.c:598 client-irc.c:177
 msgid "[Image]"
 msgstr "[图片]"
 
-#: client-cli.c:722 client-cli.c:966 client-cli.c:984
+#: client-cli.c:712 client-cli.c:956 client-cli.c:974
 msgid "Exiting ..."
 msgstr "退出 ..."
 
-#: client-cli.c:744
+#: client-cli.c:734
 msgid "Error: cannot format current date"
 msgstr "错误：无法格式化当前时间"
 
-#: client-cli.c:788 client-cli.c:799
+#: client-cli.c:778 client-cli.c:789
 msgid "Cannot load or save perferences in this session\n"
 msgstr "无法为本次会话加载或保存偏好设置\n"
 
-#: client-cli.c:819
+#: client-cli.c:809
 #, c-format
 msgid "Unrecognized option '%s', removing\n"
 msgstr "移除未被识别的选项“%s”\n"
 
-#: client-cli.c:866
+#: client-cli.c:856
 msgid "Packet short read"
 msgstr "读数据包时中断"
 
-#: client-cli.c:871
+#: client-cli.c:861
 msgid "Packet too large"
 msgstr "数据包太大"
 
-#: client-cli.c:899
+#: client-cli.c:889
 #, c-format
 msgid "User %s is %s"
 msgstr "用户 %s %s了"
 
-#: client-cli.c:900
+#: client-cli.c:890
 msgid "online"
 msgstr "上线"
 
-#: client-cli.c:900
+#: client-cli.c:890
 msgid "offline"
 msgstr "离线"
 
-#: client-cli.c:908
+#: client-cli.c:898
 #, c-format
 msgid "Unknown packet type %d"
 msgstr "未知的包类型 %d"
@@ -272,10 +271,6 @@ msgstr "你还没有注册"
 #: client-irc.c:415
 msgid "IRC frontend"
 msgstr "IRC 前端"
-
-#: client-irc.c:417
-msgid "Project page: "
-msgstr "工程页面："
 
 #: client-irc.c:429
 msgid "Error: cannot format current date time"
