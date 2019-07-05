@@ -393,7 +393,7 @@ msgstr "错误：处理文件 .ssh/authorized_keys 第 %u 行时内存不足\n"
 
 #: sshoutcfg.c:216
 msgid "'.ssh/rc' exists, and it is a directory!\n"
-msgstr "存在，并且这竟然是个目录！\n"
+msgstr "存在“.ssh/rc”，并且这竟然是个目录！\n"
 
 #: sshoutcfg.c:219
 msgid "sshout shouldn't have a SSH RC file '.ssh/rc'; removing\n"
