@@ -25,6 +25,7 @@
 #include "syncrw.h"
 #include <syslog.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -40,9 +41,14 @@
 
 static struct local_online_user online_users[FD_SETSIZE];
 
-static void syslog_perror(const char *ident) {
+static void syslog_perror(const char *format, ...) {
 	int e = errno;
-	syslog(LOG_ERR, "%s: %s (%d)", ident, strerror(e), e);
+	char buffer[256];
+	va_list ap;
+	va_start(ap, format);
+	vsnprintf(buffer, sizeof buffer, format, ap);
+	syslog(LOG_ERR, "%s: %s (%d)", buffer, strerror(e), e);
+	va_end(ap);
 }
 
 static void broadcast_user_state(const char *user_name, int on, const int *client_fds) {
@@ -60,7 +66,7 @@ static void broadcast_user_state(const char *user_name, int on, const int *clien
 		if(online_users[i].id == -1) continue;
 		while(write(client_fds[online_users[i].id], packet, packet_len) < 0) {
 			if(errno == EINTR) continue;
-			syslog_perror("broadcast_user_state: write");
+			syslog_perror("broadcast_user_state: to %d: write", online_users[i].id);
 			break;
 		}
 	} while(++i < sizeof online_users / sizeof *online_users);
@@ -192,7 +198,7 @@ static int send_online_users(int receiver_id, int receiver_fd) {
 		memcpy(info->user + count, online_users + i, sizeof(struct local_online_user));
 	}
 	if(sync_write(receiver_fd, packet, packet_length) < 0) {
-		syslog_perror("send_online_users: write");
+		syslog_perror("send_online_users: to %d: write", receiver_id);
 		r = -1;
 	}
 	free(packet);
@@ -222,7 +228,8 @@ static int dispatch_message(const struct local_online_user *sender, const struct
 		} else found = 1;
 		if(sync_write(client_fds[online_users[i].id], packet, packet_len) < 0) {
 			//syslog(LOG_WARNING, "i = %d, id = %d, fd = %d", i, online_users[i].id, client_fds[online_users[i].id]);
-			syslog_perror("dispatch_message: write");
+			syslog_perror("dispatch_message: from %d to %d: write",
+				sender->id, online_users[i].id);
 			r = -1;
 		}
 	} while(++i < sizeof online_users / sizeof *online_users);
