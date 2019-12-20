@@ -347,7 +347,7 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 				syslog_perror("accept");
 				if(errno == EMFILE && n < 2) sleep(1);
 			} else {
-				syslog(LOG_INFO, "client fd %d\n", cfd);
+				syslog(LOG_DEBUG, "client fd %d\n", cfd);
 			        if(setsockopt(cfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof timeout) < 0) syslog_perror("setsockopt");
 			        if(setsockopt(cfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof timeout) < 0) syslog_perror("setsockopt");
 				i = 0;
@@ -383,7 +383,7 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 						syslog_perror("read");
 						goto end_of_connection;
 					case GET_PACKET_SHORT_READ:
-						syslog(LOG_INFO, "client %d fd %d short read\n", i, cfd);
+						syslog(LOG_NOTICE, "client %d fd %d short read\n", i, cfd);
 						goto end_of_connection;
 					case GET_PACKET_TOO_LARGE:
 						syslog(LOG_WARNING, "client %d fd %d packet too large (%u bytes)\n",
@@ -394,7 +394,7 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 							i, cfd, (unsigned int)packet);
 						goto end_of_connection;
 					case GET_PACKET_INCOMPLETE:
-						syslog(LOG_INFO, "client %d fd %d incomplete packet received, read %zu bytes, total %zu bytes; will continue later\n",
+						syslog(LOG_DEBUG, "client %d fd %d incomplete packet received, read %zu bytes, total %zu bytes; will continue later\n",
 							i, cfd, buffers[i].read_length, buffers[i].total_length);
 						continue;
 					case 0:
@@ -422,7 +422,7 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 						}
 						break;
 					default:
-						syslog(LOG_NOTICE, "client %d fd %d unknown packet type %d",
+						syslog(LOG_WARNING, "client %d fd %d unknown packet type %d",
 							i, cfd, packet->type);
 						break;
 				}

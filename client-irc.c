@@ -597,7 +597,7 @@ static void client_irc_do_local_packet(int fd) {
 			close(fd);
 			exit(1);
 		case GET_PACKET_INCOMPLETE:
-			syslog(LOG_INFO, "incomplete packet received, read %zu bytes, total %zu bytes; will continue later\n",
+			syslog(LOG_DEBUG, "incomplete local packet received, read %zu bytes, total %zu bytes; will continue later\n",
 				buffer.read_length, buffer.total_length);
 			return;
 		case 0:

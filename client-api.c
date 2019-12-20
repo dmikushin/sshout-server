@@ -267,7 +267,7 @@ static void client_api_do_local_packet(int fd) {
 			close(fd);
 			exit(1);
 		case GET_PACKET_INCOMPLETE:
-			syslog(LOG_INFO, "incomplete packet received, read %zu bytes, total %zu bytes; will continue later\n",
+			syslog(LOG_DEBUG, "incomplete local packet received, read %zu bytes, total %zu bytes; will continue later\n",
 				buffer.read_length, buffer.total_length);
 			return;
 		case 0:
@@ -350,15 +350,15 @@ static void client_api_do_stdin(int fd) {
 			close(fd);
 			exit(1);
 		case GET_PACKET_SHORT_READ:
-			syslog(LOG_ERR, "STDIN_FILENO short read");
+			syslog(LOG_WARNING, "STDIN_FILENO short read");
 			close(fd);
 			exit(1);
 		case GET_PACKET_TOO_SMALL:
-			syslog(LOG_ERR, "Received API packet too small");
+			syslog(LOG_WARNING, "Received API packet too small");
 			close(fd);
 			exit(1);
 		case GET_PACKET_TOO_LARGE:
-			syslog(LOG_ERR, "Received API packet too large (%u bytes)", length);
+			syslog(LOG_WARNING, "Received API packet too large (%u bytes)", length);
 			close(fd);
 			exit(1);
 		case GET_PACKET_OUT_OF_MEMORY:
@@ -373,26 +373,26 @@ static void client_api_do_stdin(int fd) {
 	}
 	// packet->type have only 1 byte, doesn't need to convert byte order
 	if(!api_version && packet->type != SSHOUT_API_HELLO) {
-		syslog(LOG_ERR, "Received API packet type %hhu before handshake", packet->type);
+		syslog(LOG_WARNING, "Received API packet type %hhu before handshake", packet->type);
 		close(fd);
 		exit(1);
 	}
 	switch(packet->type) {
 		case SSHOUT_API_HELLO:
 			if(length != 9) {
-				syslog(LOG_ERR, "SSHOUT_API_HELLO: handshake failed, packet length mismatch (%u != 9)",
+				syslog(LOG_WARNING, "SSHOUT_API_HELLO: handshake failed, packet length mismatch (%u != 9)",
 					(unsigned int)length);
 				close(fd);
 				exit(1);
 			}
 			if(memcmp(packet->data, "SSHOUT", 6)) {
-				syslog(LOG_ERR, "SSHOUT_API_HELLO: handshake failed, magic mismatch");
+				syslog(LOG_WARNING, "SSHOUT_API_HELLO: handshake failed, magic mismatch");
 				close(fd);
 				exit(1);
 			}
 			api_version = ntohs(*(uint16_t *)(packet->data + 6));
 			if(api_version < 1) {
-				syslog(LOG_ERR, "SSHOUT_API_HELLO: handshake failed, invalid API version %hu",
+				syslog(LOG_WARNING, "SSHOUT_API_HELLO: handshake failed, invalid API version %hu",
 					(unsigned short int)api_version);
 				close(fd);
 				exit(1);
@@ -423,7 +423,7 @@ static void client_api_do_stdin(int fd) {
 			}
 			break;
 		default:
-			syslog(LOG_ERR, "Received unknown API packet type %hhu", packet->type);
+			syslog(LOG_WARNING, "Received unknown API packet type %hhu", packet->type);
 			break;
 	}
 	free(packet);

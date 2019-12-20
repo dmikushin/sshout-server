@@ -207,6 +207,7 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 		close(STDIN_FILENO);
 		if(open("/dev/null", O_RDONLY) != 0) {
 			fputs(_("Cannot open /dev/null for read as fd 0\n"), stderr);
+			syslog(LOG_WARNING, "Cannot open /dev/null for read as fd 0\n");
 			return 1;
 		}
 	} else {
