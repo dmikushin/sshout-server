@@ -122,7 +122,7 @@ int base64_decode(const char *in_buffer, size_t in_len, void *out_buffer, size_t
 	size_t len = 0;
 
 	while(in_buffer < end) {
-		unsigned char c = d[*in_buffer++];
+		unsigned char c = d[(unsigned char)*in_buffer++];
 
 		switch(c) {
 			case WHITESPACE: continue;   /* skip whitespace */

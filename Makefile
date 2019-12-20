@@ -3,7 +3,7 @@ CC := $(shell gcc --version > /dev/null 2>&1 && gcc -v 2>&1 | grep -q ^gcc && ec
 endif
 INSTALL ?= install
 
-CFLAGS += -Wall -Wno-switch -Wno-char-subscripts -Wno-pointer-to-int-cast -O1
+CFLAGS += -Wall -Wno-switch -Wno-pointer-to-int-cast -O1
 #LIBS += 
 
 #ifneq ($(wildcard .git/HEAD),)
