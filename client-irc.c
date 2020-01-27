@@ -130,7 +130,7 @@ static void send_irc_luser(unsigned int user_count) {
 #ifdef IRC_SEND_EMPTY_PREFIX
 	fputs(": ", stdout);
 #endif
-	printf(IRC_RPL_LUSERCLIENT " :There are %u users and 0 invisible on 1 servers\n", user_count);
+	printf(IRC_RPL_LUSERCLIENT " %s :There are %u users and 0 invisible on 1 servers\n", sshout_user_name, user_count);
 }
 
 static void do_registered(int fd) {
@@ -369,6 +369,7 @@ static void irc_command_join(int fd, int argc, struct fixed_length_string *argv)
 	strcpy(irc_channel_name, "#sshout");
 	//send_irc_topic();
 	client_send_request_get_online_users(fd);
+	printf(":%s JOIN :#sshout\r\n", sshout_user_name);
 }
 
 static void irc_command_names(int fd, int argc, struct fixed_length_string *argv) {
