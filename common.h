@@ -1,5 +1,5 @@
 #define SSHOUT_VERSION "1.2.0"
-#define SSHOUT_COPYRIGHT_LINE _("Copyright 2015-2019 Rivoreo")
+#define SSHOUT_COPYRIGHT_LINE _("Copyright 2015-2020 Rivoreo")
 #define SSHOUT_LICENSE_INFORMATION \
 	_("This is free software; see the source for copying conditions.\n" \
 	"There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n" \

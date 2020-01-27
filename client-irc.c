@@ -29,7 +29,10 @@
 #include <ctype.h>
 #include <time.h>
 
-#define SERVER_NAME "sshout.sourceforge.net"
+/* Some IRC cilents expecting a prefix before every server reply, make them
+ * happy by sending an empty prefix... */
+#define IRC_SEND_EMPTY_PREFIX
+#define IRC_SERVER_NAME "sshout.sourceforge.net"
 
 static const char *sshout_user_name;
 static int is_irc_nick_name_set;
@@ -37,6 +40,7 @@ static char irc_user_name[10];
 static int is_irc_registered;
 static char irc_channel_name[51];
 //static int is_irc_joined;
+static int need_send_luser;
 
 static void send_irc_line(const char *line) {
 	size_t len = strnlen(line, 510);
@@ -62,6 +66,9 @@ static void send_irc_line_format(const char *format, ...) {
 
 static void send_irc_reply(const char *command, ...) {
 	va_list ap;
+#ifdef IRC_SEND_EMPTY_PREFIX
+	fputs(": ", stdout);
+#endif
 	fputs(command, stdout);
 	//if(isdigit(command[0]) && isdigit(command[1]) && isdigit(command[2]) && !command[3]) {
 	if(is_irc_registered) {
@@ -113,13 +120,26 @@ static void send_irc_welcome() {
 
 static void send_irc_myinfo() {
 	//send_irc_reply(IRC_RPL_MYINFO, "SSHOUT IRC frontend", SSHOUT_VERSION_STRING, "wr", "n", NULL);
+#ifdef IRC_SEND_EMPTY_PREFIX
+	fputs(": ", stdout);
+#endif
 	printf(IRC_RPL_MYINFO " %s " SSHOUT_VERSION_STRING " wr n\r\n", sshout_user_name);
 }
 
-static void do_registered() {
+static void send_irc_luser(unsigned int user_count) {
+#ifdef IRC_SEND_EMPTY_PREFIX
+	fputs(": ", stdout);
+#endif
+	printf(IRC_RPL_LUSERCLIENT " :There are %u users and 0 invisible on 1 servers\n", user_count);
+}
+
+static void do_registered(int fd) {
 	is_irc_registered = 1;
 	send_irc_welcome();
 	send_irc_myinfo();
+	//send_irc_luser();
+	need_send_luser = 1;
+	client_send_request_get_online_users(fd);
 }
 
 static void send_irc_motd() {
@@ -143,16 +163,25 @@ static void send_irc_motd() {
 	//if(!s) return -1;
 
 	size_t user_name_len = strlen(sshout_user_name);
+#ifdef IRC_SEND_EMPTY_PREFIX
+	fputs(": ", stdout);
+#endif
 	//sync_write(STDOUT_FILENO, IRC_RPL_MOTDSTART " :- sshout Message of the day -\r\n", 36);
 	sync_write(STDOUT_FILENO, IRC_RPL_MOTDSTART " ", 4);
 	sync_write(STDOUT_FILENO, sshout_user_name, user_name_len);
 	sync_write(STDOUT_FILENO, " :- sshout Message of the day -\r\n", 33);
+#ifdef IRC_SEND_EMPTY_PREFIX
+	fputs(": ", stdout);
+#endif
 	//sync_write(STDOUT_FILENO, IRC_RPL_MOTD " :- ", 7);
 	sync_write(STDOUT_FILENO, IRC_RPL_MOTD " ", 4);
 	sync_write(STDOUT_FILENO, sshout_user_name, user_name_len);
 	sync_write(STDOUT_FILENO, " :- ", 4);
 	sync_write(STDOUT_FILENO, buffer, s);
 	sync_write(STDOUT_FILENO, "\r\n", 2);
+#ifdef IRC_SEND_EMPTY_PREFIX
+	fputs(": ", stdout);
+#endif
 	//sync_write(STDOUT_FILENO, IRC_RPL_ENDOFMOTD " :End of MOTD\r\n", 18);
 	sync_write(STDOUT_FILENO, IRC_RPL_ENDOFMOTD " ", 4);
 	sync_write(STDOUT_FILENO, sshout_user_name, user_name_len);
@@ -193,6 +222,9 @@ static void send_irc_message(const struct local_message *msg) {
 
 static void send_irc_online_users(const struct local_online_users_info *info) {
 	int i = 0;
+#ifdef IRC_SEND_EMPTY_PREFIX
+	fputs(": ", stdout);
+#endif
 	fputs(IRC_RPL_NAMREPLY " ", stdout);
 	fputs(sshout_user_name, stdout);
 	fputs(" = #sshout :", stdout);
@@ -231,7 +263,7 @@ static void irc_command_nick(int fd, int argc, struct fixed_length_string *argv)
 		return;
 	}
 	is_irc_nick_name_set = 1;
-	if(*irc_user_name) do_registered();
+	if(*irc_user_name) do_registered(fd);
 }
 
 static void irc_command_user(int fd, int argc, struct fixed_length_string *argv) {
@@ -265,7 +297,7 @@ static void irc_command_user(int fd, int argc, struct fixed_length_string *argv)
 		send_irc_reply(IRC_ERR_UNKNOWNMODE, c, "User modes other than 0 are not supported", NULL);
 	}
 */
-	if(is_irc_nick_name_set) do_registered();
+	if(is_irc_nick_name_set) do_registered(fd);
 }
 
 static void irc_command_oper(int fd, int argc, struct fixed_length_string *argv) {
@@ -340,6 +372,7 @@ static void irc_command_join(int fd, int argc, struct fixed_length_string *argv)
 }
 
 static void irc_command_names(int fd, int argc, struct fixed_length_string *argv) {
+	//if(!*irc_channel_name) return;
 	client_send_request_get_online_users(fd);
 }
 
@@ -425,7 +458,7 @@ static void irc_command_time(int fd, int argc, struct fixed_length_string *argv)
 	struct tm *tm = localtime(&t);
 	char buffer[512];
 	size_t date_str_len = strftime(buffer, sizeof buffer, "%x %T %Z", tm);
-	if(date_str_len) send_irc_reply(IRC_RPL_TIME, SERVER_NAME, buffer, NULL);
+	if(date_str_len) send_irc_reply(IRC_RPL_TIME, IRC_SERVER_NAME, buffer, NULL);
 	else send_irc_reply(IRC_ERR_UNKNOWNERROR, _("Error: cannot format current date time"));
 }
 
@@ -612,7 +645,10 @@ static void client_irc_do_local_packet(int fd) {
 			send_irc_message((struct local_message *)packet->data);
 			break;
 		case SSHOUT_LOCAL_ONLINE_USERS_INFO:
-			send_irc_online_users((struct local_online_users_info *)packet->data);
+			if(need_send_luser) {
+				send_irc_luser(((struct local_online_users_info *)packet->data)->count);
+				need_send_luser = 0;
+			} else send_irc_online_users((struct local_online_users_info *)packet->data);
 			break;
 		case SSHOUT_LOCAL_USER_ONLINE:
 			send_irc_user_join((char *)packet->data);
