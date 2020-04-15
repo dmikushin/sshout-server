@@ -815,6 +815,7 @@ static void open_preference(const char *user_name) {
 static void client_cli_init_io(const char *user_name) {
 	use_readline = isatty(STDIN_FILENO);
 	if(use_readline) {
+		rl_outstream = stderr;
 		rl_callback_handler_install(NULL, do_input_line_from_readline);
 		rl_attempted_completion_function = command_completion;
 		//rl_persistent_signal_handlers = 1;
