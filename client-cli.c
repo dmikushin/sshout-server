@@ -813,8 +813,12 @@ static void open_preference(const char *user_name) {
 }
 
 static void client_cli_init_io(const char *user_name) {
-	char *always_use_readline = getenv("RL_FORCE_ENABLE");
-	use_readline = (always_use_readline && *always_use_readline) || isatty(STDIN_FILENO);
+	if(client_log_only) {
+		use_readline = 0;
+	} else {
+		char *always_use_readline = getenv("RL_FORCE_ENABLE");
+		use_readline = (always_use_readline && *always_use_readline) || isatty(STDIN_FILENO);
+	}
 	if(use_readline) {
 		rl_outstream = stderr;
 		rl_callback_handler_install(NULL, do_input_line_from_readline);
