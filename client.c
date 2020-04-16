@@ -45,6 +45,10 @@ static int send_login(int fd, const char *orig_user_name, const char *client_add
 	//memset(user_name + user_name_len, 0, USER_NAME_MAX_LENGTH - user_name_len);
 	const char *space = strchr(client_address, ' ');
 	size_t host_name_len = space ? space - client_address : strlen(client_address);
+	if(!host_name_len) {
+		errno = EINVAL;
+		return -1;
+	}
 	if(host_name_len > HOST_NAME_MAX_LENGTH - 1) host_name_len = HOST_NAME_MAX_LENGTH - 1;
 	//char host_name[host_name_len + 1];
 	//memcpy(host_name, client_address, host_name_len);
@@ -195,7 +199,10 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 		return 1;
 	}
 
-	send_login(fd, user_name, client_address);
+	if(send_login(fd, user_name, client_address) < 0) {
+		perror("send_login");
+		return 1;
+	}
 
 	struct timeval timeout = { .tv_sec = 60 };
 	fd_set fdset;
