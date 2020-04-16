@@ -299,8 +299,8 @@ msgid "Cannot open /dev/null for read as fd 0\n"
 msgstr "无法以 fd 0 读打开 /dev/null\n"
 
 #: common.h:2
-msgid "Copyright 2015-2019 Rivoreo"
-msgstr "版权所有 2015-2019 Rivoreo"
+msgid "Copyright 2015-2020 Rivoreo"
+msgstr "版权所有 2015-2020 Rivoreo"
 
 #: common.h:4
 msgid ""

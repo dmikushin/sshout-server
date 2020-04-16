@@ -302,7 +302,7 @@ msgid "Cannot open /dev/null for read as fd 0\n"
 msgstr ""
 
 #: common.h:2
-msgid "Copyright 2015-2019 Rivoreo"
+msgid "Copyright 2015-2020 Rivoreo"
 msgstr ""
 
 #: common.h:4
