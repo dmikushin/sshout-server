@@ -1,5 +1,5 @@
 # TEMPLATE of translated messages for SSHOUT.
-# Copyright 2019 Rivoreo
+# Copyright 2019-2020 Rivoreo
 # This file is distributed under the terms of the GNU General Public License
 # as published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
@@ -46,10 +46,6 @@ msgstr ""
 msgid "User %s not found"
 msgstr ""
 
-#: client-api.c:422
-msgid "No MOTD"
-msgstr ""
-
 #: client-cli.c:164
 #, c-format
 msgid "Usage: %s off|on\n"
@@ -70,7 +66,7 @@ msgstr ""
 msgid "Usage: %s <user> <message> [<message> ...]\n"
 msgstr ""
 
-#: client-cli.c:235
+#: client-api.c:424 client-cli.c:235 client-irc.c:151
 msgid "No MOTD available"
 msgstr ""
 

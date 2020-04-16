@@ -1,5 +1,5 @@
 /* Secure Shout Host Oriented Unified Talk
- * Copyright 2015-2019 Rivoreo
+ * Copyright 2015-2020 Rivoreo
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -147,15 +147,19 @@ static void send_irc_motd() {
 	int fd = open(SSHOUT_MOTD_FILE, O_RDONLY);
 	if(fd == -1) {
 		int e = errno;
-		if(e != ENOENT) syslog(LOG_WARNING, "irc_command_motd: " SSHOUT_MOTD_FILE ": %s", strerror(e));
-		send_irc_reply(IRC_ERR_NOMOTD, strerror(e), NULL);
+		if(e == ENOENT) {
+			send_irc_reply(IRC_ERR_NOMOTD, _("No MOTD available"), NULL);
+		} else {
+			syslog(LOG_WARNING, "irc_command_motd: " SSHOUT_MOTD_FILE ": %s", strerror(e));
+			send_irc_reply(IRC_ERR_NOMOTD, strerror(e), NULL);
+		}
 		errno = e;
 		return;
 	}
 	int s = sync_read(fd, buffer, sizeof buffer);
 	if(s < 0) {
 		int e = errno;
-		if(e != ENOENT) syslog(LOG_WARNING, "irc_command_motd: read: %s", strerror(e));
+		syslog(LOG_WARNING, "irc_command_motd: read: %s", strerror(e));
 		send_irc_reply(IRC_ERR_NOMOTD, strerror(e), NULL);
 		errno = e;
 		return;

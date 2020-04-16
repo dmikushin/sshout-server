@@ -1,5 +1,5 @@
 /* Secure Shout Host Oriented Unified Talk
- * Copyright 2015-2019 Rivoreo
+ * Copyright 2015-2020 Rivoreo
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -200,14 +200,16 @@ static int send_api_motd() {
 	int fd = open(SSHOUT_MOTD_FILE, O_RDONLY);
 	if(fd == -1) {
 		int e = errno;
-		if(e != ENOENT) syslog(LOG_WARNING, "send_api_motd: " SSHOUT_MOTD_FILE ": %s", strerror(e));
-		errno = e;
+		if(e != ENOENT) {
+			syslog(LOG_WARNING, "send_api_motd: " SSHOUT_MOTD_FILE ": %s", strerror(e));
+			errno = e;
+		}
 		return -1;
 	}
 	int s = sync_read(fd, buffer, sizeof buffer);
 	if(s < 0) {
 		int e = errno;
-		if(e != ENOENT) syslog(LOG_WARNING, "send_api_motd: read: %s", strerror(e));
+		syslog(LOG_WARNING, "send_api_motd: read: %s", strerror(e));
 		errno = e;
 		return -1;
 	}
@@ -419,7 +421,7 @@ static void client_api_do_stdin(int fd) {
 			errno = ENOENT;
 			if(send_api_motd() < 0) {
 				send_api_error(SSHOUT_API_ERROR_MOTD_NOT_AVAILABLE,
-					errno == ENOENT ? _("No MOTD") : strerror(errno));
+					errno == ENOENT ? _("No MOTD available") : strerror(errno));
 			}
 			break;
 		default:
