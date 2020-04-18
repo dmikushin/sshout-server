@@ -307,7 +307,8 @@ msgstr ""
 
 #: common.h:4
 msgid ""
-"This is free software; see the source for copying conditions.\n"
+"This is free software; you are free to change and redistribute it. See the\n"
+"source for copying conditions.\n"
 "There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n"
 "PARTICULAR PURPOSE."
 msgstr ""
