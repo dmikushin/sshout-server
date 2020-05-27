@@ -616,6 +616,7 @@ static int listuser_command(int argc, char **argv) {
 				if(i) putchar(':');
 				printf("%.2hhx", hash[i++]);
 			}
+			mhash_free(hash);
 		}
 		if(comment) printf(_(", Comment \"%s\""), comment);
 		putchar('\n');
