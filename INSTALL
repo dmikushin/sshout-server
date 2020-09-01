@@ -5,6 +5,7 @@ Some useful environment variables:
 	CFLAGS	prepend flags to C compiler
 	LDFLAGS	prepend flags to linker (e.g. -L <path>)
 	LIBS	additional libraries pass to linker
+	NO_NLS	disable native language support
 To enable to experimental IRC frontend, add '-D ENABLE_IRC_FRONTEND' to
 CFLAGS, for example:
 	$ CFLAGS="-D ENABLE_IRC_FRONTEND" make
@@ -17,6 +18,7 @@ Some useful environment variables:
 	SBINDIR		default ${PREFIX}/sbin
 	DATADIR		default ${PREFIX}/share
 	MANDIR		default ${DATADIR}/man
+	LOCALEDIR	default ${DATADIR}/locate
 
 Some additional steps after 'make install' are needed to get this program
 work:
