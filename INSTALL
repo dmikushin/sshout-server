@@ -20,10 +20,10 @@ Some useful environment variables:
 	SBINDIR		default ${PREFIX}/sbin
 	DATADIR		default ${PREFIX}/share
 	MANDIR		default ${DATADIR}/man
-	LOCALEDIR	default ${DATADIR}/locate
+	LOCALEDIR	default ${DATADIR}/locale
 
 Some additional steps after 'make install' are needed to get this program
-work:
+working:
 Add a local user account, with name 'sshout' and shell set to the path of
 installed sshoutd program; there is an example of suitable passwd(5) line:
 sshout:*:115:115:Secure Shout Host Oriented Unified Talk:/var/lib/sshout:/usr/lib/sshout/sshoutd
@@ -41,4 +41,5 @@ server is supported.
 
 The CLI frontend requiring some addional programs for some features to work:
 '/pasteimage <user>' requires xclip(1) be available in PATH;
-'/showhtml color|plain' requires elinks(1) version 0.12 or later be available in PATH.
+'/showhtml color|plain' requires elinks(1) version 0.12 or later be available
+in PATH.
