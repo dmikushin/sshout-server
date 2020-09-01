@@ -7,6 +7,9 @@ MSGFMT ?= msgfmt
 CFLAGS += -Wall -Wno-switch -Wno-pointer-to-int-cast -O1
 #LIBS += 
 
+#SOCKET_LIBS := -l socket
+#NLS_LIBS := -l intl
+
 #ifneq ($(wildcard .git/HEAD),)
 #CFLAGS += -D GIT_COMMIT=\"`cut -c -7 ".git/\`sed 's/^ref: //' .git/HEAD\`"`\"
 #endif
@@ -20,13 +23,15 @@ LOCALEDIR ?= $(DATADIR)/locale
 
 SSHOUTCFG_OBJCTS := base64.o file-helpers.o misc.o sshoutcfg.o syncrw.o
 SSHOUTD_OBJECTS := api-packet.o client.o client-api.o client-cli.o client-irc.o file-helpers.o local-packet.o main.o misc.o server.o syncrw.o
-SSHOUTCFG_LIBS := -lmhash
-SSHOUTD_LIBS := -lreadline
+SSHOUTCFG_LIBS = -l mhash
+SSHOUTD_LIBS = -l readline $(SOCKET_LIBS)
 ifdef NO_NLS
 TRANSLATED_MESSAGES :=
 CFLAGS += -D NO_NLS=1
 else
 TRANSLATED_MESSAGES := zh_CN.mo
+SSHOUTCFG_LIBS += $(NLS_LIBS)
+SSHOUTD_LIBS += $(NLS_LIBS)
 endif
 
 all:	sshoutcfg sshoutd $(TRANSLATED_MESSAGES)

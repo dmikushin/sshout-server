@@ -1,14 +1,16 @@
 To build programs, type:
 	$ make
 Some useful environment variables:
-	CC	change C compiler
-	CFLAGS	prepend flags to C compiler
-	LDFLAGS	prepend flags to linker (e.g. -L <path>)
-	LIBS	additional libraries pass to linker
-	NO_NLS	disable native language support
-To enable to experimental IRC frontend, add '-D ENABLE_IRC_FRONTEND' to
+	CC		change C compiler
+	CFLAGS		prepend flags to C compiler
+	LDFLAGS		prepend flags to linker (e.g. -L <path>)
+	LIBS		additional libraries pass to linker
+	SOCKET_LIBS	separated socket libraries (e.g. -l socket for SysV)
+	NLS_LIBS	libraries for native language support
+	NO_NLS		disable native language support
+To enable to experimental IRC frontend, add '-D ENABLE_IRC_FRONTEND=1' to
 CFLAGS, for example:
-	$ CFLAGS="-D ENABLE_IRC_FRONTEND" make
+	$ CFLAGS="-D ENABLE_IRC_FRONTEND=1" make
 
 To install built programs and manual pages, type:
 	$ make install
