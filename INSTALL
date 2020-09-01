@@ -1,6 +1,9 @@
+GNU Make is required to build the programs, you may need to run 'gmake'
+command instead of 'make' on some systems.
+
 To build programs, type:
 	$ make
-Some useful environment variables:
+Useful environment variables:
 	CC		change C compiler
 	CFLAGS		prepend flags to C compiler
 	LDFLAGS		prepend flags to linker (e.g. -L <path>)
@@ -8,13 +11,17 @@ Some useful environment variables:
 	SOCKET_LIBS	separated socket libraries (e.g. -l socket for SysV)
 	NLS_LIBS	libraries for native language support
 	NO_NLS		disable native language support
-To enable to experimental IRC frontend, add '-D ENABLE_IRC_FRONTEND=1' to
+To enable the experimental IRC frontend, add '-D ENABLE_IRC_FRONTEND=1' to
 CFLAGS, for example:
 	$ CFLAGS="-D ENABLE_IRC_FRONTEND=1" make
+To build on some SysV systems such as Solaris, libsocket.so must be specified
+via SOCKET_LIBS, for example:
+	$ SOCKET_LIBS="-l socket" make
+
 
 To install built programs and manual pages, type:
 	$ make install
-Some useful environment variables:
+Useful environment variables:
 	PREFIX		change installing prefix, default /usr
 	LIBEXECDIR	default ${PREFIX}/lib/sshout
 	SBINDIR		default ${PREFIX}/sbin
@@ -23,22 +30,24 @@ Some useful environment variables:
 	LOCALEDIR	default ${DATADIR}/locale
 	NO_NLS		disable native language support
 
-Some additional steps after 'make install' are needed to get this program
+Some additional steps after 'make install' are required to get this program
 working:
 Add a local user account, with name 'sshout' and shell set to the path of
 installed sshoutd program; there is an example of suitable passwd(5) line:
 sshout:*:115:115:Secure Shout Host Oriented Unified Talk:/var/lib/sshout:/usr/lib/sshout/sshoutd
 This user account must be allowed to log in with SSH public key
 authentication.
-This program is currently assuming the AuthorizedKeysFile option in
+The programs are currently assuming the AuthorizedKeysFile option in
 sshd_config(5) is left default, or contains '.ssh/authorized_keys'; otherwise
 the authentication won't work.
 Create a service so sshoutd can be started automatically; the service must be
 started under the sshout user, instead of root. For systemd based systems,
-you can use the systemd service file provided in 'deploy' directory, by running:
+you can simply use the systemd service file provided in 'deploy' directory,
+then enable the service, by running:
 	# cp deploy/systemd/sshout.service /etc/systemd/system/
-And of course you need a working SSH server installed; currently only OpenSSH
-server is supported.
+	# systemctl enable --now sshout
+And of course you need to have a working SSH server installed; currently only
+OpenSSH server is supported.
 
 The CLI frontend requiring some addional programs for some features to work:
 '/pasteimage <user>' requires xclip(1) be available in PATH;
