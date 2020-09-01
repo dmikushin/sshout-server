@@ -143,8 +143,8 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 		return 1;
 	}
 
-	setlocale(LC_ALL, "");
 #ifndef NO_NLS
+	setlocale(LC_ALL, "");
 	textdomain("sshout");
 #endif
 

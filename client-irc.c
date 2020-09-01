@@ -442,7 +442,7 @@ static void irc_command_motd(int fd, int argc, struct fixed_length_string *argv)
 static void irc_command_version(int fd, int argc, struct fixed_length_string *argv) {
 	if(argc > 0) return;
 	char buffer[506];
-#ifdef NO_NLS
+#if 0
 	snprintf(buffer, sizeof buffer, SSHOUT_VERSION_STRING "\n"
 		"IRC frontend\n"
 		SSHOUT_COPYRIGHT_LINE "\n"

@@ -2,6 +2,7 @@ ifeq ($(CC),cc)
 CC := $(shell gcc --version > /dev/null 2>&1 && gcc -v 2>&1 | grep -q ^gcc && echo gcc || echo cc)
 endif
 INSTALL ?= install
+MSGFMT ?= msgfmt
 
 CFLAGS += -Wall -Wno-switch -Wno-pointer-to-int-cast -O1
 #LIBS += 
@@ -15,13 +16,20 @@ LIBEXECDIR ?= $(PREFIX)/lib/sshout
 SBINDIR ?= $(PREFIX)/sbin
 DATADIR ?= $(PREFIX)/share
 MANDIR ?= $(DATADIR)/man
+LOCALEDIR ?= $(DATADIR)/locale
 
-SSHOUTCFG_OBJCTS = base64.o file-helpers.o misc.o sshoutcfg.o syncrw.o
-SSHOUTD_OBJECTS = api-packet.o client.o client-api.o client-cli.o client-irc.o file-helpers.o local-packet.o main.o misc.o server.o syncrw.o
-SSHOUTCFG_LIBS = -lmhash
-SSHOUTD_LIBS = -lreadline
+SSHOUTCFG_OBJCTS := base64.o file-helpers.o misc.o sshoutcfg.o syncrw.o
+SSHOUTD_OBJECTS := api-packet.o client.o client-api.o client-cli.o client-irc.o file-helpers.o local-packet.o main.o misc.o server.o syncrw.o
+SSHOUTCFG_LIBS := -lmhash
+SSHOUTD_LIBS := -lreadline
+ifdef NO_NLS
+TRANSLATED_MESSAGES :=
+CFLAGS += -D NO_NLS=1
+else
+TRANSLATED_MESSAGES := zh_CN.mo
+endif
 
-all:	sshoutcfg sshoutd
+all:	sshoutcfg sshoutd $(TRANSLATED_MESSAGES)
 
 build-info.h:
 	{ [ -f .git/HEAD ] && printf "#define GIT_COMMIT \"%s\"\\n" "`cut -c -7 \".git/\`sed 's/^ref: //' .git/HEAD\`\"`" || true; } > $@
@@ -37,7 +45,7 @@ sshoutd:	$(SSHOUTD_OBJECTS)
 	$(CC) $(LDFLAGS) $^ -o $@ $(SSHOUTD_LIBS) $(LIBS)
 
 clean:
-	rm -f build-info.h $(SSHOUTCFG_OBJCTS) $(SSHOUTD_OBJECTS) sshoutcfg sshoutd
+	rm -f build-info.h $(SSHOUTCFG_OBJCTS) $(SSHOUTD_OBJECTS) sshoutcfg sshoutd $(TRANSLATED_MESSAGES)
 
 install:	all
 	[ -d "$(DESTDIR)$(LIBEXECDIR)" ] || mkdir -p "$(DESTDIR)$(LIBEXECDIR)"
@@ -47,5 +55,11 @@ install:	all
 	$(INSTALL) -m 755 sshoutd "$(DESTDIR)$(LIBEXECDIR)/"
 	$(INSTALL) -m 755 sshoutcfg "$(DESTDIR)$(SBINDIR)/"
 	$(INSTALL) -m 644 sshoutcfg.8 "$(DESTDIR)$(MANDIR)/man8/"
+ifndef NO_NLS
+	for f in $(TRANSLATED_MESSAGES); do d="$(DESTDIR)$(LOCALEDIR)/$${f%.mo}/LC_MESSAGES"; [ -d "$$d" ] || mkdir -p "$$d" || exit; $(INSTALL) -m 644 $$f "$$d/sshout.mo"; done
+endif
+
+%.mo:	po/%.po
+	$(MSGFMT) $< -o $@
 
 .PHONY:	build-info.h clean install
