@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: SSHOUT 1.2.0\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/sshout/tickets/\n"
 "POT-Creation-Date: 2019-05-07 12:42+0800\n"
-"PO-Revision-Date: 2020-09-01 19:31+0800\n"
+"PO-Revision-Date: 2020-09-01 21:34+0800\n"
 "Last-Translator: WHR <msl0000023508@gmail.com>\n"
 "Language: zh_TW\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: client-api.c:250 client-cli.c:846
 msgid "Server closed connection"
-msgstr "服務端關閉了連接"
+msgstr "伺服器端關閉了連接"
 
 #: client-api.c:258 client-irc.c:588
 msgid "Local packet short read"
@@ -61,7 +61,7 @@ msgstr "用法： %s off|on|auto\n"
 #: client-cli.c:204
 #, c-format
 msgid "Usage: %s <user> <message> [<message> ...]\n"
-msgstr "用法： %s <用戶> <消息> [<消息> ...]\n"
+msgstr "用法： %s <用戶> <訊息> [<訊息> ...]\n"
 
 #: client-api.c:424 client-cli.c:235 client-irc.c:151
 msgid "No MOTD available"
@@ -69,7 +69,7 @@ msgstr "沒有 MOTD 可用"
 
 #: client-cli.c:248
 msgid "Message of the day:"
-msgstr "今日消息："
+msgstr "今日訊息："
 
 #: client-cli.c:263
 #, c-format
@@ -92,7 +92,7 @@ msgstr "子行程被訊號 %d 終止\n"
 #. / To transtators: try not to change the string length
 #: client-cli.c:374
 msgid "Message alert:          "
-msgstr "消息響鈴：              "
+msgstr "訊息響鈴：              "
 
 #: client-cli.c:375 client-cli.c:399
 msgid "on"
@@ -105,15 +105,15 @@ msgstr "關"
 #. / To transtators: try not to change the string length
 #: client-cli.c:377
 msgid "Showing HTML message:   "
-msgstr "顯示 HTML 消息：        "
+msgstr "顯示 HTML 訊息：        "
 
 #: client-cli.c:383
 msgid "colorized text"
-msgstr "帶顏色的文本"
+msgstr "帶顏色的文字"
 
 #: client-cli.c:386
 msgid "plain text"
-msgstr "純文本"
+msgstr "純文字"
 
 #: client-cli.c:389
 msgid "raw html document"
@@ -142,7 +142,7 @@ msgstr "支持的命令有："
 
 #: client-cli.c:452
 msgid "End of list\n"
-msgstr "列表結束\n"
+msgstr "清單結束\n"
 
 #: client-cli.c:547
 #, c-format
@@ -163,20 +163,20 @@ msgstr "錯誤：無法格式化當前時間"
 
 #: client-cli.c:778 client-cli.c:789
 msgid "Cannot load or save perferences in this session\n"
-msgstr "無法為本次會話加載或保存偏好設置\n"
+msgstr "無法為本次連線載入或儲存偏好設定\n"
 
 #: client-cli.c:809
 #, c-format
 msgid "Unrecognized option '%s', removing\n"
-msgstr "移除未被識別的選項「%s」\n"
+msgstr "移除未被辨識的選項「%s」\n"
 
 #: client-cli.c:856
 msgid "Packet short read"
-msgstr "讀數據包時中斷"
+msgstr "讀封包時中斷"
 
 #: client-cli.c:861
 msgid "Packet too large"
-msgstr "數據包太大"
+msgstr "封包太大"
 
 #: client-cli.c:889
 #, c-format
@@ -214,7 +214,7 @@ msgstr "缺失暱稱"
 
 #: client-irc.c:230
 msgid "Nick name didn't match the registered one"
-msgstr "暱稱與已註冊的用戶名不匹配"
+msgstr "暱稱不符合已註冊的用戶名"
 
 #: client-irc.c:240 client-irc.c:273 client-irc.c:281 client-irc.c:311
 msgid "Not enough parameters"
@@ -226,7 +226,7 @@ msgstr "你不能再次註冊"
 
 #: client-irc.c:276
 msgid "operator is not supported"
-msgstr "operator 並不受支持"
+msgstr "operator 並不受支援"
 
 #: client-irc.c:291
 msgid "You cannot change mode for other users"
@@ -250,7 +250,7 @@ msgstr "這裡只有一個"
 
 #: client-irc.c:358
 msgid "End of LIST"
-msgstr "列表結束"
+msgstr "清單結束"
 
 #: client-irc.c:363
 msgid "Missing recipient"
@@ -258,7 +258,7 @@ msgstr "缺失收信人"
 
 #: client-irc.c:367
 msgid "Missing message"
-msgstr "缺失消息"
+msgstr "缺失訊息"
 
 #: client-irc.c:371
 msgid "You have not registered"
@@ -284,7 +284,7 @@ msgstr "無效的用戶名「%s」\n"
 #: client.c:160
 #, c-format
 msgid "Command '%s' is not recognized\n"
-msgstr "不可識別的命令「%s」\n"
+msgstr "不可辨識的命令「%s」\n"
 
 #: client.c:177
 msgid "Ignoring absolute path name in TZ\n"
@@ -309,21 +309,21 @@ msgid ""
 "There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n"
 "PARTICULAR PURPOSE."
 msgstr ""
-"本程序為自由軟體，您可以自由地更改和重新發布。請參看來源程式碼的版權宣告。\n"
-"本程序不提供任何擔保，包括沒有適銷性和某一專用目的下的適用性擔保。"
+"本程式為自由軟體，您可以自由地更改和重新發布。請參看來源程式碼的版權宣告。\n"
+"本程式不提供任何擔保，包括沒有適銷性和某一專用目的下的適用性擔保。"
 
 #: sshoutcfg.c:92
 msgid "Invalid key: invalid BASE64 encoding\n"
-msgstr "無效的密鑰：無效的 BASE64 編碼\n"
+msgstr "無效的金鑰：無效的 BASE64 編碼\n"
 
 #: sshoutcfg.c:96
 msgid "Invalid key: too short\n"
-msgstr "無效的密鑰：太短\n"
+msgstr "無效的金鑰：太短\n"
 
 #: sshoutcfg.c:101
 #, c-format
 msgid "Invalid key: key type string length %u too long\n"
-msgstr "無效的密鑰：密鑰類型字符串長度 %u 太長\n"
+msgstr "無效的金鑰：金鑰類型字串長度 %u 太長\n"
 
 #: sshoutcfg.c:116
 #, c-format
@@ -343,7 +343,7 @@ msgstr "警告：文件 .ssh/authorized_keys 第 %u 行有格式錯誤\n"
 #: sshoutcfg.c:138
 #, c-format
 msgid "Warning: unmatched '\"' in file .ssh/authorized_keys line %u\n"
-msgstr "警告：在文件 .ssh/authorized_keys 第 %u 行中找不到匹配的「\"」字符\n"
+msgstr "警告：在文件 .ssh/authorized_keys 第 %u 行中找不到符合的「\"」字符\n"
 
 #: sshoutcfg.c:148
 #, c-format
@@ -354,7 +354,7 @@ msgstr "警告：文件 .ssh/authorized_keys 第 %u 行中的用戶名是空的\
 #, c-format
 msgid "Warning: invalid key type '%s' in file .ssh/authorized_keys line %u\n"
 msgstr ""
-"警告：文件 .ssh/authorized_keys 第 %2$u 行中的密鑰類型「%1$s」是無效或不可識別"
+"警告：文件 .ssh/authorized_keys 第 %2$u 行中的金鑰類型「%1$s」是無效或不可辨識"
 "的\n"
 
 #: sshoutcfg.c:172
@@ -363,8 +363,8 @@ msgid ""
 "Warning: invalid key type '%s' from BASE64 in file .ssh/authorized_keys line "
 "%u\n"
 msgstr ""
-"警告：文件 .ssh/authorized_keys 第 %2$u 行中的 BASE64 編碼中的密鑰類"
-"型「%1$s」是無效或不可識別的\n"
+"警告：文件 .ssh/authorized_keys 第 %2$u 行中的 BASE64 編碼中的金鑰類"
+"型「%1$s」是無效或不可辨識的\n"
 
 #: sshoutcfg.c:176
 #, c-format
@@ -372,7 +372,7 @@ msgid ""
 "Warning: key type didn't match in file .ssh/authorized_keys line %u; key "
 "ignored\n"
 msgstr ""
-"警告：已忽略文件 .ssh/authorized_keys 中的第 %u 行，因為其中的密鑰類型是不匹"
+"警告：已忽略文件 .ssh/authorized_keys 中的第 %u 行，因為其中的金鑰類型是不匹"
 "配的\n"
 
 #: sshoutcfg.c:181
@@ -398,7 +398,7 @@ msgstr "sshout 不應有 SSH RC 文件「.ssh/rc」，已移除\n"
 
 #: sshoutcfg.c:248
 msgid "Key string shouldn't have new line\n"
-msgstr "密鑰字符串不應有換行\n"
+msgstr "金鑰字串不應有換行\n"
 
 #: sshoutcfg.c:282
 #, c-format
@@ -412,11 +412,11 @@ msgstr "公鑰太長\n"
 #: sshoutcfg.c:296 sshoutcfg.c:307 sshoutcfg.c:326
 #, c-format
 msgid "Invalid key type '%s'\n"
-msgstr "無效的密鑰類型「%s」\n"
+msgstr "無效的金鑰類型「%s」\n"
 
 #: sshoutcfg.c:311
 msgid "Invalid key: key type didn't match\n"
-msgstr "無效的密鑰：密鑰類型不匹配\n"
+msgstr "無效的金鑰：金鑰類型不匹配\n"
 
 #: sshoutcfg.c:346
 msgid "'.ssh' is not a directory\n"
@@ -468,7 +468,7 @@ msgstr "找不到用戶 %s\n"
 #: sshoutcfg.c:493
 #, c-format
 msgid "Remove user %s from SSHOUT user list? "
-msgstr "是否將用戶 %s 從 SSHOUT 用戶列表中移除？"
+msgstr "是否將用戶 %s 從 SSHOUT 用戶清單中移除？"
 
 #: sshoutcfg.c:502 sshoutcfg.c:528
 msgid "Failed to remove user"
@@ -477,7 +477,7 @@ msgstr "無法移除用戶"
 #: sshoutcfg.c:513
 #, c-format
 msgid "User %s have %zu public keys registered in the user list\n"
-msgstr "用戶 %s 有 %zu 個公鑰註冊在用戶列表中\n"
+msgstr "用戶 %s 有 %zu 個公鑰註冊在用戶清單中\n"
 
 #: sshoutcfg.c:514
 #, c-format
@@ -504,11 +504,11 @@ msgstr "移除了用戶 %2$s 的 %1$zu 個公鑰\n"
 #: sshoutcfg.c:553
 #, c-format
 msgid "Invalid hash algorithm '%s'\n"
-msgstr "無效的散列算法「%s」\n"
+msgstr "無效的雜湊算法「%s」\n"
 
 #: sshoutcfg.c:564
 msgid "Warning: configuration error left unresolved\n"
-msgstr "警告：並未解決配置錯誤\n"
+msgstr "警告：並未解決組態錯誤\n"
 
 #: sshoutcfg.c:576
 #, c-format
@@ -522,11 +522,11 @@ msgstr "公鑰 \"%s\""
 
 #: sshoutcfg.c:582
 msgid "Cannot start hash public key\n"
-msgstr "無法開始計算公鑰的散列值\n"
+msgstr "無法開始計算公鑰的雜湊值\n"
 
 #: sshoutcfg.c:587 sshoutcfg.c:599 sshoutcfg.c:604
 msgid "Invalid key\n"
-msgstr "無效密鑰\n"
+msgstr "無效金鑰\n"
 
 #: sshoutcfg.c:595
 msgid "Invalid BASE64 encoding\n"
@@ -552,7 +552,7 @@ msgstr "選項「-d」不能與「-m」同時使用\n"
 
 #: sshoutcfg.c:705
 msgid "Type message below:\n"
-msgstr "在下面鍵入消息：\n"
+msgstr "在下面鍵入訊息：\n"
 
 #: sshoutcfg.c:740
 msgid "Following subcommands are available:\n"
