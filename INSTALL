@@ -21,6 +21,7 @@ Some useful environment variables:
 	DATADIR		default ${PREFIX}/share
 	MANDIR		default ${DATADIR}/man
 	LOCALEDIR	default ${DATADIR}/locale
+	NO_NLS		disable native language support
 
 Some additional steps after 'make install' are needed to get this program
 working:
