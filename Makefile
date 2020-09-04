@@ -10,10 +10,6 @@ CFLAGS += -Wall -Wno-switch -Wno-pointer-to-int-cast -O1
 #SOCKET_LIBS := -l socket
 #NLS_LIBS := -l intl
 
-#ifneq ($(wildcard .git/HEAD),)
-#CFLAGS += -D GIT_COMMIT=\"`cut -c -7 ".git/\`sed 's/^ref: //' .git/HEAD\`"`\"
-#endif
-
 PREFIX ?= /usr
 LIBEXECDIR ?= $(PREFIX)/lib/sshout
 SBINDIR ?= $(PREFIX)/sbin

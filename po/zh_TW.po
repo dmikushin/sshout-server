@@ -328,33 +328,33 @@ msgstr "無效的金鑰：金鑰類型字串長度 %u 太長\n"
 #: sshoutcfg.c:116
 #, c-format
 msgid "Warning: line %u in file .ssh/authorized_keys is too long, skipping\n"
-msgstr "警告：文件 .ssh/authorized_keys 第 %u 行太長，已跳過\n"
+msgstr "警告：檔案 .ssh/authorized_keys 第 %u 行太長，已跳過\n"
 
 #: sshoutcfg.c:127
 #, c-format
 msgid "Warning: cannot find '\"' at line %u in file .ssh/authorized_keys\n"
-msgstr "警告：在文件 .ssh/authorized_keys 第 %u 行中找不到「\"」字符\n"
+msgstr "警告：在檔案 .ssh/authorized_keys 第 %u 行中找不到「\"」字元\n"
 
 #: sshoutcfg.c:132 sshoutcfg.c:143 sshoutcfg.c:154
 #, c-format
 msgid "Warning: syntax error in file .ssh/authorized_keys line %u\n"
-msgstr "警告：文件 .ssh/authorized_keys 第 %u 行有格式錯誤\n"
+msgstr "警告：檔案 .ssh/authorized_keys 第 %u 行有格式錯誤\n"
 
 #: sshoutcfg.c:138
 #, c-format
 msgid "Warning: unmatched '\"' in file .ssh/authorized_keys line %u\n"
-msgstr "警告：在文件 .ssh/authorized_keys 第 %u 行中找不到符合的「\"」字符\n"
+msgstr "警告：在檔案 .ssh/authorized_keys 第 %u 行中找不到符合的「\"」字元\n"
 
 #: sshoutcfg.c:148
 #, c-format
 msgid "Warning: empty user name in file .ssh/authorized_keys line %u\n"
-msgstr "警告：文件 .ssh/authorized_keys 第 %u 行中的用戶名是空的\n"
+msgstr "警告：檔案 .ssh/authorized_keys 第 %u 行中的用戶名是空的\n"
 
 #: sshoutcfg.c:161
 #, c-format
 msgid "Warning: invalid key type '%s' in file .ssh/authorized_keys line %u\n"
 msgstr ""
-"警告：文件 .ssh/authorized_keys 第 %2$u 行中的金鑰類型「%1$s」是無效或不可辨識"
+"警告：檔案 .ssh/authorized_keys 第 %2$u 行中的金鑰類型「%1$s」是無效或不可辨識"
 "的\n"
 
 #: sshoutcfg.c:172
@@ -363,7 +363,7 @@ msgid ""
 "Warning: invalid key type '%s' from BASE64 in file .ssh/authorized_keys line "
 "%u\n"
 msgstr ""
-"警告：文件 .ssh/authorized_keys 第 %2$u 行中的 BASE64 編碼中的金鑰類"
+"警告：檔案 .ssh/authorized_keys 第 %2$u 行中的 BASE64 編碼中的金鑰類"
 "型「%1$s」是無效或不可辨識的\n"
 
 #: sshoutcfg.c:176
@@ -372,7 +372,7 @@ msgid ""
 "Warning: key type didn't match in file .ssh/authorized_keys line %u; key "
 "ignored\n"
 msgstr ""
-"警告：已忽略文件 .ssh/authorized_keys 中的第 %u 行，因為其中的金鑰類型是不匹"
+"警告：已忽略檔案 .ssh/authorized_keys 中的第 %u 行，因為其中的金鑰類型是不匹"
 "配的\n"
 
 #: sshoutcfg.c:181
@@ -380,13 +380,13 @@ msgstr ""
 msgid ""
 "Error: allocate %zu bytes failed when processing file .ssh/authorized_keys "
 "line %u\n"
-msgstr "錯誤：處理文件 .ssh/authorized_keys 第 %2$u 行時無法分配 %1$zu 字節\n"
+msgstr "錯誤：處理檔案 .ssh/authorized_keys 第 %2$u 行時無法分配 %1$zu 位元組\n"
 
 #: sshoutcfg.c:188 sshoutcfg.c:197
 #, c-format
 msgid ""
 "Error: out of memory when processing file .ssh/authorized_keys line %u\n"
-msgstr "錯誤：處理文件 .ssh/authorized_keys 第 %u 行時內存不足\n"
+msgstr "錯誤：處理檔案 .ssh/authorized_keys 第 %u 行時記憶體不足\n"
 
 #: sshoutcfg.c:216
 msgid "'.ssh/rc' exists, and it is a directory!\n"
@@ -394,7 +394,7 @@ msgstr "存在「.ssh/rc」，並且這竟然是個目錄！\n"
 
 #: sshoutcfg.c:219
 msgid "sshout shouldn't have a SSH RC file '.ssh/rc'; removing\n"
-msgstr "sshout 不應有 SSH RC 文件「.ssh/rc」，已移除\n"
+msgstr "sshout 不應有 SSH RC 檔案「.ssh/rc」，已移除\n"
 
 #: sshoutcfg.c:248
 msgid "Key string shouldn't have new line\n"
@@ -484,7 +484,7 @@ msgstr "用戶 %s 有 %zu 個公鑰註冊在用戶清單中\n"
 msgid ""
 "If you want to remove only some of the user's keys, edit file '%s/.ssh/"
 "authorized_keys' manually\n"
-msgstr "如果您只想要移除部分公鑰，請手動編輯文件「%s/.ssh/authorized_keys」\n"
+msgstr "如果您只想要移除部分公鑰，請手動編輯檔案「%s/.ssh/authorized_keys」\n"
 
 #: sshoutcfg.c:516
 #, c-format
