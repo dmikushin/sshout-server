@@ -1,10 +1,10 @@
 ifeq ($(CC),cc)
-CC := $(shell gcc --version > /dev/null 2>&1 && gcc -v 2>&1 | grep -q ^gcc && echo gcc || echo cc)
+CC := $(shell gcc --version > /dev/null 2>&1 && gcc -v 2>&1 | grep -q "^gcc version " && echo gcc || echo cc)
 endif
 INSTALL ?= install
 MSGFMT ?= msgfmt
 
-CFLAGS += -Wall -Wno-switch -Wno-pointer-to-int-cast -O1
+CFLAGS += -Wall -Wno-switch -Wno-pointer-to-int-cast -O1 -fno-common
 #LIBS += 
 
 #SOCKET_LIBS := -l socket
