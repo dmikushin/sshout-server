@@ -4,7 +4,10 @@ endif
 INSTALL ?= install
 MSGFMT ?= msgfmt
 
-CFLAGS += -Wall -Wno-switch -Wno-pointer-to-int-cast -O1 -fno-common
+CFLAGS += -Wall -Wno-switch -Wno-pointer-to-int-cast -fno-common
+ifeq ($(filter -O%,$(CFLAGS)),)
+CFLAGS += -O1
+endif
 #LIBS += 
 
 #SOCKET_LIBS := -l socket
