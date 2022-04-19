@@ -8,6 +8,7 @@ CFLAGS += -Wall -Wno-switch -Wno-pointer-to-int-cast -fno-common
 ifeq ($(filter -O%,$(CFLAGS)),)
 CFLAGS += -O1
 endif
+CFLAGS += $(CPPFLAGS)
 #LIBS += 
 
 #SOCKET_LIBS := -l socket
