@@ -1,5 +1,5 @@
 # TEMPLATE of translated messages for SSHOUT.
-# Copyright 2019-2020 Rivoreo
+# Copyright 2019-2022 Rivoreo
 # This file is distributed under the terms of the GNU General Public License
 # as published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
@@ -302,7 +302,7 @@ msgid "Cannot open /dev/null for read as fd 0\n"
 msgstr ""
 
 #: common.h:2
-msgid "Copyright 2015-2020 Rivoreo"
+msgid "Copyright 2015-2022 Rivoreo"
 msgstr ""
 
 #: common.h:4

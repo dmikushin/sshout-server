@@ -14,6 +14,8 @@ Useful environment variables:
 To enable the experimental IRC frontend, add '-D ENABLE_IRC_FRONTEND=1' to
 CFLAGS, for example:
 	$ CFLAGS="-D ENABLE_IRC_FRONTEND=1" make
+To omit build date and make the binary programs reproducible, add
+'-D BUILD_REPRODUCIBLE=1' to CFLAGS.
 To build on some SysV systems such as Solaris, libsocket.so must be specified
 via SOCKET_LIBS, for example:
 	$ SOCKET_LIBS="-l socket" make
