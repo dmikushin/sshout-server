@@ -1,5 +1,5 @@
 /* Secure Shout Host Oriented Unified Talk
- * Copyright 2015-2019 Rivoreo
+ * Copyright 2015-2022 Rivoreo
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -370,10 +370,10 @@ static void command_listoptions(int fd, int argc, char **argv) {
 				break;
 		}
 	} else {
-		/// To transtators: try not to change the string length
+		/// To transtators: try not to change the string width
 		fputs(_("Message alert:          "), stdout);
 		puts(option_alert ? _("on") : _("off"));
-		/// To transtators: try not to change the string length
+		/// To transtators: try not to change the string width
 		fputs(_("Showing HTML message:   "), stdout);
 		switch(option_showhtml) {
 			case SHOWHTML_OFF:
@@ -389,7 +389,7 @@ static void command_listoptions(int fd, int argc, char **argv) {
 				puts(_("raw html document"));
 				break;
 		}
-		/// To transtators: try not to change the string length
+		/// To transtators: try not to change the string width
 		fputs(_("Use colorized output:   "), stdout);
 		switch(option_color) {
 			case COLOR_OFF:

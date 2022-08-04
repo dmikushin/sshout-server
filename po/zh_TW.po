@@ -102,7 +102,7 @@ msgstr "開"
 msgid "off"
 msgstr "關"
 
-#. / To transtators: try not to change the string length
+#. / To transtators: try not to change the string width
 #: client-cli.c:377
 msgid "Showing HTML message:   "
 msgstr "顯示 HTML 訊息：        "
@@ -119,7 +119,7 @@ msgstr "純文字"
 msgid "raw html document"
 msgstr "原始 HTML 文稿"
 
-#. / To transtators: try not to change the string length
+#. / To transtators: try not to change the string width
 #: client-cli.c:393
 msgid "Use colorized output:   "
 msgstr "使用色彩輸出：          "
@@ -444,7 +444,7 @@ msgstr "無法繼續\n"
 msgid ""
 "This public key is already used by user %s.\n"
 "Are you pasted wrong key?\n"
-msgstr "從公鑰已被用戶 %s 使用。請檢查是否貼入了錯誤的公鑰。\n"
+msgstr "這個公鑰已被用戶 %s 使用。請檢查是否貼入了錯誤的公鑰。\n"
 
 #: sshoutcfg.c:408
 #, c-format
@@ -458,7 +458,7 @@ msgstr "確定要為用戶 %s 添加這個公鑰？"
 
 #: sshoutcfg.c:412 sshoutcfg.c:496 sshoutcfg.c:519
 msgid "Operation canceled\n"
-msgstr "操作已取消\n"
+msgstr "作業已取消\n"
 
 #: sshoutcfg.c:487
 #, c-format
@@ -584,7 +584,7 @@ msgstr "當前的有效 UID %u 不匹配 sshout 用戶帳戶\n"
 #: sshoutcfg.c:798
 #, c-format
 msgid "Home directory '%s' is not owned by sshout (expecting UID=%u, got %u)\n"
-msgstr "家目錄「%s」不是被 sshout 所擁有的（期待的 UID %u，但實際上是 %u）\n"
+msgstr "家目錄「%s」不是被 sshout 所擁有的（期待 UID %u，但實際上是 %u）\n"
 
 #: sshoutcfg.c:812
 #, c-format

@@ -92,7 +92,7 @@ msgstr ""
 msgid "child process terminated by signal %d\n"
 msgstr ""
 
-#. / To transtators: try not to change the string length
+#. / To transtators: try not to change the string width
 #: client-cli.c:374
 msgid "Message alert:          "
 msgstr ""
@@ -105,7 +105,7 @@ msgstr ""
 msgid "off"
 msgstr ""
 
-#. / To transtators: try not to change the string length
+#. / To transtators: try not to change the string width
 #: client-cli.c:377
 msgid "Showing HTML message:   "
 msgstr ""
@@ -122,7 +122,7 @@ msgstr ""
 msgid "raw html document"
 msgstr ""
 
-#. / To transtators: try not to change the string length
+#. / To transtators: try not to change the string width
 #: client-cli.c:393
 msgid "Use colorized output:   "
 msgstr ""
