@@ -1,5 +1,5 @@
 /* Secure Shout Host Oriented Unified Talk
- * Copyright 2015-2018 Rivoreo
+ * Copyright 2015-2022 Rivoreo
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -98,7 +98,7 @@ static int user_online(int id, const char *user_name, const char *host_name, int
 	while(online_users[i].id != -1) {
 		if(!found_dup && strcmp(online_users[i].user_name, user_name) == 0) found_dup = 1;
 		if(++i >= sizeof online_users / sizeof *online_users) {
-			syslog(LOG_WARNING, "cannot let user '%s' from %s login: too many users\n", user_name, host_name);
+			syslog(LOG_WARNING, "cannot let user '%s' from %s login: too many users", user_name, host_name);
 			return -1;
 		}
 	}
@@ -347,13 +347,13 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 				syslog_perror("accept");
 				if(errno == EMFILE && n < 2) sleep(1);
 			} else {
-				syslog(LOG_DEBUG, "client fd %d\n", cfd);
+				syslog(LOG_DEBUG, "client fd %d", cfd);
 			        if(setsockopt(cfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof timeout) < 0) syslog_perror("setsockopt");
 			        if(setsockopt(cfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof timeout) < 0) syslog_perror("setsockopt");
 				i = 0;
 				while(1) {
 					if(i >= FD_SETSIZE) {
-						syslog(LOG_WARNING, "cannot add fd %d to set, too many clients\n", cfd);
+						syslog(LOG_WARNING, "cannot add fd %d to set, too many clients", cfd);
 						close(cfd);
 						break;
 					}
@@ -361,7 +361,7 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 						client_fds[i] = cfd;
 						FD_SET(cfd, &fdset);
 						if(cfd > max_fd) max_fd = cfd;
-						syslog(LOG_INFO, "client %d fd %d\n", i, cfd);
+						syslog(LOG_INFO, "client %d fd %d", i, cfd);
 						break;
 					}
 					i++;
@@ -377,30 +377,30 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 				struct local_packet *packet;
 				switch(get_local_packet(cfd, &packet, buffers + i)) {
 					case GET_PACKET_EOF:
-						syslog(LOG_INFO, "client %d fd %d EOF\n", i, cfd);
+						syslog(LOG_INFO, "client %d fd %d EOF", i, cfd);
 						goto end_of_connection;
 					case GET_PACKET_ERROR:
 						syslog_perror("read");
 						goto end_of_connection;
 					case GET_PACKET_SHORT_READ:
-						syslog(LOG_NOTICE, "client %d fd %d short read\n", i, cfd);
+						syslog(LOG_NOTICE, "client %d fd %d short read", i, cfd);
 						goto end_of_connection;
 					case GET_PACKET_TOO_LARGE:
-						syslog(LOG_WARNING, "client %d fd %d packet too large (%u bytes)\n",
+						syslog(LOG_WARNING, "client %d fd %d packet too large (%u bytes)",
 							i, cfd, (unsigned int)packet);
 						goto end_of_connection;
 					case GET_PACKET_OUT_OF_MEMORY:
-						syslog(LOG_WARNING, "client %d fd %d out of memory (allocating %u bytes)\n",
+						syslog(LOG_WARNING, "client %d fd %d out of memory (allocating %u bytes)",
 							i, cfd, (unsigned int)packet);
 						goto end_of_connection;
 					case GET_PACKET_INCOMPLETE:
-						syslog(LOG_DEBUG, "client %d fd %d incomplete packet received, read %zu bytes, total %zu bytes; will continue later\n",
-							i, cfd, buffers[i].read_length, buffers[i].total_length);
+						//syslog(LOG_DEBUG, "client %d fd %d incomplete packet received, read %zu bytes, total %zu bytes; will continue later",
+						//	i, cfd, buffers[i].read_length, buffers[i].total_length);
 						continue;
 					case 0:
 						break;
 					default:
-						syslog(LOG_WARNING, "client %d fd %d unknown error\n", i, cfd);
+						syslog(LOG_WARNING, "client %d fd %d unknown error", i, cfd);
 						//abort();
 						goto end_of_connection;
 				}

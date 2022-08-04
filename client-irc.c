@@ -1,5 +1,5 @@
 /* Secure Shout Host Oriented Unified Talk
- * Copyright 2015-2020 Rivoreo
+ * Copyright 2015-2022 Rivoreo
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -635,8 +635,8 @@ static void client_irc_do_local_packet(int fd) {
 			close(fd);
 			exit(1);
 		case GET_PACKET_INCOMPLETE:
-			syslog(LOG_DEBUG, "incomplete local packet received, read %zu bytes, total %zu bytes; will continue later\n",
-				buffer.read_length, buffer.total_length);
+			//syslog(LOG_DEBUG, "incomplete local packet received, read %zu bytes, total %zu bytes; will continue later",
+			//	buffer.read_length, buffer.total_length);
 			return;
 		case 0:
 			break;

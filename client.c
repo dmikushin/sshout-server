@@ -1,5 +1,5 @@
 /* Secure Shout Host Oriented Unified Talk
- * Copyright 2015-2019 Rivoreo
+ * Copyright 2015-2022 Rivoreo
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -214,7 +214,7 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 		close(STDIN_FILENO);
 		if(open("/dev/null", O_RDONLY) != 0) {
 			fputs(_("Cannot open /dev/null for read as fd 0\n"), stderr);
-			syslog(LOG_WARNING, "Cannot open /dev/null for read as fd 0\n");
+			syslog(LOG_WARNING, "Cannot open /dev/null for read as fd 0");
 			return 1;
 		}
 	} else {
