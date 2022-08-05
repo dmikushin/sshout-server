@@ -521,7 +521,7 @@ static void do_command(int fd, const char *command) {
 	}
 	int argc = parse_tokens(buffer, &argv, 0);
 	if(argc < 1) {
-		if(argv < 0) {
+		if(argc < 0) {
 #ifndef NO_NLS
 			print_with_time(-1, PRINT_NEWLINE, "do_command: out of memory");
 #else
