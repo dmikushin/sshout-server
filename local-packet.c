@@ -1,5 +1,5 @@
-/*
- * Copyright 2015-2018 Rivoreo
+/* Part of SSHOUT
+ * Copyright 2015-2022 Rivoreo
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,7 +16,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
-//#include <syslog.h>
 
 int get_local_packet(int fd, struct local_packet **packet, struct private_buffer *buffer) {
 	struct local_packet **p = buffer ? (struct local_packet **)&buffer->buffer : packet;
@@ -24,8 +23,6 @@ int get_local_packet(int fd, struct local_packet **packet, struct private_buffer
 	size_t length;
 	int s;
 	if(buffer && buffer->buffer) {
-		//syslog(LOG_DEBUG, "get_local_packet: continue from last packet: buffer = %p, total_length = %zu, read_length = %zu",
-		//	buffer->buffer, buffer->total_length, buffer->read_length);
 		length = buffer->total_length;
 		skip = buffer->read_length;
 	} else {
@@ -34,7 +31,7 @@ int get_local_packet(int fd, struct local_packet **packet, struct private_buffer
 		} while(s < 0 && errno == EINTR);
 		if(s < 0) return GET_PACKET_ERROR;
 		if(!s) return GET_PACKET_EOF;
-		if(s < sizeof length) return GET_PACKET_SHORT_READ;
+		if((size_t)s < sizeof length) return GET_PACKET_SHORT_READ;
 		if(length > LOCAL_PACKET_MAX_LENGTH) {
 			*(unsigned int *)packet = length;
 			return GET_PACKET_TOO_LARGE;

@@ -1,5 +1,5 @@
 /* Secure Shout Host Oriented Unified Talk
- * Copyright 2015-2018 Rivoreo
+ * Copyright 2015-2022 Rivoreo
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,11 +15,13 @@
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
+#include <limits.h>
 #include <assert.h>
 
 int fgetline(FILE *f, char *line, size_t len) {
 	size_t i = 0;
 	int c;
+	if(len > INT_MAX) len = INT_MAX;
 	while((c = fgetc(f)) != '\n') {
 		if(c == EOF) {
 			if(!i) return -1;
@@ -35,7 +37,7 @@ int fgetline(FILE *f, char *line, size_t len) {
 int fbackwardoverwrite(FILE *f, size_t len) {
 	long int offset = ftell(f);
 	if(offset < 0) return -1;
-	if(len > offset) {
+	if(len > (size_t)offset) {
 #if 0
 		errno = ERANGE;
 		return -1;
@@ -60,7 +62,7 @@ int fbackwardoverwrite(FILE *f, size_t len) {
 	if(ferror(f)) return -1;
 	clearerr(f);
 	fflush(f);
-	assert(ftell(f) == overwrite_start + ss);
+	assert((size_t)ftell(f) == (size_t)overwrite_start + ss);
 	if(ftruncate(fileno(f), ftell(f)) < 0) return -1;
 	return fseek(f, overwrite_start, SEEK_SET);
 }

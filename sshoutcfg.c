@@ -1,5 +1,5 @@
 /* Secure Shout Host Oriented Unified Talk
- * Copyright 2015-2019 Rivoreo
+ * Copyright 2015-2022 Rivoreo
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -600,7 +600,7 @@ static int listuser_command(int argc, char **argv) {
 				return 1;
 			}
 			size_t type_len = ntohl(*(uint32_t *)buffer);
-			if(type_len > len - 4) {
+			if(type_len > (size_t)len - 4) {
 				fputs(_("Invalid key\n"), stderr);
 				return 1;
 			}

@@ -1,5 +1,5 @@
-/*
- * Copyright 2015-2018 Rivoreo
+/* Part of SSHOUT
+ * Copyright 2015-2022 Rivoreo
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,7 +19,6 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <arpa/inet.h>
-#include <syslog.h>
 
 int get_api_packet(int fd, struct sshout_api_packet **packet, uint32_t *length, int block_read) {
 	uint32_t orig_length;
@@ -30,7 +29,7 @@ int get_api_packet(int fd, struct sshout_api_packet **packet, uint32_t *length, 
 	} while(s < 0 && errno == EINTR);
 	if(s < 0) return GET_PACKET_ERROR;
 	if(!s) return GET_PACKET_EOF;
-	if(s < sizeof orig_length) return block_read ? GET_PACKET_EOF : GET_PACKET_SHORT_READ;
+	if((size_t)s < sizeof orig_length) return block_read ? GET_PACKET_EOF : GET_PACKET_SHORT_READ;
 	*length = ntohl(orig_length);
 	if(*length < 1) return GET_PACKET_TOO_SMALL;
 	if(*length > SSHOUT_API_PACKET_MAX_LENGTH) return GET_PACKET_TOO_LARGE;
@@ -42,10 +41,9 @@ int get_api_packet(int fd, struct sshout_api_packet **packet, uint32_t *length, 
 		s = read(fd, (char *)*packet + sizeof orig_length, *length);
 	} while(s < 0 && errno == EINTR);
 	int r = 0;
-	//syslog(LOG_DEBUG, "*length = %u, s = %d", (unsigned int)*length, s);
 	if(s < 0) r = GET_PACKET_ERROR;
 	else if(!s) r = GET_PACKET_EOF;
-	else if(s < *length) r = block_read ? GET_PACKET_EOF : GET_PACKET_SHORT_READ;
+	else if((size_t)s < *length) r = block_read ? GET_PACKET_EOF : GET_PACKET_SHORT_READ;
 	if(r) free(*packet);
 	return r;
 }
