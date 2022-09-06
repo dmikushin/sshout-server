@@ -1,4 +1,4 @@
-#define SSHOUT_VERSION "1.2.1"
+#define SSHOUT_VERSION "1.3.0"
 #define SSHOUT_COPYRIGHT_LINE _("Copyright 2015-2022 Rivoreo")
 #define SSHOUT_LICENSE_INFORMATION \
 	_("This is free software; you are free to change and redistribute it. See the\n" \
@@ -25,6 +25,7 @@
 #define GLOBAL_NAME "GLOBAL"
 #define USER_LIST_FILE ".ssh/authorized_keys"
 #define HOST_NAME_MAX_LENGTH 128
+#define TEXT_ENCODING_NAME_MAX_LENGTH 24
 #define SSHOUT_MOTD_FILE "motd"
 #define SSHOUT_USERS_PREFERENCES_DIR "users-preferences"
 
@@ -89,8 +90,11 @@ enum local_msg_type {
 struct local_message {
 	char msg_from[USER_NAME_MAX_LENGTH];
 	char msg_to[USER_NAME_MAX_LENGTH];
+//#ifdef HAVE_ICONV
+//	char msg_text_encoding[TEXT_ENCODING_NAME_MAX_LENGTH];	// Only for msg_type == SSHOUT_MSG_PLAIN
+//#endif
 	enum local_msg_type msg_type;
-	size_t msg_length;	// Only for array msg
+	size_t msg_length;		// Only for array msg
 	char msg[0];
 };
 

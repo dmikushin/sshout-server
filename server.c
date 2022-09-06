@@ -38,8 +38,14 @@
 #include <ucred.h>
 #endif
 #endif
+#ifdef HAVE_ICONV
+#include <iconv.h>
+#endif
 
 static struct local_online_user online_users[FD_SETSIZE];
+#ifdef HAVE_ICONV
+static char *user_text_encodings[FD_SETSIZE];
+#endif
 
 static void syslog_perror(const char *format, ...) {
 	int e = errno;
@@ -53,7 +59,8 @@ static void syslog_perror(const char *format, ...) {
 
 static void broadcast_user_state(const char *user_name, int on, const int *client_fds) {
 	unsigned int i = 0;
-	size_t packet_len = sizeof(struct local_packet) + USER_NAME_MAX_LENGTH;
+	size_t user_name_len = strnlen(user_name, USER_NAME_MAX_LENGTH - 1);
+	size_t packet_len = sizeof(struct local_packet) + user_name_len + 1;
 	struct local_packet *packet = malloc(packet_len);
 	if(!packet) {
 		syslog(LOG_ERR, "broadcast_user_state: out of memory");
@@ -61,7 +68,8 @@ static void broadcast_user_state(const char *user_name, int on, const int *clien
 	}
 	packet->length = packet_len - sizeof packet->length;
 	packet->type = on ? SSHOUT_LOCAL_USER_ONLINE : SSHOUT_LOCAL_USER_OFFLINE;
-	strncpy(packet->data, user_name, USER_NAME_MAX_LENGTH);
+	memcpy(packet->data, user_name, user_name_len);
+	packet->data[user_name_len] = 0;
 	do {
 		if(online_users[i].id == -1) continue;
 		while(write(client_fds[online_users[i].id], packet, packet_len) < 0) {
@@ -92,7 +100,11 @@ static pid_t get_pid_from_unix_socket(int fd) {
 }
 #endif
 
-static int user_online(int id, const char *user_name, const char *host_name, int *index, const int *client_fds) {
+static int user_online(int id, const char *user_name, const char *host_name,
+#ifdef HAVE_ICONV
+  const char *text_encoding,
+#endif
+  int *index, const int *client_fds) {
 	int found_dup = 0;
 	unsigned int i = 0;
 	while(online_users[i].id != -1) {
@@ -104,9 +116,16 @@ static int user_online(int id, const char *user_name, const char *host_name, int
 	}
 	struct local_online_user *p = online_users + i;
 	p->id = id;
-	strncpy(p->user_name, user_name, sizeof p->user_name);
-	strncpy(p->host_name, host_name, sizeof p->host_name);
+	size_t len = strnlen(user_name, sizeof p->user_name - 1);
+	memcpy(p->user_name, user_name, len);
+	p->user_name[len] = 0;
+	len = strnlen(host_name, sizeof p->host_name - 1);
+	memcpy(p->host_name, host_name, len);
+	p->host_name[len] = 0;
 	*index = i;
+#ifdef HAVE_ICONV
+	if(*text_encoding) user_text_encodings[i] = strdup(text_encoding);
+#endif
 	while(!found_dup && ++i < sizeof online_users / sizeof *online_users) {
 		if(online_users[i].id != -1 && strcmp(online_users[i].user_name, user_name) == 0) found_dup = 1;
 	}
@@ -139,6 +158,10 @@ static void user_offline(int id, const int *client_fds) {
 	while(online_users[i].id != id) {
 		if(++i >= sizeof online_users / sizeof *online_users) return;
 	}
+#ifdef HAVE_ICONV
+	free(user_text_encodings[i]);
+	user_text_encodings[i] = NULL;
+#endif
 	const char *user_name = online_users[i].user_name;
 #ifdef HAVE_UPDWTMPX
 	const char *host_name = online_users[i].host_name;
@@ -205,9 +228,57 @@ static int send_online_users(int receiver_id, int receiver_fd) {
 	return r;
 }
 
-static int dispatch_message(const struct local_online_user *sender, const struct local_message *msg, const int *client_fds) {
+#ifdef HAVE_ICONV
+static int convert_message(const char *from_encoding, const char *to_encoding, const char *sender_name, const struct local_message *msg, struct local_message **new_msg) {
+	iconv_t cd = iconv_open(to_encoding, from_encoding);
+	if(cd == (iconv_t)-1) return -1;
+	*new_msg = malloc(sizeof(struct local_message) + msg->msg_length);
+	(*new_msg)->msg_length = msg->msg_length;
+	const char *input_p = msg->msg;
+	size_t input_len = msg->msg_length;
+	char *output_p = (*new_msg)->msg;
+	size_t output_len = msg->msg_length;
+	size_t len;
+	while((len = iconv(cd, (char **)&input_p, &input_len, &output_p, &output_len)) == (size_t)-1) {
+		int e = errno;
+		if(e != E2BIG) {
+			iconv_close(cd);
+			free(*new_msg);
+			errno = e;
+			return -1;
+		}
+		(*new_msg)->msg_length += 32;
+		struct local_message *p = realloc(*new_msg, sizeof(struct local_message) + (*new_msg)->msg_length);
+		if(!p) {
+			e = errno;
+			iconv_close(cd);
+			free(*new_msg);
+			errno = e;
+			return -1;
+		}
+		output_p -= (*new_msg)->msg - p->msg;
+		output_len += 32;
+		*new_msg = p;
+	}
+	iconv_close(cd);
+	(*new_msg)->msg_length = output_p - (*new_msg)->msg;
+	(*new_msg)->msg_type = SSHOUT_MSG_PLAIN;
+	memcpy((*new_msg)->msg_to, msg->msg_to, sizeof (*new_msg)->msg_to);
+	len = strnlen(sender_name ? : msg->msg_from, sizeof (*new_msg)->msg_from - 1);
+	memcpy((*new_msg)->msg_from, sender_name ? : msg->msg_from, len);
+	//if(len < sizeof (*new_msg)->msg_from) (*new_msg)->msg_from[len] = 0;
+	(*new_msg)->msg_from[len] = 0;
+	return 0;
+}
+#endif
+
+static int dispatch_message(int sender_i, const struct local_message *msg, const int *client_fds) {
+	const struct local_online_user *sender = online_users + sender_i;
+#ifdef HAVE_ICONV
+	const char *from_encoding = user_text_encodings[sender_i];
+#endif
 	int r = 0;
-	unsigned int i = 0;
+	int i = 0;
 	int found = 0;
 	int is_broadcast = strcmp(msg->msg_to, GLOBAL_NAME) == 0 || strcmp(msg->msg_to, "*") == 0;
 	size_t packet_len = sizeof(struct local_packet) + sizeof(struct local_message) + msg->msg_length;
@@ -218,24 +289,57 @@ static int dispatch_message(const struct local_online_user *sender, const struct
 	}
 	packet->length = packet_len - sizeof packet->length;
 	packet->type = SSHOUT_LOCAL_DISPATCH_MESSAGE;
-	memcpy(packet->data, msg, sizeof(struct local_message) + msg->msg_length);
-	strncpy(((struct local_message *)packet->data)->msg_from, sender->user_name, USER_NAME_MAX_LENGTH);
+	struct local_message *payload_p = (struct local_message *)packet->data;
+	memcpy(payload_p, msg, sizeof(struct local_message) + msg->msg_length);
+	size_t sender_name_len = strnlen(sender->user_name, USER_NAME_MAX_LENGTH - 1);
+	memcpy(payload_p->msg_from, sender->user_name, sender_name_len);
+	payload_p->msg_from[sender_name_len] = 0;
 	do {
 		if(online_users[i].id == -1) continue;
 		if(!is_broadcast && strcmp(online_users[i].user_name, msg->msg_to)) {
 			// Not the target user, but we also need to send the message back to sender
 			if(strcmp(online_users[i].user_name, sender->user_name)) continue;
 		} else found = 1;
-		if(sync_write(client_fds[online_users[i].id], packet, packet_len) < 0) {
+		struct local_packet *cur_packet = packet;
+		size_t cur_packet_len = packet_len;
+#ifdef HAVE_ICONV
+		if(i != sender_i && from_encoding && msg->msg_type == SSHOUT_MSG_PLAIN) {
+			const char *to_encoding = user_text_encodings[i];
+			if(to_encoding && strcmp(from_encoding, to_encoding)) {
+				struct local_message *new_msg;
+				if(convert_message(from_encoding, to_encoding, sender->user_name, msg, &new_msg) < 0) {
+					syslog_perror("dispatch_message: failed to convert text encoding from %s to %s",
+						from_encoding, to_encoding);
+				} else {
+					cur_packet_len = sizeof(struct local_packet) + sizeof(struct local_message) + new_msg->msg_length;
+					cur_packet = malloc(cur_packet_len);
+					if(!cur_packet) {
+						syslog(LOG_ERR, "dispatch_message: out of memory when converting character set");
+						free(new_msg);
+						continue;
+					}
+					cur_packet->length = cur_packet_len - sizeof cur_packet->length;
+					cur_packet->type = SSHOUT_LOCAL_DISPATCH_MESSAGE;
+					memcpy(cur_packet->data, new_msg, sizeof(struct local_message) + new_msg->msg_length);
+					free(new_msg);
+				}
+			}
+		}
+#endif
+		if(sync_write(client_fds[online_users[i].id], cur_packet, cur_packet_len) < 0) {
 			//syslog(LOG_WARNING, "i = %d, id = %d, fd = %d", i, online_users[i].id, client_fds[online_users[i].id]);
 			syslog_perror("dispatch_message: from %d to %d: write",
 				sender->id, online_users[i].id);
 			r = -1;
 		}
-	} while(++i < sizeof online_users / sizeof *online_users);
+#ifdef HAVE_ICONV
+		if(cur_packet != packet) free(cur_packet);
+#endif
+	} while(++i < (int)(sizeof online_users / sizeof *online_users));
 	free(packet);
 	if(!found) {
-		packet_len = sizeof(struct local_packet) + USER_NAME_MAX_LENGTH;
+		size_t name_len = strnlen(msg->msg_to, USER_NAME_MAX_LENGTH - 1);
+		packet_len = sizeof(struct local_packet) + name_len + 1;
 		packet = malloc(packet_len);
 		if(!packet) {
 			syslog(LOG_ERR, "dispatch_message: out of memory");
@@ -243,7 +347,8 @@ static int dispatch_message(const struct local_online_user *sender, const struct
 		}
 		packet->length = packet_len - sizeof packet->length;
 		packet->type = SSHOUT_LOCAL_USER_NOT_FOUND;
-		strncpy(packet->data, msg->msg_to, USER_NAME_MAX_LENGTH);
+		memcpy(packet->data, msg->msg_to, name_len);
+		packet->data[name_len] = 0;
 		while(write(client_fds[sender->id], packet, packet_len) < 0) {
 			if(errno == EINTR) continue;
 			syslog_perror("dispatch_message: write");
@@ -406,14 +511,19 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 				}
 				switch(packet->type) {
 					case SSHOUT_LOCAL_LOGIN:
-						user_online(i, packet->data, packet->data + USER_NAME_MAX_LENGTH, online_users_indexes + i, client_fds);
+						user_online(i, packet->data, packet->data + USER_NAME_MAX_LENGTH,
+#ifdef HAVE_ICONV
+							packet->data + USER_NAME_MAX_LENGTH + HOST_NAME_MAX_LENGTH,
+#endif
+							online_users_indexes + i, client_fds);
 						break;
 					case SSHOUT_LOCAL_POST_MESSAGE:
 						if(online_users_indexes[i] == -1) {
 							syslog(LOG_NOTICE, "client %d fd %d posting message without login", i, cfd);
 							break;
 						}
-						dispatch_message(online_users + online_users_indexes[i], (struct local_message *)packet->data, client_fds);
+						dispatch_message(online_users_indexes[i],
+							(struct local_message *)packet->data, client_fds);
 						break;
 					case SSHOUT_LOCAL_GET_ONLINE_USERS:
 						if(send_online_users(i, cfd) < 0) {

@@ -36,7 +36,11 @@
 #define REMOTE_MODE_LOG 3
 #define REMOTE_MODE_IRC 4
 
-static int send_login(int fd, const char *orig_user_name, const char *client_address) {
+static int send_login(int fd, const char *orig_user_name, const char *client_address
+#ifdef HAVE_ICONV
+  , const char *text_encoding
+#endif
+) {
 	int r = 0;
 	size_t user_name_len = strlen(orig_user_name);
 	//char user_name[USER_NAME_MAX_LENGTH];
@@ -50,19 +54,36 @@ static int send_login(int fd, const char *orig_user_name, const char *client_add
 		return -1;
 	}
 	if(host_name_len > HOST_NAME_MAX_LENGTH - 1) host_name_len = HOST_NAME_MAX_LENGTH - 1;
-	//char host_name[host_name_len + 1];
-	//memcpy(host_name, client_address, host_name_len);
-	//host_name[host_name_len] = 0;
-	size_t packet_len = sizeof(struct local_packet) + USER_NAME_MAX_LENGTH + host_name_len + 1;
+#ifdef HAVE_ICONV
+	size_t encoding_name_len = text_encoding ? strlen(text_encoding) : 0;
+	if(encoding_name_len > TEXT_ENCODING_NAME_MAX_LENGTH - 1) {
+		encoding_name_len = 0;
+		syslog(LOG_WARNING, "Text encoding name '%s' too long", text_encoding);
+	}
+#endif
+	size_t packet_len = sizeof(struct local_packet) + USER_NAME_MAX_LENGTH +
+#ifdef HAVE_ICONV
+		HOST_NAME_MAX_LENGTH + encoding_name_len + 1
+#else
+		host_name_len + 1
+#endif
+		;
 	struct local_packet *packet = malloc(packet_len);
 	if(!packet) return -1;
 	packet->length = packet_len - sizeof packet->length;
 	packet->type = SSHOUT_LOCAL_LOGIN;
 	memcpy(packet->data, orig_user_name, user_name_len);
 	memset(packet->data + user_name_len, 0, USER_NAME_MAX_LENGTH - user_name_len);
-	char *host_name = packet->data + USER_NAME_MAX_LENGTH;
-	memcpy(host_name, client_address, host_name_len);
-	host_name[host_name_len] = 0;
+	char *p = packet->data + USER_NAME_MAX_LENGTH;
+	memcpy(p, client_address, host_name_len);
+#ifdef HAVE_ICONV
+	memset(p + host_name_len, 0, HOST_NAME_MAX_LENGTH - host_name_len);
+	p += HOST_NAME_MAX_LENGTH;
+	if(encoding_name_len) memcpy(p, text_encoding, encoding_name_len);
+	p[encoding_name_len] = 0;
+#else
+	p[host_name_len] = 0;
+#endif
 	while(write(fd, packet, packet_len) < 0) {
 		if(errno == EINTR) continue;
 		r = -1;
@@ -199,7 +220,15 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 		return 1;
 	}
 
+#ifdef HAVE_ICONV
+	char *locale = getenv("LC_CTYPE");
+	if(!locale) locale = getenv("LANG");
+	char *encoding = locale ? strchr(locale, '.') : NULL;
+	if(encoding) encoding++;
+	if(send_login(fd, user_name, client_address, encoding) < 0) {
+#else
 	if(send_login(fd, user_name, client_address) < 0) {
+#endif
 		perror("send_login");
 		return 1;
 	}
