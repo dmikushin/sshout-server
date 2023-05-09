@@ -1,5 +1,5 @@
 /* Secure Shout Host Oriented Unified Talk
- * Copyright 2015-2022 Rivoreo
+ * Copyright 2015-2023 Rivoreo
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -451,7 +451,7 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 			if(cfd == -1) {
 				syslog_perror("accept");
 				if(errno == EMFILE && n < 2) sleep(1);
-			} else {
+			} else if(cfd < FD_SETSIZE) {
 				syslog(LOG_DEBUG, "client fd %d", cfd);
 			        if(setsockopt(cfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof timeout) < 0) syslog_perror("setsockopt");
 			        if(setsockopt(cfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof timeout) < 0) syslog_perror("setsockopt");
@@ -471,6 +471,9 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 					}
 					i++;
 				}
+			} else {
+				syslog(LOG_WARNING, "cannot add fd %d to set, too many clients", cfd);
+				close(cfd);
 			}
 			n--;
 		}
