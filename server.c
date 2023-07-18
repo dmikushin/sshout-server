@@ -233,6 +233,11 @@ static int convert_message(const char *from_encoding, const char *to_encoding, c
 	iconv_t cd = iconv_open(to_encoding, from_encoding);
 	if(cd == (iconv_t)-1) return -1;
 	*new_msg = malloc(sizeof(struct local_message) + msg->msg_length);
+	if(!*new_msg) {
+		iconv_close(cd);
+		errno = ENOMEM;
+		return -1;
+	}
 	(*new_msg)->msg_length = msg->msg_length;
 	const char *input_p = msg->msg;
 	size_t input_len = msg->msg_length;
