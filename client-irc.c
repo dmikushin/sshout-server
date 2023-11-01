@@ -1,5 +1,5 @@
 /* Secure Shout Host Oriented Unified Talk
- * Copyright 2015-2022 Rivoreo
+ * Copyright 2015-2023 Rivoreo
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -133,15 +133,6 @@ static void send_irc_luser(unsigned int user_count) {
 	printf(IRC_RPL_LUSERCLIENT " %s :There are %u users and 0 invisible on 1 servers\n", sshout_user_name, user_count);
 }
 
-static void do_registered(int fd) {
-	is_irc_registered = 1;
-	send_irc_welcome();
-	send_irc_myinfo();
-	//send_irc_luser();
-	need_send_luser = 1;
-	client_send_request_get_online_users(fd);
-}
-
 static void send_irc_motd() {
 	char buffer[503];
 	int fd = open(SSHOUT_MOTD_FILE, O_RDONLY);
@@ -197,6 +188,15 @@ static void send_irc_motd() {
 	sync_write(STDOUT_FILENO, s_end_of_motd, strlen(s_end_of_motd));
 	sync_write(STDOUT_FILENO, "\r\n", 2);
 #endif
+}
+
+static void do_registered(int fd) {
+	is_irc_registered = 1;
+	send_irc_welcome();
+	send_irc_myinfo();
+	send_irc_motd();
+	need_send_luser = 1;
+	client_send_request_get_online_users(fd);
 }
 
 static void send_irc_message(const struct local_message *msg) {
