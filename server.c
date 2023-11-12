@@ -58,7 +58,6 @@ static void syslog_perror(const char *format, ...) {
 }
 
 static void broadcast_user_state(const char *user_name, int on, const int *client_fds) {
-	unsigned int i = 0;
 	size_t user_name_len = strnlen(user_name, USER_NAME_MAX_LENGTH - 1);
 	size_t packet_len = sizeof(struct local_packet) + user_name_len + 1;
 	struct local_packet *packet = malloc(packet_len);
@@ -70,6 +69,7 @@ static void broadcast_user_state(const char *user_name, int on, const int *clien
 	packet->type = on ? SSHOUT_LOCAL_USER_ONLINE : SSHOUT_LOCAL_USER_OFFLINE;
 	memcpy(packet->data, user_name, user_name_len);
 	packet->data[user_name_len] = 0;
+	unsigned int i = 0;
 	do {
 		if(online_users[i].id == -1) continue;
 		while(write(client_fds[online_users[i].id], packet, packet_len) < 0) {
@@ -153,7 +153,6 @@ static int user_online(int id, const char *user_name, const char *host_name,
 }
 
 static void user_offline(int id, const int *client_fds) {
-	int found_dup = 0;
 	unsigned int i = 0;
 	while(online_users[i].id != id) {
 		if(++i >= sizeof online_users / sizeof *online_users) return;
@@ -167,6 +166,7 @@ static void user_offline(int id, const int *client_fds) {
 	const char *host_name = online_users[i].host_name;
 #endif
 	online_users[i].id = -1;
+	int found_dup = 0;
 	i = 0;
 	while(i < sizeof online_users / sizeof *online_users) {
 		if(online_users[i].id != -1 && strcmp(online_users[i].user_name, user_name) == 0) {
@@ -198,7 +198,6 @@ static void user_offline(int id, const int *client_fds) {
 }
 
 static int send_online_users(int receiver_id, int receiver_fd) {
-	int r = 0;
 	unsigned int i = 0, count = 0;
 	do {
 		if(online_users[i].id != -1) count++;
@@ -214,12 +213,12 @@ static int send_online_users(int receiver_id, int receiver_fd) {
 	struct local_online_users_info *info = (struct local_online_users_info *)packet->data;
 	info->your_id = receiver_id;
 	info->count = count;
-	i = 0;
 	for(i = 0; i < sizeof online_users / sizeof *online_users && count > 0; i++) {
 		if(online_users[i].id == -1) continue;
 		count--;
 		memcpy(info->user + count, online_users + i, sizeof(struct local_online_user));
 	}
+	int r = 0;
 	if(sync_write(receiver_fd, packet, packet_length) < 0) {
 		syslog_perror("send_online_users: to %d: write", receiver_id);
 		r = -1;
