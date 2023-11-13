@@ -42,7 +42,12 @@
 #include <iconv.h>
 #endif
 
+#if 0
 static struct local_online_user online_users[FD_SETSIZE];
+#else
+static char user_names[FD_SETSIZE][USER_NAME_MAX_LENGTH];
+static char user_client_addresses[FD_SETSIZE][HOST_NAME_MAX_LENGTH];
+#endif
 #ifdef HAVE_ICONV
 static char *user_text_encodings[FD_SETSIZE];
 #endif
@@ -57,7 +62,7 @@ static void syslog_perror(const char *format, ...) {
 	va_end(ap);
 }
 
-static void broadcast_user_state(const char *user_name, int on, const int *client_fds) {
+static void broadcast_user_state(const char *user_name, int on, const fd_set *client_fds, int fd_max_size) {
 	size_t user_name_len = strnlen(user_name, USER_NAME_MAX_LENGTH - 1);
 	size_t packet_len = sizeof(struct local_packet) + user_name_len + 1;
 	struct local_packet *packet = malloc(packet_len);
@@ -69,15 +74,20 @@ static void broadcast_user_state(const char *user_name, int on, const int *clien
 	packet->type = on ? SSHOUT_LOCAL_USER_ONLINE : SSHOUT_LOCAL_USER_OFFLINE;
 	memcpy(packet->data, user_name, user_name_len);
 	packet->data[user_name_len] = 0;
-	unsigned int i = 0;
+	int fd = 0;
 	do {
-		if(online_users[i].id == -1) continue;
-		while(write(client_fds[online_users[i].id], packet, packet_len) < 0) {
+		if(!FD_ISSET(fd, client_fds)) continue;
+#if 0
+		if(online_users[fd].id == -1) continue;
+#else
+		if(!*user_names[fd]) continue;
+#endif
+		while(write(fd, packet, packet_len) < 0) {
 			if(errno == EINTR) continue;
-			syslog_perror("broadcast_user_state: to %d: write", online_users[i].id);
+			syslog_perror("broadcast_user_state: to %d: write", fd);
 			break;
 		}
-	} while(++i < sizeof online_users / sizeof *online_users);
+	} while(++fd < fd_max_size);
 	free(packet);
 }
 
@@ -100,108 +110,111 @@ static pid_t get_pid_from_unix_socket(int fd) {
 }
 #endif
 
-static int user_online(int id, const char *user_name, const char *host_name,
+static int user_online(int fd, const char *user_name, const char *host_name,
 #ifdef HAVE_ICONV
   const char *text_encoding,
 #endif
-  int *index, const int *client_fds) {
+  const fd_set *client_fds, int fd_max_size) {
 	int found_dup = 0;
-	unsigned int i = 0;
-	while(online_users[i].id != -1) {
-		if(!found_dup && strcmp(online_users[i].user_name, user_name) == 0) found_dup = 1;
-		if(++i >= sizeof online_users / sizeof *online_users) {
-			syslog(LOG_WARNING, "cannot let user '%s' from %s login: too many users", user_name, host_name);
-			return -1;
+	int i;
+	for(i = 0; i < fd_max_size; i++) {
+		if(i == fd) continue;
+		if(!FD_ISSET(i, client_fds)) continue;
+		if(strcmp(user_names[i], user_name) == 0) {
+			found_dup = 1;
+			break;
 		}
 	}
-	struct local_online_user *p = online_users + i;
-	p->id = id;
-	size_t len = strnlen(user_name, sizeof p->user_name - 1);
-	memcpy(p->user_name, user_name, len);
-	p->user_name[len] = 0;
-	len = strnlen(host_name, sizeof p->host_name - 1);
-	memcpy(p->host_name, host_name, len);
-	p->host_name[len] = 0;
-	*index = i;
-#ifdef HAVE_ICONV
-	if(*text_encoding) user_text_encodings[i] = strdup(text_encoding);
+#if 0
+	struct local_online_user *p = online_users + fd;
+	p->id = fd;
 #endif
-	while(!found_dup && ++i < sizeof online_users / sizeof *online_users) {
-		if(online_users[i].id != -1 && strcmp(online_users[i].user_name, user_name) == 0) found_dup = 1;
-	}
-	syslog(LOG_INFO, "user %s login from %s id %d dup %d", user_name, host_name, id, found_dup);
+	size_t len = strnlen(user_name, USER_NAME_MAX_LENGTH - 1);
+	memcpy(user_names[fd], user_name, len);
+	user_names[fd][len] = 0;
+	len = strnlen(host_name, HOST_NAME_MAX_LENGTH - 1);
+	memcpy(user_client_addresses[fd], host_name, len);
+	user_client_addresses[fd][len] = 0;
+#ifdef HAVE_ICONV
+	if(*text_encoding) user_text_encodings[fd] = strdup(text_encoding);
+#endif
+	syslog(LOG_INFO, "user %s login from %s fd %d dup %d", user_name, host_name, fd, found_dup);
 #ifdef HAVE_UPDWTMPX
 	if(access("wtmpx", W_OK) == 0) {
 		struct timeval tv;
 		if(gettimeofday(&tv, NULL) == 0) {
-			pid_t pid = get_pid_from_unix_socket(client_fds[id]);
+			pid_t pid = get_pid_from_unix_socket(fd);
 			struct utmpx utx = {
 				.ut_type = USER_PROCESS,
-				.ut_pid = pid == -1 ? id : pid,
+				.ut_pid = pid == -1 ? fd : pid,
 				.ut_tv.tv_sec = tv.tv_sec,
 				.ut_tv.tv_usec = tv.tv_usec
 			};
-			snprintf(utx.ut_line, sizeof utx.ut_line, "%d", id);
+			snprintf(utx.ut_line, sizeof utx.ut_line, "%d", fd);
 			strncpy(utx.ut_user, user_name, sizeof utx.ut_user);
 			strncpy(utx.ut_host, host_name, sizeof utx.ut_host);
 			updwtmpx("wtmpx", &utx);
 		}
 	}
 #endif
-	if(!found_dup) broadcast_user_state(user_name, 1, client_fds);
+	if(!found_dup) broadcast_user_state(user_name, 1, client_fds, fd_max_size);
 	return 0;
 }
 
-static void user_offline(int id, const int *client_fds) {
-	unsigned int i = 0;
-	while(online_users[i].id != id) {
-		if(++i >= sizeof online_users / sizeof *online_users) return;
-	}
+static void user_offline(int fd, const fd_set *client_fds, int fd_max_size) {
 #ifdef HAVE_ICONV
-	free(user_text_encodings[i]);
-	user_text_encodings[i] = NULL;
+	free(user_text_encodings[fd]);
+	user_text_encodings[fd] = NULL;
 #endif
-	const char *user_name = online_users[i].user_name;
+#if 0
+	const char *user_name = online_users[fd].user_name;
 #ifdef HAVE_UPDWTMPX
-	const char *host_name = online_users[i].host_name;
+	const char *host_name = online_users[fd].host_name;
 #endif
-	online_users[i].id = -1;
+	online_users[fd].id = -1;
+#else
+	char *user_name = user_names[fd];
+#ifdef HAVE_UPDWTMPX
+	const char *host_name = user_client_addresses[fd];
+#endif
+#endif
 	int found_dup = 0;
-	i = 0;
-	while(i < sizeof online_users / sizeof *online_users) {
-		if(online_users[i].id != -1 && strcmp(online_users[i].user_name, user_name) == 0) {
+	int i = 0;
+	while(i < fd_max_size) {
+		if(i != fd && FD_ISSET(i, client_fds) && strcmp(user_names[i], user_name) == 0) {
 			found_dup = 1;
 			break;
 		}
 		i++;
 	}
-	if(!found_dup) broadcast_user_state(user_name, 0, client_fds);
-	syslog(LOG_INFO, "user %s logout id %d dup %d", user_name, id, found_dup);
+	if(!found_dup) broadcast_user_state(user_name, 0, client_fds, fd_max_size);
+	syslog(LOG_INFO, "user %s logout fd %d dup %d", user_name, fd, found_dup);
 #ifdef HAVE_UPDWTMPX
 	if(access("wtmpx", W_OK) == 0) {
 		struct timeval tv;
 		if(gettimeofday(&tv, NULL) == 0) {
-			pid_t pid = get_pid_from_unix_socket(client_fds[id]);
+			pid_t pid = get_pid_from_unix_socket(fd);
 			struct utmpx utx = {
 				.ut_type = DEAD_PROCESS,
-				.ut_pid = pid == -1 ? id : pid,
+				.ut_pid = pid == -1 ? fd : pid,
 				.ut_tv.tv_sec = tv.tv_sec,
 				.ut_tv.tv_usec = tv.tv_usec
 			};
-			snprintf(utx.ut_line, sizeof utx.ut_line, "%d", id);
+			snprintf(utx.ut_line, sizeof utx.ut_line, "%d", fd);
 			strncpy(utx.ut_user, user_name, sizeof utx.ut_user);
 			strncpy(utx.ut_host, host_name, sizeof utx.ut_host);
 			updwtmpx("wtmpx", &utx);
 		}
 	}
 #endif
+	*user_name = 0;
 }
 
-static int send_online_users(int receiver_id, int receiver_fd) {
-	unsigned int i = 0, count = 0;
+static int send_online_users(int receiver_fd, int fd_max_size) {
+	int fd = 0, count = 0;
 	do {
-		if(online_users[i].id != -1) count++;
-	} while(++i < sizeof online_users / sizeof *online_users);
+		if(*user_names[fd]) count++;
+	} while(++fd < fd_max_size);
 	size_t packet_length = sizeof(struct local_packet) + sizeof(struct local_online_users_info) + sizeof(struct local_online_user) * count;
 	struct local_packet *packet = malloc(packet_length);
 	if(!packet) {
@@ -211,16 +224,19 @@ static int send_online_users(int receiver_id, int receiver_fd) {
 	packet->length = packet_length - sizeof packet->length;
 	packet->type = SSHOUT_LOCAL_ONLINE_USERS_INFO;
 	struct local_online_users_info *info = (struct local_online_users_info *)packet->data;
-	info->your_id = receiver_id;
+	info->your_id = receiver_fd;
 	info->count = count;
-	for(i = 0; i < sizeof online_users / sizeof *online_users && count > 0; i++) {
-		if(online_users[i].id == -1) continue;
+	for(fd = 0; fd < fd_max_size && count > 0; fd++) {
+		if(!*user_names[fd]) continue;
 		count--;
-		memcpy(info->user + count, online_users + i, sizeof(struct local_online_user));
+		struct local_online_user *p = info->user + count;
+		p->id = fd;
+		strcpy(p->user_name, user_names[fd]);
+		strcpy(p->host_name, user_client_addresses[fd]);
 	}
 	int r = 0;
 	if(sync_write(receiver_fd, packet, packet_length) < 0) {
-		syslog_perror("send_online_users: to %d: write", receiver_id);
+		syslog_perror("send_online_users: write to %d", receiver_fd);
 		r = -1;
 	}
 	free(packet);
@@ -276,14 +292,15 @@ static int convert_message(const char *from_encoding, const char *to_encoding, c
 }
 #endif
 
-static int dispatch_message(int sender_i, const struct local_message *msg, const int *client_fds) {
-	const struct local_online_user *sender = online_users + sender_i;
-#ifdef HAVE_ICONV
-	const char *from_encoding = user_text_encodings[sender_i];
+static int dispatch_message(int sender_fd, const struct local_message *msg, const fd_set *client_fds, int fd_max_size) {
+#if 0
+	const struct local_online_user *sender = online_users + sender_fd;
+#else
+	const char *sender_name = user_names[sender_fd];
 #endif
-	int r = 0;
-	int i = 0;
-	int found = 0;
+#ifdef HAVE_ICONV
+	const char *from_encoding = user_text_encodings[sender_fd];
+#endif
 	int is_broadcast = strcmp(msg->msg_to, GLOBAL_NAME) == 0 || strcmp(msg->msg_to, "*") == 0;
 	size_t packet_len = sizeof(struct local_packet) + sizeof(struct local_message) + msg->msg_length;
 	struct local_packet *packet = malloc(packet_len);
@@ -295,23 +312,27 @@ static int dispatch_message(int sender_i, const struct local_message *msg, const
 	packet->type = SSHOUT_LOCAL_DISPATCH_MESSAGE;
 	struct local_message *payload_p = (struct local_message *)packet->data;
 	memcpy(payload_p, msg, sizeof(struct local_message) + msg->msg_length);
-	size_t sender_name_len = strnlen(sender->user_name, USER_NAME_MAX_LENGTH - 1);
-	memcpy(payload_p->msg_from, sender->user_name, sender_name_len);
+	size_t sender_name_len = strnlen(sender_name, USER_NAME_MAX_LENGTH - 1);
+	memcpy(payload_p->msg_from, sender_name, sender_name_len);
 	payload_p->msg_from[sender_name_len] = 0;
+	int r = 0;
+	int fd = 0;
+	int found = 0;
 	do {
-		if(online_users[i].id == -1) continue;
-		if(!is_broadcast && strcmp(online_users[i].user_name, msg->msg_to)) {
+		if(!FD_ISSET(fd, client_fds)) continue;
+		if(!*user_names[fd]) continue;
+		if(!is_broadcast && strcmp(user_names[fd], msg->msg_to)) {
 			// Not the target user, but we also need to send the message back to sender
-			if(strcmp(online_users[i].user_name, sender->user_name)) continue;
+			if(strcmp(user_names[fd], sender_name)) continue;
 		} else found = 1;
 		struct local_packet *cur_packet = packet;
 		size_t cur_packet_len = packet_len;
 #ifdef HAVE_ICONV
-		if(i != sender_i && from_encoding && msg->msg_type == SSHOUT_MSG_PLAIN) {
-			const char *to_encoding = user_text_encodings[i];
+		if(fd != sender_fd && from_encoding && msg->msg_type == SSHOUT_MSG_PLAIN) {
+			const char *to_encoding = user_text_encodings[fd];
 			if(to_encoding && strcmp(from_encoding, to_encoding)) {
 				struct local_message *new_msg;
-				if(convert_message(from_encoding, to_encoding, sender->user_name, msg, &new_msg) < 0) {
+				if(convert_message(from_encoding, to_encoding, sender_name, msg, &new_msg) < 0) {
 					syslog_perror("dispatch_message: failed to convert text encoding from %s to %s",
 						from_encoding, to_encoding);
 				} else {
@@ -330,16 +351,15 @@ static int dispatch_message(int sender_i, const struct local_message *msg, const
 			}
 		}
 #endif
-		if(sync_write(client_fds[online_users[i].id], cur_packet, cur_packet_len) < 0) {
-			//syslog(LOG_WARNING, "i = %d, id = %d, fd = %d", i, online_users[i].id, client_fds[online_users[i].id]);
+		if(sync_write(fd, cur_packet, cur_packet_len) < 0) {
 			syslog_perror("dispatch_message: from %d to %d: write",
-				sender->id, online_users[i].id);
+				sender_fd, fd);
 			r = -1;
 		}
 #ifdef HAVE_ICONV
 		if(cur_packet != packet) free(cur_packet);
 #endif
-	} while(++i < (int)(sizeof online_users / sizeof *online_users));
+	} while(++fd < fd_max_size);
 	free(packet);
 	if(!found) {
 		size_t name_len = strnlen(msg->msg_to, USER_NAME_MAX_LENGTH - 1);
@@ -353,7 +373,7 @@ static int dispatch_message(int sender_i, const struct local_message *msg, const
 		packet->type = SSHOUT_LOCAL_USER_NOT_FOUND;
 		memcpy(packet->data, msg->msg_to, name_len);
 		packet->data[name_len] = 0;
-		while(write(client_fds[sender->id], packet, packet_len) < 0) {
+		while(write(sender_fd, packet, packet_len) < 0) {
 			if(errno == EINTR) continue;
 			syslog_perror("dispatch_message: write");
 			r = -1;
@@ -421,23 +441,18 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 
 	fd_set fdset;
 	FD_ZERO(&fdset);
-	FD_SET(fd, &fdset);
 	int max_fd = fd;
 
-	int client_fds[FD_SETSIZE];
 	struct private_buffer buffers[FD_SETSIZE];
-	int online_users_indexes[FD_SETSIZE];
 	int i;
 	for(i=0; i<FD_SETSIZE; i++) {
-		client_fds[i] = -1;
 		buffers[i].buffer = NULL;
-		online_users[i].id = -1;
-		online_users_indexes[i] = -1;
 	}
 
 	while(1) {
 		int have_client_fd_closed = 0;
 		fd_set rfdset = fdset;
+		FD_SET(fd, &rfdset);
 		int n = select(max_fd + 1, &rfdset, NULL, NULL, NULL);
 		if(n < 0) {
 			if(errno == EINTR) continue;
@@ -445,10 +460,10 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 			sleep(2);
 			continue;
 		}
+		int cfd;
 		if(FD_ISSET(fd, &rfdset)) {
 			struct sockaddr_un client_addr;
 			socklen_t addr_len = sizeof client_addr;
-			int cfd;
 			do {
 				cfd = accept(fd, (struct sockaddr *)&client_addr, &addr_len);
 			} while(cfd == -1 && errno == EINTR);
@@ -459,106 +474,89 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 				syslog(LOG_DEBUG, "client fd %d", cfd);
 			        if(setsockopt(cfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof timeout) < 0) syslog_perror("setsockopt");
 			        if(setsockopt(cfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof timeout) < 0) syslog_perror("setsockopt");
-				i = 0;
-				while(1) {
-					if(i >= FD_SETSIZE) {
-						syslog(LOG_WARNING, "cannot add fd %d to set, too many clients", cfd);
-						close(cfd);
-						break;
-					}
-					if(client_fds[i] == -1) {
-						client_fds[i] = cfd;
-						FD_SET(cfd, &fdset);
-						if(cfd > max_fd) max_fd = cfd;
-						syslog(LOG_INFO, "client %d fd %d", i, cfd);
-						break;
-					}
-					i++;
-				}
+				FD_SET(cfd, &fdset);
+				if(cfd > max_fd) max_fd = cfd;
+				syslog(LOG_INFO, "client %d fd %d", i, cfd);
 			} else {
 				syslog(LOG_WARNING, "cannot add fd %d to set, too many clients", cfd);
 				close(cfd);
 			}
 			n--;
 		}
-		for(i=0; n && i<FD_SETSIZE; i++) {
-			int cfd = client_fds[i];
-			if(cfd == -1) continue;
+		for(cfd=0; n && cfd<FD_SETSIZE; cfd++) {
 			if(FD_ISSET(cfd, &rfdset)) {
 				n--;
 				struct local_packet *packet;
-				switch(get_local_packet(cfd, &packet, buffers + i)) {
+				switch(get_local_packet(cfd, &packet, buffers + cfd)) {
 					case GET_PACKET_EOF:
-						syslog(LOG_INFO, "client %d fd %d EOF", i, cfd);
+						syslog(LOG_INFO, "client fd %d EOF", cfd);
 						goto end_of_connection;
 					case GET_PACKET_ERROR:
 						syslog_perror("read");
 						goto end_of_connection;
 					case GET_PACKET_SHORT_READ:
-						syslog(LOG_NOTICE, "client %d fd %d short read", i, cfd);
+						syslog(LOG_NOTICE, "client fd %d short read", cfd);
 						goto end_of_connection;
 					case GET_PACKET_TOO_LARGE:
-						syslog(LOG_WARNING, "client %d fd %d packet too large (%u bytes)",
-							i, cfd, (unsigned int)packet);
+						syslog(LOG_WARNING, "client fd %d packet too large (%u bytes)",
+							cfd, (unsigned int)packet);
 						goto end_of_connection;
 					case GET_PACKET_OUT_OF_MEMORY:
-						syslog(LOG_WARNING, "client %d fd %d out of memory (allocating %u bytes)",
-							i, cfd, (unsigned int)packet);
+						syslog(LOG_WARNING, "client fd %d out of memory (allocating %u bytes)",
+							cfd, (unsigned int)packet);
 						goto end_of_connection;
 					case GET_PACKET_INCOMPLETE:
-						//syslog(LOG_DEBUG, "client %d fd %d incomplete packet received, read %zu bytes, total %zu bytes; will continue later",
-						//	i, cfd, buffers[i].read_length, buffers[i].total_length);
+						//syslog(LOG_DEBUG, "client fd %d incomplete packet received, read %zu bytes, total %zu bytes; will continue later",
+						//	cfd, buffers[cfd].read_length, buffers[cfd].total_length);
 						continue;
 					case 0:
 						break;
 					default:
-						syslog(LOG_WARNING, "client %d fd %d unknown error", i, cfd);
+						syslog(LOG_WARNING, "client fd %d unknown error", cfd);
 						//abort();
 						goto end_of_connection;
 				}
 				switch(packet->type) {
 					case SSHOUT_LOCAL_LOGIN:
-						user_online(i, packet->data, packet->data + USER_NAME_MAX_LENGTH,
+						user_online(cfd, packet->data, packet->data + USER_NAME_MAX_LENGTH,
 #ifdef HAVE_ICONV
 							packet->data + USER_NAME_MAX_LENGTH + HOST_NAME_MAX_LENGTH,
 #endif
-							online_users_indexes + i, client_fds);
+							&fdset, max_fd + 1);
 						break;
 					case SSHOUT_LOCAL_POST_MESSAGE:
-						if(online_users_indexes[i] == -1) {
-							syslog(LOG_NOTICE, "client %d fd %d posting message without login", i, cfd);
+						if(!*user_names[cfd]) {
+							syslog(LOG_NOTICE, "client fd %d posting message without login", cfd);
 							break;
 						}
-						dispatch_message(online_users_indexes[i],
-							(struct local_message *)packet->data, client_fds);
+						dispatch_message(cfd, (struct local_message *)packet->data,
+							&fdset, max_fd + 1);
 						break;
 					case SSHOUT_LOCAL_GET_ONLINE_USERS:
-						if(send_online_users(i, cfd) < 0) {
-						//	syslog(LOG_NOTICE, "client %d fd %d send_online_users failed, disconnecting", i, cfd);
+						if(send_online_users(cfd, max_fd + 1) < 0) {
+						//	syslog(LOG_NOTICE, "client fd %d send_online_users failed, disconnecting", cfd);
 						//	goto end_of_connection;
 						}
 						break;
 					default:
-						syslog(LOG_WARNING, "client %d fd %d unknown packet type %d",
-							i, cfd, packet->type);
+						syslog(LOG_WARNING, "client fd %d unknown packet type %d",
+							cfd, packet->type);
 						break;
 				}
 				free(packet);
 				continue;
 end_of_connection:
-				user_offline(i, client_fds);
+				user_offline(cfd, &fdset, max_fd + 1);
 				close(cfd);
 				FD_CLR(cfd, &fdset);
 				have_client_fd_closed = 1;
-				client_fds[i] = -1;
-				free(buffers[i].buffer);
-				buffers[i].buffer = NULL;
-				online_users_indexes[i] = -1;
+				free(buffers[cfd].buffer);
+				buffers[cfd].buffer = NULL;
 			}
 		}
 		if(have_client_fd_closed) {
 			max_fd = fd;
-			for(i=0; i<FD_SETSIZE; i++) if(client_fds[i] > max_fd) max_fd = client_fds[i];
+			for(i=0; i<FD_SETSIZE; i++) if(FD_ISSET(i, &fdset) && i > max_fd) max_fd = i;
 		}
 	}
 }
