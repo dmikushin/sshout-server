@@ -1,5 +1,5 @@
 /* Secure Shout Host Oriented Unified Talk
- * Copyright 2015-2022 Rivoreo
+ * Copyright 2015-2023 Rivoreo
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -17,6 +17,7 @@
 #include "misc.h"
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <syslog.h>
 #include "syncrw.h"
@@ -199,14 +200,21 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 	char *tz = getenv("TZ");
 	if(tz) {
 		if((tz[0] == ':' && tz[1] == '/') || tz[0] == '/') {
+			*tz = 0;
 			fputs(_("Ignoring absolute path name in TZ\n"), stderr);
 			syslog(LOG_WARNING, "TZ contains absolute path name '%s', ignored", tz);
-			*tz = 0;
 		} else if(strstr(tz, "../")) {
+			*tz = 0;
 			fputs(_("Ignoring TZ\n"), stderr);
 			syslog(LOG_WARNING, "TZ='%s', ignored", tz);
-			*tz = 0;
 		}
+	}
+
+	if(isatty(STDOUT_FILENO) && fchmod(STDOUT_FILENO, 0600) < 0) {
+		int e = errno;
+		const char *tty_path = ttyname(STDOUT_FILENO);
+		if(!tty_path) tty_path = "unknown";
+		syslog(LOG_WARNING, "Failed to change mode for stdout (%s): %s", tty_path, strerror(e));
 	}
 
 	int fd = socket(AF_UNIX, SOCK_STREAM, 0);
