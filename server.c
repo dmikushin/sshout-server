@@ -42,12 +42,8 @@
 #include <iconv.h>
 #endif
 
-#if 0
-static struct local_online_user online_users[FD_SETSIZE];
-#else
 static char user_names[FD_SETSIZE][USER_NAME_MAX_LENGTH];
 static char user_client_addresses[FD_SETSIZE][HOST_NAME_MAX_LENGTH];
-#endif
 #ifdef HAVE_ICONV
 static char *user_text_encodings[FD_SETSIZE];
 #endif
@@ -77,11 +73,7 @@ static void broadcast_user_state(const char *user_name, int on, const fd_set *cl
 	int fd = 0;
 	do {
 		if(!FD_ISSET(fd, client_fds)) continue;
-#if 0
-		if(online_users[fd].id == -1) continue;
-#else
 		if(!*user_names[fd]) continue;
-#endif
 		while(write(fd, packet, packet_len) < 0) {
 			if(errno == EINTR) continue;
 			syslog_perror("broadcast_user_state: to %d: write", fd);
@@ -125,10 +117,6 @@ static int user_online(int fd, const char *user_name, const char *host_name,
 			break;
 		}
 	}
-#if 0
-	struct local_online_user *p = online_users + fd;
-	p->id = fd;
-#endif
 	size_t len = strnlen(user_name, USER_NAME_MAX_LENGTH - 1);
 	memcpy(user_names[fd], user_name, len);
 	user_names[fd][len] = 0;
@@ -166,17 +154,9 @@ static void user_offline(int fd, const fd_set *client_fds, int fd_max_size) {
 	free(user_text_encodings[fd]);
 	user_text_encodings[fd] = NULL;
 #endif
-#if 0
-	const char *user_name = online_users[fd].user_name;
-#ifdef HAVE_UPDWTMPX
-	const char *host_name = online_users[fd].host_name;
-#endif
-	online_users[fd].id = -1;
-#else
 	char *user_name = user_names[fd];
 #ifdef HAVE_UPDWTMPX
 	const char *host_name = user_client_addresses[fd];
-#endif
 #endif
 	int found_dup = 0;
 	int i = 0;
@@ -293,11 +273,7 @@ static int convert_message(const char *from_encoding, const char *to_encoding, c
 #endif
 
 static int dispatch_message(int sender_fd, const struct local_message *msg, const fd_set *client_fds, int fd_max_size) {
-#if 0
-	const struct local_online_user *sender = online_users + sender_fd;
-#else
 	const char *sender_name = user_names[sender_fd];
-#endif
 #ifdef HAVE_ICONV
 	const char *from_encoding = user_text_encodings[sender_fd];
 #endif
