@@ -388,6 +388,10 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 		return 1;
 	}
 	signal(SIGPIPE, SIG_IGN);
+
+	close(STDIN_FILENO);
+	close(STDOUT_FILENO);
+
 	int fd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if(fd == -1) {
 		perror("socket");
