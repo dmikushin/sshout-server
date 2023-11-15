@@ -210,11 +210,20 @@ int client_mode(const struct sockaddr_un *socket_addr, const char *user_name) {
 		}
 	}
 
-	if(isatty(STDOUT_FILENO) && fchmod(STDOUT_FILENO, 0600) < 0) {
-		int e = errno;
-		const char *tty_path = ttyname(STDOUT_FILENO);
-		if(!tty_path) tty_path = "unknown";
-		syslog(LOG_WARNING, "Failed to change mode for stdout (%s): %s", tty_path, strerror(e));
+	const char *tty_path = ttyname(STDOUT_FILENO);
+	if(tty_path && strcmp(tty_path, "/dev/tty")) {
+		struct stat st;
+		if(fstat(STDOUT_FILENO, &st) < 0) {
+			syslog(LOG_ERR, "Failed to get status of stdout (%s): %s", tty_path, strerror(errno));
+			return 1;
+		}
+		if(st.st_uid != getuid()) {
+			syslog(LOG_ERR, "stdout terminal %s isn't owned by me", tty_path);
+			return 1;
+		}
+		if(fchmod(STDOUT_FILENO, 0600) < 0) {
+			syslog(LOG_WARNING, "Failed to change mode for stdout (%s): %s", tty_path, strerror(errno));
+		}
 	}
 
 	int fd = socket(AF_UNIX, SOCK_STREAM, 0);
