@@ -1,5 +1,5 @@
 /* Secure Shout Host Oriented Unified Talk
- * Copyright 2015-2022 Rivoreo
+ * Copyright 2015-2023 Rivoreo
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -935,7 +935,7 @@ static void do_input_line(int fd, const char *line) {
 	}
 }
 
-static char input_buffer[4906];
+static char input_buffer[2048];
 static int ss;
 
 // fd is for local packet
