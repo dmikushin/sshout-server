@@ -456,7 +456,6 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 			        if(setsockopt(cfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof timeout) < 0) syslog_perror("setsockopt");
 				FD_SET(cfd, &fdset);
 				if(cfd > max_fd) max_fd = cfd;
-				syslog(LOG_INFO, "client %d fd %d", i, cfd);
 			} else {
 				syslog(LOG_WARNING, "cannot add fd %d to set, too many clients", cfd);
 				close(cfd);
