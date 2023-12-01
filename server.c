@@ -463,6 +463,7 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 			n--;
 		}
 		for(cfd=0; n && cfd<FD_SETSIZE; cfd++) {
+			if(cfd == fd) continue;
 			if(FD_ISSET(cfd, &rfdset)) {
 				n--;
 				struct local_packet *packet;
