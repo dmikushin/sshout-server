@@ -965,7 +965,7 @@ static void client_cli_do_stdin(int fd) {
 			char *bs = buffer;
 			while((bs = mem2chr(bs, '\b', 0x7f, s - (bs - buffer)))) {
 				ss--;
-				//fputc('\b', stderr);
+				bs++;
 			}
 		} else {
 			do {
