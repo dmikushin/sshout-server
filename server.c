@@ -526,10 +526,10 @@ int server_mode(const struct sockaddr_un *socket_addr) {
 				free(packet);
 				continue;
 end_of_connection:
-				user_offline(cfd, &fdset, max_fd + 1);
 				close(cfd);
 				FD_CLR(cfd, &fdset);
 				have_client_fd_closed = 1;
+				user_offline(cfd, &fdset, max_fd + 1);
 				free(buffers[cfd].buffer);
 				buffers[cfd].buffer = NULL;
 			}
