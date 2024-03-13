@@ -43,10 +43,14 @@
 
 #include <stdint.h>
 
+#pragma pack(push, 1)
+
 struct sshout_api_packet {
   uint32_t length;
   uint8_t type;
   uint8_t data[0];
 };
+
+#pragma pack(pop)
 
 #endif
