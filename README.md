@@ -13,7 +13,7 @@ First of all, you need to have a working SSH server installed; currently only Op
 The `sshout` server additionally depends on mhash and readline, which could be installed from distro packages, e.g. for Ubuntu:
 
 ```
-sudo apt install libmhash-dev libreadline6-dev
+sudo apt install libmhash-dev libreadline-dev
 ```
 
 
@@ -22,7 +22,7 @@ sudo apt install libmhash-dev libreadline6-dev
 ```
 mkdir build
 cd build
-cmake ..
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr ..
 make
 make install
 ```
@@ -33,7 +33,7 @@ make install
 1. Add a local user account, with name `sshout` and shell set to the path of installed sshoutd program:
 
 ```
-sudo useradd -c "Secure Shout Host Oriented Unified Talk" -d /var/lib/sshout -s /usr/lib/sshout/sshoutd sshout
+sudo useradd --create-home -c "Secure Shout Host Oriented Unified Talk" -d /var/lib/sshout -s /usr/lib/sshout/sshoutd sshout
 ```
 
 The command above should create the following suitable passwd(5) line:
@@ -42,7 +42,7 @@ The command above should create the following suitable passwd(5) line:
 sshout:*:115:115:Secure Shout Host Oriented Unified Talk:/var/lib/sshout:/usr/lib/sshout/sshoutd
 ```
 
-2. The `sshout` user account must be allowed to log in with SSH public key authentication. The programs are currently assuming the `AuthorizedKeysFile` option in sshd_config(5) is left default, or contains `.ssh/authorized_keys`; otherwise the authentication won't work.
+2. The `sshout` user account must be allowed to log in with SSH public key authentication. The programs are currently assuming the `AuthorizedKeysFile` option in `sshd_config(5)` is left default, or contains `.ssh/authorized_keys`; otherwise the authentication won't work.
 
 3. Enable `sshout` systemd service so that `sshoutd` can be started automatically:
 
