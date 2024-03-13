@@ -86,7 +86,7 @@ static void send_api_error(int code, const char *message) {
   *(uint32_t *)packet->data = htonl(code);
   *(uint32_t *)(packet->data + 4) = htonl(message_length);
   memcpy(packet->data + 8, message, message_length);
-  if (sync_write(STDOUT_FILENO, packet, 4 + length) < 0) {
+  if (sync_write(STDOUT_FILENO, packet, sizeof(struct sshout_api_packet) + length) < 0) {
     syslog(LOG_ERR, "send_api_error: write: STDOUT_FILENO: errno %d", errno);
     exit(1);
   }
@@ -142,7 +142,7 @@ static void send_api_message(const struct local_message *local_message) {
   *(uint32_t *)p = htonl(local_message->msg_length);
   p += 4;
   memcpy(p, local_message->msg, local_message->msg_length);
-  if (sync_write(STDOUT_FILENO, packet, 4 + length) < 0) {
+  if (sync_write(STDOUT_FILENO, packet, sizeof(struct sshout_api_packet) + length) < 0) {
     syslog(LOG_ERR, "send_api_message: write: STDOUT_FILENO: errno %d", errno);
     exit(1);
   }
@@ -187,7 +187,7 @@ send_api_online_users(const struct local_online_users_info *local_info) {
     p += host_name_len;
   }
   packet->length = htonl(length);
-  if (sync_write(STDOUT_FILENO, packet, 4 + length) < 0) {
+  if (sync_write(STDOUT_FILENO, packet, sizeof(struct sshout_api_packet) + length) < 0) {
     syslog(LOG_ERR, "send_api_online_users: write: STDOUT_FILENO: errno %d",
            errno);
     exit(1);
@@ -212,7 +212,7 @@ static void send_api_user_state(const char *user, int online) {
   packet->data[0] = (uint8_t)online;
   packet->data[1] = user_name_len;
   memcpy(packet->data + 2, user, user_name_len);
-  if (sync_write(STDOUT_FILENO, packet, 4 + length) < 0) {
+  if (sync_write(STDOUT_FILENO, packet, sizeof(struct sshout_api_packet) + length) < 0) {
     syslog(LOG_ERR, "send_api_user_state: write: STDOUT_FILENO: errno %d",
            errno);
     exit(1);
@@ -256,7 +256,7 @@ static int send_api_motd() {
   packet->type = SSHOUT_API_MOTD;
   *(uint32_t *)packet->data = htonl(s);
   memcpy(packet->data + 4, buffer, s);
-  if (sync_write(STDOUT_FILENO, packet, 4 + length) < 0) {
+  if (sync_write(STDOUT_FILENO, packet, sizeof(struct sshout_api_packet) + length) < 0) {
     syslog(LOG_ERR, "send_api_motd: write: STDOUT_FILENO: errno %d", errno);
     exit(1);
   }
