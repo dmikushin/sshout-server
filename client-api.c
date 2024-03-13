@@ -42,6 +42,10 @@ static int api_version = 0;
 static void send_api_pass(int version) {
   uint8_t user_name_len = strlen(sshout_user_name);
   uint32_t length = 6 + 2 + 1 + user_name_len;
+  if(length > SSHOUT_API_PACKET_MAX_LENGTH) {
+    syslog(LOG_ERR, "send_api_pass: packet too long (%u bytes)", (unsigned int)length);
+    return;
+  }
   struct sshout_api_packet *packet = malloc(sizeof(struct sshout_api_packet) + length);
   if (!packet) {
     syslog(LOG_ERR, "send_api_pass: out of memory");
@@ -68,6 +72,10 @@ static void send_api_pass(int version) {
 static void send_api_error(int code, const char *message) {
   uint32_t message_length = strlen(message);
   uint32_t length = 4 + 4 + message_length;
+  if(length > SSHOUT_API_PACKET_MAX_LENGTH) {
+    syslog(LOG_ERR, "send_api_error: packet too long (%u bytes)", (unsigned int)length);
+    return;
+  }
   struct sshout_api_packet *packet = malloc(sizeof(struct sshout_api_packet) + length);
   if (!packet) {
     syslog(LOG_ERR, "send_api_error: out of memory");
@@ -98,6 +106,10 @@ static void send_api_message(const struct local_message *local_message) {
   }
   uint32_t length = 8 + 1 + from_user_name_len + 1 + to_user_name_len + 1 +
                     4 + local_message->msg_length;
+  if(length > SSHOUT_API_PACKET_MAX_LENGTH) {
+    syslog(LOG_ERR, "send_api_message: packet too long (%u bytes)", (unsigned int)length);
+    return;
+  }
   struct sshout_api_packet *packet = malloc(sizeof(struct sshout_api_packet) + length);
   if (!packet) {
     syslog(LOG_ERR, "send_api_message: out of memory");
@@ -143,7 +155,6 @@ send_api_online_users(const struct local_online_users_info *local_info) {
   struct sshout_api_packet *packet = malloc(sizeof(struct sshout_api_packet) + length);
   if (!packet) {
     syslog(LOG_ERR, "send_api_online_users: out of memory");
-    // return;
     exit(1);
   }
   packet->type = SSHOUT_API_ONLINE_USERS_INFO;
@@ -187,6 +198,10 @@ send_api_online_users(const struct local_online_users_info *local_info) {
 static void send_api_user_state(const char *user, int online) {
   uint8_t user_name_len = strnlen(user, USER_NAME_MAX_LENGTH);
   uint32_t length = 1 + 1 + user_name_len;
+  if(length > SSHOUT_API_PACKET_MAX_LENGTH) {
+    syslog(LOG_ERR, "send_api_user_state: packet too long (%u bytes)", (unsigned int)length);
+    return;
+  }
   struct sshout_api_packet *packet = malloc(sizeof(struct sshout_api_packet) + length);
   if (!packet) {
     syslog(LOG_ERR, "send_api_user_state: out of memory");
@@ -228,6 +243,10 @@ static int send_api_motd() {
     return -1;
 
   uint32_t length = 4 + s;
+  if(length > SSHOUT_API_PACKET_MAX_LENGTH) {
+    syslog(LOG_ERR, "send_api_motd: packet too long (%u bytes)", (unsigned int)length);
+    return -1;
+  }
   struct sshout_api_packet *packet = malloc(sizeof(struct sshout_api_packet) + length);
   if (!packet) {
     syslog(LOG_ERR, "send_api_motd: out of memory");
