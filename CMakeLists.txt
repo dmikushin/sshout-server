@@ -17,14 +17,33 @@ add_custom_command(OUTPUT ${BUILD_INFO}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-set(SSHOUTCFG_OBJCTS base64.c file-helpers.c misc.c sshoutcfg.c syncrw.c)
-set(SSHOUTD_OBJECTS api-packet.c client.c client-api.c client-cli.c client-irc.c file-helpers.c local-packet.c main.c misc.c server.c syncrw.c)
+set(SSHOUTCFG_OBJCTS
+    src/base64.c
+    src/file-helpers.c
+    src/misc.c
+    src/sshoutcfg.c
+    src/syncrw.c)
+
+set(SSHOUTD_OBJECTS
+    src/api-packet.c
+    src/client.c
+    src/client-api.c
+    src/client-cli.c
+    src/client-irc.c
+    src/file-helpers.c
+    src/local-packet.c
+    src/main.c
+    src/misc.c
+    src/server.c
+    src/syncrw.c)
 
 add_executable(sshoutcfg ${BUILD_INFO} ${SSHOUTCFG_OBJCTS})
+target_include_directories(sshoutcfg PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(sshoutcfg PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(sshoutcfg ${MHASH_LIBRARIES})
 
 add_executable(sshoutd ${BUILD_INFO} ${SSHOUTD_OBJECTS})
+target_include_directories(sshoutd PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(sshoutd PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(sshoutd PRIVATE ${Readline_INCLUDE_DIRS})
 target_link_libraries(sshoutd ${Readline_LIBRARY})
