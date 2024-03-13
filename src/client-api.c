@@ -35,7 +35,7 @@
   (htons(1) == 1 ? (a)                                                         \
                  : ((uint64_t)htonl((a)&0xFFFFFFFF) << 32) | htonl((a) >> 32))
 
-static const char *sshout_user_name;
+static const char *sshout_user_name = "";
 
 static int api_version = 0;
 
