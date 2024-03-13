@@ -12,57 +12,66 @@
  * more details.
  */
 
-#include <stdio.h>
-#include <errno.h>
-#include <unistd.h>
-#include <limits.h>
 #include <assert.h>
+#include <errno.h>
+#include <limits.h>
+#include <stdio.h>
+#include <unistd.h>
 
 int fgetline(FILE *f, char *line, size_t len) {
-	size_t i = 0;
-	int c;
-	if(len > INT_MAX) len = INT_MAX;
-	while((c = fgetc(f)) != '\n') {
-		if(c == EOF) {
-			if(!i) return -1;
-			break;
-		}
-		if(i >= len - 1) return -2;
-		line[i++] = c;
-	}
-	line[i] = 0;
-	return i;
+  size_t i = 0;
+  int c;
+  if (len > INT_MAX)
+    len = INT_MAX;
+  while ((c = fgetc(f)) != '\n') {
+    if (c == EOF) {
+      if (!i)
+        return -1;
+      break;
+    }
+    if (i >= len - 1)
+      return -2;
+    line[i++] = c;
+  }
+  line[i] = 0;
+  return i;
 }
 
 int fbackwardoverwrite(FILE *f, size_t len) {
-	long int offset = ftell(f);
-	if(offset < 0) return -1;
-	if(len > (size_t)offset) {
+  long int offset = ftell(f);
+  if (offset < 0)
+    return -1;
+  if (len > (size_t)offset) {
 #if 0
 		errno = ERANGE;
 		return -1;
 #else
-		len = offset;
+    len = offset;
 #endif
-	}
-	long int overwrite_start = offset - len;
-	char buffer[1024];
-	size_t item_count, ss = 0;
-	long int current_offset;
-	do {
-		item_count = fread(buffer, sizeof buffer, 1, f);
-		if(!item_count && ferror(f)) return -1;
-		current_offset = ftell(f);
-		long int s = current_offset - offset - ss;
-		fseek(f, overwrite_start + ss , SEEK_SET);
-		if(!s) break;
-		if(!fwrite(buffer, s, 1, f)) return -1;
-		ss += s;
-	} while(item_count && fseek(f, current_offset, SEEK_SET) != -1);
-	if(ferror(f)) return -1;
-	clearerr(f);
-	fflush(f);
-	assert((size_t)ftell(f) == (size_t)overwrite_start + ss);
-	if(ftruncate(fileno(f), ftell(f)) < 0) return -1;
-	return fseek(f, overwrite_start, SEEK_SET);
+  }
+  long int overwrite_start = offset - len;
+  char buffer[1024];
+  size_t item_count, ss = 0;
+  long int current_offset;
+  do {
+    item_count = fread(buffer, sizeof buffer, 1, f);
+    if (!item_count && ferror(f))
+      return -1;
+    current_offset = ftell(f);
+    long int s = current_offset - offset - ss;
+    fseek(f, overwrite_start + ss, SEEK_SET);
+    if (!s)
+      break;
+    if (!fwrite(buffer, s, 1, f))
+      return -1;
+    ss += s;
+  } while (item_count && fseek(f, current_offset, SEEK_SET) != -1);
+  if (ferror(f))
+    return -1;
+  clearerr(f);
+  fflush(f);
+  assert((size_t)ftell(f) == (size_t)overwrite_start + ss);
+  if (ftruncate(fileno(f), ftell(f)) < 0)
+    return -1;
+  return fseek(f, overwrite_start, SEEK_SET);
 }

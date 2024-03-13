@@ -15,30 +15,32 @@
 #include "common.h"
 
 int is_valid_user_name(const char *name) {
-	unsigned int len = 0;
-	if(!*name) return 0;
-	do {
-		switch(*name) {
-			case 0x4:
-			case '\a':
-			case '\b':
-			case '	':
-			case '\n':
-			case '':
-			case '':
-			case '\r':
-			case 0x1b:
-			case '"':
-			case '#':
-			case '\'':
-			case '*':
-			case '/':
-			case ':':
-			case '\\':
-			case 0x7f:
-				return 0;
-		}
-		if(++len > USER_NAME_MAX_LENGTH) return 0;
-	} while(*++name);
-	return 1;
+  unsigned int len = 0;
+  if (!*name)
+    return 0;
+  do {
+    switch (*name) {
+    case 0x4:
+    case '\a':
+    case '\b':
+    case '	':
+    case '\n':
+    case '':
+    case '':
+    case '\r':
+    case 0x1b:
+    case '"':
+    case '#':
+    case '\'':
+    case '*':
+    case '/':
+    case ':':
+    case '\\':
+    case 0x7f:
+      return 0;
+    }
+    if (++len > USER_NAME_MAX_LENGTH)
+      return 0;
+  } while (*++name);
+  return 1;
 }

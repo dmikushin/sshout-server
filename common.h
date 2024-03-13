@@ -1,10 +1,14 @@
+#ifndef SSHOUT_COMMON_H
+#define SSHOUT_COMMON_H
+
 #define SSHOUT_VERSION "1.3.0"
 #define SSHOUT_COPYRIGHT_LINE _("Copyright 2015-2023 Rivoreo")
-#define SSHOUT_LICENSE_INFORMATION \
-	_("This is free software; you are free to change and redistribute it. See the\n" \
-	"source for copying conditions.\n" \
-	"There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n" \
-	"PARTICULAR PURPOSE.")
+#define SSHOUT_LICENSE_INFORMATION                                             \
+  _("This is free software; you are free to change and redistribute it. See "  \
+    "the\n"                                                                    \
+    "source for copying conditions.\n"                                         \
+    "There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n"    \
+    "PARTICULAR PURPOSE.")
 #include "build-info.h"
 #ifdef BUILD_REPRODUCIBLE
 #undef BUILD_DATE
@@ -12,11 +16,14 @@
 #define BUILD_DATE __DATE__ " " __TIME__
 #endif
 #if defined GIT_COMMIT && defined BUILD_DATE
-#define SSHOUT_VERSION_STRING "SSHOUT " SSHOUT_VERSION " (commit " GIT_COMMIT ", built on " BUILD_DATE ")"
+#define SSHOUT_VERSION_STRING                                                  \
+  "SSHOUT " SSHOUT_VERSION " (commit " GIT_COMMIT ", built on " BUILD_DATE ")"
 #elif defined GIT_COMMIT
-#define SSHOUT_VERSION_STRING "SSHOUT " SSHOUT_VERSION " (commit " GIT_COMMIT ")"
+#define SSHOUT_VERSION_STRING                                                  \
+  "SSHOUT " SSHOUT_VERSION " (commit " GIT_COMMIT ")"
 #elif defined BUILD_DATE
-#define SSHOUT_VERSION_STRING "SSHOUT " SSHOUT_VERSION " (built on " BUILD_DATE ")"
+#define SSHOUT_VERSION_STRING                                                  \
+  "SSHOUT " SSHOUT_VERSION " (built on " BUILD_DATE ")"
 #else
 #define SSHOUT_VERSION_STRING "SSHOUT " SSHOUT_VERSION
 #endif
@@ -44,14 +51,14 @@
 #define LOCAL_PACKET_MAX_LENGTH (2 * 1024 * 1024)
 
 enum local_packet_type {
-	SSHOUT_LOCAL_LOGIN,
-	SSHOUT_LOCAL_POST_MESSAGE,
-	SSHOUT_LOCAL_GET_ONLINE_USERS,
-	SSHOUT_LOCAL_USER_NOT_FOUND,
-	SSHOUT_LOCAL_DISPATCH_MESSAGE,
-	SSHOUT_LOCAL_ONLINE_USERS_INFO,
-	SSHOUT_LOCAL_USER_ONLINE,
-	SSHOUT_LOCAL_USER_OFFLINE,
+  SSHOUT_LOCAL_LOGIN,
+  SSHOUT_LOCAL_POST_MESSAGE,
+  SSHOUT_LOCAL_GET_ONLINE_USERS,
+  SSHOUT_LOCAL_USER_NOT_FOUND,
+  SSHOUT_LOCAL_DISPATCH_MESSAGE,
+  SSHOUT_LOCAL_ONLINE_USERS_INFO,
+  SSHOUT_LOCAL_USER_ONLINE,
+  SSHOUT_LOCAL_USER_OFFLINE,
 };
 
 #define GET_PACKET_EOF -1
@@ -64,50 +71,50 @@ enum local_packet_type {
 
 // Doesn't need to use types from stdint.h in local packets
 struct local_packet {
-	size_t length;
-	enum local_packet_type type;
-	char data[0];
+  size_t length;
+  enum local_packet_type type;
+  char data[0];
 };
 
 struct local_online_user {
-	int id;
-	char user_name[USER_NAME_MAX_LENGTH];
-	char host_name[HOST_NAME_MAX_LENGTH];
+  int id;
+  char user_name[USER_NAME_MAX_LENGTH];
+  char host_name[HOST_NAME_MAX_LENGTH];
 };
 
 struct local_online_users_info {
-	int your_id;
-	int count;
-	struct local_online_user user[0];
+  int your_id;
+  int count;
+  struct local_online_user user[0];
 };
 
-enum local_msg_type {
-	SSHOUT_MSG_PLAIN = 1,
-	SSHOUT_MSG_RICH,
-	SSHOUT_MSG_IMAGE
-};
+enum local_msg_type { SSHOUT_MSG_PLAIN = 1, SSHOUT_MSG_RICH, SSHOUT_MSG_IMAGE };
 
 struct local_message {
-	char msg_from[USER_NAME_MAX_LENGTH];
-	char msg_to[USER_NAME_MAX_LENGTH];
-//#ifdef HAVE_ICONV
-//	char msg_text_encoding[TEXT_ENCODING_NAME_MAX_LENGTH];	// Only for msg_type == SSHOUT_MSG_PLAIN
-//#endif
-	enum local_msg_type msg_type;
-	size_t msg_length;		// Only for array msg
-	char msg[0];
+  char msg_from[USER_NAME_MAX_LENGTH];
+  char msg_to[USER_NAME_MAX_LENGTH];
+  //#ifdef HAVE_ICONV
+  //	char msg_text_encoding[TEXT_ENCODING_NAME_MAX_LENGTH];	// Only for
+  //msg_type == SSHOUT_MSG_PLAIN #endif
+  enum local_msg_type msg_type;
+  size_t msg_length; // Only for array msg
+  char msg[0];
 };
 
 struct private_buffer {
-	char *buffer;
-	size_t total_length;
-	size_t read_length;
+  char *buffer;
+  size_t total_length;
+  size_t read_length;
 };
 
 struct sockaddr_un;
 struct sshout_api_packet;
 
 extern int get_api_packet(int, struct sshout_api_packet **, uint32_t *, int);
-extern int get_local_packet(int, struct local_packet **, struct private_buffer *);
+extern int get_local_packet(int, struct local_packet **,
+                            struct private_buffer *);
 extern int client_mode(const struct sockaddr_un *, const char *);
 extern int server_mode(const struct sockaddr_un *);
+
+#endif // SSHOUT_COMMON_H
+

@@ -12,35 +12,39 @@
  * more details.
  */
 
-#include <unistd.h>
 #include <errno.h>
+#include <unistd.h>
 
 int sync_read(int fd, void *buffer, size_t count) {
-	char *p = buffer;
-	do {
-		int s = read(fd, p, count);
-		if(s < 0) {
-			if(errno == EINTR) continue;
-			return -1;
-		}
-		if(!s) return p - (char *)buffer;
-		count -= s;
-		p += s;
-	} while(count > 0);
-	return p - (char *)buffer;
+  char *p = buffer;
+  do {
+    int s = read(fd, p, count);
+    if (s < 0) {
+      if (errno == EINTR)
+        continue;
+      return -1;
+    }
+    if (!s)
+      return p - (char *)buffer;
+    count -= s;
+    p += s;
+  } while (count > 0);
+  return p - (char *)buffer;
 }
 
 int sync_write(int fd, const void *buffer, size_t count) {
-	const char *p = buffer;
-	do {
-		int s = write(fd, p, count);
-		if(s < 0) {
-			if(errno == EINTR) continue;
-			return -1;
-		}
-		if(!s) return p - (char *)buffer;
-		count -= s;
-		p += s;
-	} while(count > 0);
-	return p - (char *)buffer;
+  const char *p = buffer;
+  do {
+    int s = write(fd, p, count);
+    if (s < 0) {
+      if (errno == EINTR)
+        continue;
+      return -1;
+    }
+    if (!s)
+      return p - (char *)buffer;
+    count -= s;
+    p += s;
+  } while (count > 0);
+  return p - (char *)buffer;
 }

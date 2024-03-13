@@ -44,9 +44,9 @@
 #include <stdint.h>
 
 struct sshout_api_packet {
-	uint32_t length;
-	uint8_t type;
-	uint8_t data[0];
+  uint32_t length;
+  uint8_t type;
+  uint8_t data[0];
 };
 
 #endif
