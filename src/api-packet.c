@@ -12,7 +12,7 @@
  * more details.
  */
 
-#include "api.h"
+#include "sshout/api.h"
 #include "common.h"
 #include "syncrw.h"
 #include <arpa/inet.h>

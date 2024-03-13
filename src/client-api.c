@@ -15,7 +15,7 @@
 /* This part is actually the API server; it is named 'client' because it is
  * the client of the local daemon sshoutd(8) */
 
-#include "api.h"
+#include "sshout/api.h"
 #include "client.h"
 #include "common.h"
 #include "syncrw.h"
