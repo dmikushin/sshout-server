@@ -60,7 +60,7 @@ static void send_api_pass(int version) {
   p += 2;
   *p++ = user_name_len;
   memcpy(p, sshout_user_name, user_name_len);
-  while (write(STDOUT_FILENO, packet, 4 + length) < 0) {
+  while (write(STDOUT_FILENO, packet, sizeof(struct sshout_api_packet) + length) < 0) {
     if (errno == EINTR)
       continue;
     syslog(LOG_ERR, "send_api_pass: write: STDOUT_FILENO: errno %d", errno);
@@ -169,7 +169,7 @@ send_api_online_users(const struct local_online_users_info *local_info) {
     uint8_t user_name_len = strnlen(u->user_name, USER_NAME_MAX_LENGTH);
     uint8_t host_name_len = strnlen(u->host_name, HOST_NAME_MAX_LENGTH);
     length += 2 + 1 + user_name_len + 1 + host_name_len;
-    uint8_t *np = realloc(packet, 4 + length);
+    uint8_t *np = realloc(packet, sizeof(struct sshout_api_packet) + length);
     if (!np) {
       syslog(LOG_ERR, "send_api_online_users: out of memory");
       exit(1);
